@@ -49,6 +49,8 @@ export default function Login() {
     return Object.keys(errors).length === 0;
   };
 
+  console.log();
+  
   const validateSignupForm = () => {
     const errors = {};
     
