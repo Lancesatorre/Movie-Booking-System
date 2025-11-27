@@ -23,9 +23,7 @@ export default function Login() {
       [e.target.name]: e.target.value
     });
   };
-
-  console.log();
-  console.log();
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
