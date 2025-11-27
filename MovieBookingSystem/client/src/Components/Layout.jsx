@@ -14,7 +14,7 @@ export default function Layout() {
         <div className="absolute bottom-32 right-32 w-40 h-40 bg-purple-500/5 rounded-full blur-2xl"></div>
       <div className="relative z-10">
         <Navbar />
-        <main className='pt-20'>
+        <main className='pt-17'>
           <Outlet />
         </main>
       </div>
