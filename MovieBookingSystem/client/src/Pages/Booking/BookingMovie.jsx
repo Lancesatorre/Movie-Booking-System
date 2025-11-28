@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const BookingMovie = () => {
+  const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -17,7 +19,9 @@ const BookingMovie = () => {
       duration: "132m",
       rating: "R-5",
       image: "/assets/Movies/altered.jpg",
-      description: "In an alternate present, genetically enhanced humans dominate society. Outcasts Leon and Chloe fight for justice against corrupt politicians exploiting genetic disparity, risking everything to challenge the oppressive system."
+      description: "In an alternate present, genetically enhanced humans dominate society. Outcasts Leon and Chloe fight for justice against corrupt politicians exploiting genetic disparity, risking everything to challenge the oppressive system.",
+      dateRelease: "Nov 25, 2025",
+      price: 250
     },
     {
       id: 2,
@@ -26,7 +30,9 @@ const BookingMovie = () => {
       duration: "153m",
       rating: "R-5",
       image: "/assets/Movies/avengers-endgame.jpg",
-      description: "After Thanos, devastating snap leaves the universe in ruins, the remaining Avengers reunite to undo his actions and restore balance—no matter the cost."
+      description: "After Thanos, devastating snap leaves the universe in ruins, the remaining Avengers reunite to undo his actions and restore balance—no matter the cost.",
+      dateRelease: "Nov 25, 2025",
+      price: 300
     },
     {
       id: 3,
@@ -35,7 +41,9 @@ const BookingMovie = () => {
       duration: "125m",
       rating: "R-5",
       image: "/assets/Movies/frankenstein.jpg",
-      description: "Dr. Victor Frankenstein, a brilliant but egotistical scientist, brings a creature to life in a monstrous experiment that ultimately leads to the undoing of both the creator and his tragic creation."
+      description: "Dr. Victor Frankenstein, a brilliant but egotistical scientist, brings a creature to life in a monstrous experiment that ultimately leads to the undoing of both the creator and his tragic creation.",
+      dateRelease: "Nov 25, 2025",
+      price: 250
     },
     {
       id: 4,
@@ -44,7 +52,9 @@ const BookingMovie = () => {
       duration: "81m",
       rating: "R-5",
       image: "/assets/Movies/in-your-dreams.jpg",
-      description: "Stevie and her little brother Elliot journey into the wildly absurd landscape of their own dreams to ask the Sandman to grant them the perfect family."
+      description: "Stevie and her little brother Elliot journey into the wildly absurd landscape of their own dreams to ask the Sandman to grant them the perfect family.",
+      dateRelease: "Nov 25, 2025",
+      price: 200
     },
     {
       id: 5,
@@ -53,7 +63,9 @@ const BookingMovie = () => {
       duration: "145m",
       rating: "R-5",
       image: "/assets/Movies/war-of-the-worlds.jpg",
-      description: "Will Radford, a top Homeland Security cyber-analyst, uncovers a mysterious attack that makes him question whether the government is hiding the truth from him—and the world."
+      description: "Will Radford, a top Homeland Security cyber-analyst, uncovers a mysterious attack that makes him question whether the government is hiding the truth from him—and the world.",
+      dateRelease: "Nov 25, 2025",
+      price: 280
     },
     {
       id: 6,
@@ -62,9 +74,20 @@ const BookingMovie = () => {
       duration: "137m",
       rating: "R-5",
       image: "/assets/Movies/wicked-for-good.jpg",
-      description: "As an angry mob rises against the Wicked Witch, Glinda and Elphaba will need to come together one final time. With their singular friendship now the fulcrum of their futures, they will need to truly see each other, with honesty and empathy, if they are to change themselves, and all of Oz, for good."
+      description: "As an angry mob rises against the Wicked Witch, Glinda and Elphaba will need to come together one final time. With their singular friendship now the fulcrum of their futures, they will need to truly see each other, with honesty and empathy, if they are to change themselves, and all of Oz, for good.",
+      dateRelease: "Nov 25, 2025",
+      price: 320
     }
   ];
+
+  const handleBookNow = () => {
+    const selectedMovie = movies[currentIndex];
+    navigate('/movies-checkout', { 
+      state: { 
+        movie: selectedMovie
+      } 
+    });
+  };
 
   const resetAutoRotate = () => {
     if (autoRotateRef.current) {
@@ -328,52 +351,64 @@ const BookingMovie = () => {
           </div>
         </div>
 
-        {/* Enhanced Movie Details */}
-        <div className="max-w-5xl mx-auto bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-xl rounded-2xl p-8 border border-gray-700/50 shadow-2xl">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="md:col-span-1">
-              <div className="relative group">
-                <img 
-                  src={movies[currentIndex].image} 
-                  alt={movies[currentIndex].title}
-                  className="w-full h-[400px] object-cover rounded-xl shadow-2xl transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+       {/* Enhanced Movie Details */}
+          <div className="max-w-5xl mx-auto bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-xl rounded-2xl p-8 border border-gray-700/50 shadow-2xl">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="md:col-span-1">
+                <div className="relative group">
+                  <img 
+                    src={movies[currentIndex].image} 
+                    alt={movies[currentIndex].title}
+                    className="w-full h-[400px] object-cover rounded-xl shadow-2xl transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
               </div>
-            </div>
-            <div className="md:col-span-2 flex flex-col justify-center text-left">
-              <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                {movies[currentIndex].title}
-              </h2>
-              <div className="flex flex-wrap gap-4 text-gray-400 mb-6">
-                <span className="flex items-center gap-2 bg-gray-800/50 px-3 py-1 rounded-full">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
-                  </svg>
-                  {movies[currentIndex].genre}
-                </span>
-                <span className="flex items-center gap-2 bg-gray-800/50 px-3 py-1 rounded-full">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" />
-                  </svg>
-                  {movies[currentIndex].duration}
-                </span>
-                <span className="flex items-center gap-2 bg-red-600/20 text-red-400 px-3 py-1 rounded-full">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                  {movies[currentIndex].rating}
-                </span>
+              <div className="md:col-span-2 flex flex-col justify-center text-left">
+                <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                  {movies[currentIndex].title}
+                </h2>
+                <div className="flex flex-wrap gap-4 text-gray-400 mb-6">
+                  <span className="flex items-center gap-2 bg-gray-800/50 px-3 py-1 rounded-full">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                    </svg>
+                    {movies[currentIndex].genre}
+                  </span>
+                  <span className="flex items-center gap-2 bg-gray-800/50 px-3 py-1 rounded-full">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" />
+                    </svg>
+                    {movies[currentIndex].duration}
+                  </span>
+                  <span className="flex items-center gap-2 bg-red-600/20 text-red-400 px-3 py-1 rounded-full">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    {movies[currentIndex].rating}
+                  </span>
+                  <span className="flex items-center gap-2 bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                    </svg>
+                    {movies[currentIndex].dateRelease}
+                  </span>
+                  <span className="flex items-center gap-2 bg-green-600/20 text-green-400 px-3 py-1 rounded-full">
+                    ₱ {movies[currentIndex].price}.00
+                  </span>
+                </div>
+                <p className="text-gray-300 text-lg mb-8 leading-relaxed">
+                  {movies[currentIndex].description}
+                </p>
+                <button 
+                  onClick={handleBookNow}
+                  className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-red-600 to-red-700 rounded-xl hover:from-red-500 hover:to-red-600 transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-red-500/50 hover:scale-105 transform"
+                >
+                  Book Now
+                </button>
               </div>
-              <p className="text-gray-300 text-lg mb-8 leading-relaxed">
-                {movies[currentIndex].description}
-              </p>
-              <button className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-red-600 to-red-700 rounded-xl hover:from-red-500 hover:to-red-600 transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-red-500/50 hover:scale-105 transform">
-                Book Now
-              </button>
             </div>
           </div>
-        </div>
 
         {/* Enhanced Dots Indicator */}
         <div className="flex justify-center mt-12 gap-3">
