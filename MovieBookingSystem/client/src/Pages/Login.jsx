@@ -87,59 +87,90 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateLoginForm()) {
-      return;
-    }
-    
+
+    if (!validateLoginForm()) return;
+
     setIsLoading(true);
+
     try {
-      console.log('Login attempt:', formData);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch("http://localhost/mobook_api/login.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        localStorage.setItem("mobook_user", JSON.stringify(result.user));
+        window.location.href = "/Home";
+      } else {
+        alert(result.message);
+      }
+
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
+
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateSignupForm()) {
-      return;
-    }
-    
+
+    if (!validateSignupForm()) return;
+
     setIsLoading(true);
-    
+
     try {
-      console.log('Signup attempt:', formData);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setIsSuccessLoading(true);
-      
-      setTimeout(() => {
-        setFormData({
-          email: '',
-          password: '',
-          confirmPassword: '',
-          firstName: '',
-          middleName: '',
-          lastName: '',
-          phone: ''
-        });
-        
-        setFormErrors({});
-        handleBackToLogin();
-        setIsSuccessLoading(false);
-      }, 2000);
-      
+      const response = await fetch("http://localhost/mobook_api/signup.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          middleName: formData.middleName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setIsSuccessLoading(true);
+
+        setTimeout(() => {
+          setIsSignup(false);
+          setIsSuccessLoading(false);
+
+          setFormData({
+            email: '',
+            password: '',
+            confirmPassword: '',
+            firstName: '',
+            middleName: '',
+            lastName: '',
+            phone: ''
+          });
+        }, 2000);
+
+      } else {
+        alert(result.message);
+      }
+
     } catch (error) {
-      console.error('Signup failed:', error);
+      console.error("Signup failed:", error);
     } finally {
       setIsLoading(false);
     }
   };
+
 
   const handleSignupClick = () => {
     setFormErrors({});

@@ -27,8 +27,13 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex space-x-4">
-            <button className="px-4 py-2 text-sm bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
-              Logout
+            <button
+              className="px-4 py-2 text-sm bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+              onClick={() => {
+                localStorage.removeItem("mobook_user");
+                window.location.href = "/";
+              }}
+            >Logout
             </button>
           </div>
 
