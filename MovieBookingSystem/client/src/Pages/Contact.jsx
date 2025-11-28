@@ -68,7 +68,7 @@ const Contact = () => {
         </div>
 
         {/* Contact Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+        <div className="grid grid-cols-1 xl:grid-cols-2 lg:px-40 xl:px-0 gap-6 mb-16">
           {contactInfo.map((info, index) => {
             const IconComponent = info.icon;
             return (

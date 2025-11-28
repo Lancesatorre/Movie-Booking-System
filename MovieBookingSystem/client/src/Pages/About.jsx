@@ -49,7 +49,7 @@ const About = () => {
         </div>
 
         {/* Story Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-12 lg:px-20 xl:px-0">
           <div className="space-y-6">
             <div className="inline-block p-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg mb-4">
               <Target size={40} />
