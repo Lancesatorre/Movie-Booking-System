@@ -7,8 +7,12 @@ const Landing = () => {
   const [scrollY, setScrollY] = useState(0);
   const navigate = useNavigate();
 
-    const handleBookTickets = () => {
+  const handleBookTickets = () => {
     navigate('/movies');
+  };
+
+  const handleNavigation = (path) => {
+    navigate(path);
   };
 
   useEffect(() => {
@@ -67,9 +71,11 @@ const Landing = () => {
             Book tickets, choose your seats, and enjoy the show with MoBook — the modern movie booking system designed for today's cinemas.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
-            onClick={handleBookTickets}>
-            <button className="group px-8 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg hover:from-red-700 hover:to-orange-700 transition-all duration-300 text-lg font-semibold shadow-lg shadow-red-500/20 hover:shadow-red-500/40">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <button 
+              onClick={handleBookTickets}
+              className="group px-8 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg hover:from-red-700 hover:to-orange-700 transition-all duration-300 text-lg font-semibold shadow-lg shadow-red-500/20 hover:shadow-red-500/40"
+            >
               Book Tickets Now
             </button>
             <button className="px-8 py-4 border-2 border-red-500/50 rounded-lg hover:border-red-500 hover:bg-red-900/10 transition-all duration-300 text-lg font-semibold">
@@ -136,7 +142,10 @@ const Landing = () => {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to Transform Your Cinema Experience?</h2>
           <p className="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">Join thousands of cinema-goers who've already discovered the easiest way to book tickets.</p>
-          <button className="px-10 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg hover:from-red-700 hover:to-orange-700 transition-all duration-300 text-lg font-semibold shadow-lg shadow-red-500/20 hover:shadow-red-500/40">
+          <button 
+            onClick={handleBookTickets}
+            className="px-10 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg hover:from-red-700 hover:to-orange-700 transition-all duration-300 text-lg font-semibold shadow-lg shadow-red-500/20 hover:shadow-red-500/40"
+          >
             Get Started Today
           </button>
         </div>
@@ -155,32 +164,64 @@ const Landing = () => {
               </p>
             </div>
             
-            <div>
+            <div className='text-right'>
               <h4 className="text-lg font-semibold mb-4 text-red-500">Quick Links</h4>
               <ul className="space-y-3 text-gray-400">
-                <li><a href="#movies" className="hover:text-red-500 transition-colors">Movies</a></li>
-                <li><a href="#features" className="hover:text-red-500 transition-colors">Features</a></li>
-                <li><a href="#about" className="hover:text-red-500 transition-colors">About</a></li>
-                <li><a href="#contact" className="hover:text-red-500 transition-colors">Contact</a></li>
+                <li>
+                  <button onClick={() => handleNavigation('/movies')} className="hover:text-red-500 transition-colors">
+                    Movies
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => handleNavigation('/features')} className="hover:text-red-500 transition-colors">
+                    Features
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => handleNavigation('/about')} className="hover:text-red-500 transition-colors">
+                    About
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => handleNavigation('/contact')} className="hover:text-red-500 transition-colors">
+                    Contact
+                  </button>
+                </li>
               </ul>
             </div>
             
-            <div>
+            <div className='text-right'>
               <h4 className="text-lg font-semibold mb-4 text-red-500">Support</h4>
               <ul className="space-y-3 text-gray-400">
-                <li><a href="#" className="hover:text-red-500 transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-red-500 transition-colors">FAQ</a></li>
-                <li><a href="#" className="hover:text-red-500 transition-colors">Contact Us</a></li>
-                <li><a href="#" className="hover:text-red-500 transition-colors">Privacy Policy</a></li>
+                <li>
+                  <button onClick={() => handleNavigation('/help-center')} className="hover:text-red-500 transition-colors">
+                    Help Center
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => handleNavigation('/faq')} className="hover:text-red-500 transition-colors">
+                    FAQ
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => handleNavigation('/contact')} className="hover:text-red-500 transition-colors">
+                    Contact Us
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => handleNavigation('/privacy-policy')} className="hover:text-red-500 transition-colors">
+                    Privacy Policy
+                  </button>
+                </li>
               </ul>
             </div>
             
-            <div>
+            <div className='text-right'>
               <h4 className="text-lg font-semibold mb-4 text-red-500">Contact Info</h4>
               <ul className="space-y-3 text-gray-400">
-                <li>support@mobook.com</li>
-                <li>+1 (555) 123-4567</li>
-                <li>123 Cinema Street, Movie City</li>
+                <li>MoBook@gmail.com</li>
+                <li>(+63) 923 1324 213</li>
+                <li>University of Cebu Main Campus</li>
               </ul>
             </div>
           </div>

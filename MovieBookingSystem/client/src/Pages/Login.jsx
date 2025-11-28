@@ -301,7 +301,7 @@ export default function Login() {
 
             <div className="space-y-6" onSubmit={handleSubmit}>
               {/* Email Input */}
-              <div className="space-y-2">
+              <div className="space-y-2 text-left">
                 <label className="block text-sm font-medium text-gray-300">Email Address</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3.5 text-gray-500" size={20} />
@@ -323,7 +323,7 @@ export default function Login() {
 
               {/* Password Input */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300">Password</label>
+                <label className="block text-left text-sm font-medium text-gray-300">Password</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3.5 text-gray-500" size={20} />
                   <input
