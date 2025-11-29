@@ -56,17 +56,17 @@ export default function Navbar() {
               >
                 Movies
               </button>
+                 <button 
+                onClick={() => handleNavigation('/')} 
+                className={isActivePath('/') ? activeStyles : inactiveStyles}
+              >
+                Theaters
+              </button>
               <button 
                 onClick={() => handleNavigation('/features')} 
                 className={isActivePath('/features') ? activeStyles : inactiveStyles}
               >
                 Features
-              </button>
-              <button 
-                onClick={() => handleNavigation('/about')} 
-                className={isActivePath('/about') ? activeStyles : inactiveStyles}
-              >
-                About
               </button>
               <button 
                 onClick={() => handleNavigation('/contact')} 

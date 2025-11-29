@@ -12,6 +12,7 @@ import Contact from './Pages/Contact.jsx';
 import HelpCenter from './Pages/HelpCenter.jsx';
 import FAQ from './Pages/FAQ.jsx';
 import PrivacyPolicy from './Pages/PrivacyPolicy.jsx';
+import Checkout from './Pages/Booking/Checkout.jsx';
 import './App.css'
 
 function App() {
@@ -23,8 +24,8 @@ function App() {
            <Route path="/" element={<Login />} />
            <Route element={<Layout />}>
         <Route path="/Home" element={<Landing />} />
-        <Route path="/Movies" element={<BookingMovie />} />
-
+        <Route path="/movies" element={<BookingMovie />} />
+        <Route path="/movies-checkout" element={<Checkout />} />
          <Route path="/features" element={<Features />} />
          <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
