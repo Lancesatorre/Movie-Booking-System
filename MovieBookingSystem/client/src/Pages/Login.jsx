@@ -358,7 +358,7 @@ export default function Login() {
                     Logging in...
                   </div>
                 ) : (
-                  'Login'
+                  'WOW'
                 )}
               </button>
             </div>
