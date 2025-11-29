@@ -111,7 +111,7 @@ const Landing = () => {
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-orange-500/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl" />
                   <div className="relative bg-gray-900/50 backdrop-blur-sm p-8 rounded-xl border border-gray-800 group-hover:border-red-500/50 transition-all duration-300 h-full">
-                    <div className="text-5xl mb-4 text-red-500 group-hover:text-orange-500 transition-colors duration-300 transform group-hover:scale-110 group-hover:-rotate-6 transition-transform">
+                    <div className="text-5xl flex justify-center mb-4 text-red-500 group-hover:text-orange-500 transition-colors duration-300 transform group-hover:scale-110 group-hover:-rotate-6 transition-transform">
                       <IconComponent size={40} strokeWidth={1.5} />
                     </div>
                     <h3 className="text-2xl font-semibold mb-3">{Feature.title}</h3>
@@ -164,7 +164,7 @@ const Landing = () => {
               </p>
             </div>
             
-            <div className='text-right'>
+            <div className='text-center  md:text-right'>
               <h4 className="text-lg font-semibold mb-4 text-red-500">Quick Links</h4>
               <ul className="space-y-3 text-gray-400">
                 <li>
@@ -190,7 +190,7 @@ const Landing = () => {
               </ul>
             </div>
             
-            <div className='text-right'>
+            <div className='text-center  md:text-right'>
               <h4 className="text-lg font-semibold mb-4 text-red-500">Support</h4>
               <ul className="space-y-3 text-gray-400">
                 <li>
@@ -216,7 +216,7 @@ const Landing = () => {
               </ul>
             </div>
             
-            <div className='text-right'>
+            <div className='text-center  md:text-right'>
               <h4 className="text-lg font-semibold mb-4 text-red-500">Contact Info</h4>
               <ul className="space-y-3 text-gray-400">
                 <li>MoBook@gmail.com</li>
