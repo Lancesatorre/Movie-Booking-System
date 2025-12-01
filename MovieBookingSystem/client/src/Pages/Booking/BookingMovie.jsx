@@ -509,20 +509,20 @@ const BookingMovie = () => {
             </div>
 
             {/* Trailer Info */}
-            <div className="p-8 bg-gradient-to-b from-red-700/45 to-black border-t border-red-500/20">
-              <div className="flex items-center justify-between">
+            <div className="p-5 md:p-8 bg-gradient-to-b from-red-700/45 to-black border-t border-red-500/20">
+              <div className="flex flex-col md:flex-row items-start md:items-center md:justify-between">
                 <div>
-                  <h3 className="text-3xl font-bold text-white mb-2">
+                  <h3 className="text-md md:text-3xl font-bold text-left text-white mb-2">
                     {movies[currentIndex].title} - Official Trailer
                   </h3>
-                  <p className="text-gray-400 text-left text-lg">
+                  <p className="text-gray-400 text-left text-xs md:text-lg">
                     Press ESC or click outside to close
                   </p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-3 mt-15 md:w-auto w-full md:mt-0">
                   <button 
                     onClick={() => window.open(sampleTrailerUrl, '_blank')}
-                    className="px-6 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-all duration-300 text-white font-semibold flex items-center gap-2"
+                    className="px-6 py-3 md:w-auto w-full bg-gray-800 hover:bg-gray-700 rounded-lg transition-all duration-300 text-white font-semibold flex justify-center items-center gap-2"
                   >
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
