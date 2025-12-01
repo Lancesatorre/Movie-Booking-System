@@ -15,6 +15,11 @@ const BookingMovie = () => {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Trailer modal state
+  const [showTrailer, setShowTrailer] = useState(false);
+  // Sample link trailer
+  const sampleTrailerUrl = "https://www.youtube.com/watch?v=TcMBFSGVi1c";
 
   // Fetch movies from backend
   useEffect(() => {
@@ -49,6 +54,44 @@ const BookingMovie = () => {
       } 
     });
   };
+
+  // Function to convert YouTube URL to embed format
+  const getYouTubeEmbedUrl = (url) => {
+    if (!url) return '';
+    
+    const videoIdMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+    
+    if (videoIdMatch && videoIdMatch[1]) {
+      return `https://www.youtube.com/embed/${videoIdMatch[1]}?autoplay=1`;
+    }
+    
+    return url;
+  };
+
+  const openTrailer = () => {
+    setShowTrailer(true);
+    // Stop auto-rotation when trailer opens
+    if (autoRotateRef.current) {
+      clearInterval(autoRotateRef.current);
+    }
+  };
+
+  const closeTrailer = () => {
+    setShowTrailer(false);
+    // Resume auto-rotation when trailer closes
+    resetAutoRotate();
+  };
+
+  // Close trailer on ESC key
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape' && showTrailer) {
+        closeTrailer();
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [showTrailer]);
 
   const resetAutoRotate = () => {
     if (!movies.length) return;
@@ -381,12 +424,25 @@ const BookingMovie = () => {
                   <p className="text-gray-300 text-lg mb-8 leading-relaxed">
                     {movies[currentIndex].description}
                   </p>
-                  <button 
+                  <div className='flex flex-col md:flex-row w-full gap-5'> 
+                    
+                     <button 
+                      onClick={openTrailer}
+                      className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-gray-500/50 hover:scale-105 transform flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
+                      </svg>
+                      Watch Trailer
+                    </button>
+
+                    <button 
                     onClick={handleBookNow}
                     className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-red-600 to-red-700 rounded-xl hover:from-red-500 hover:to-red-600 transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-red-500/50 hover:scale-105 transform"
-                  >
+                    >
                     Book Now
                   </button>
+                    </div> 
                 </div>
               </div>
             </div>
@@ -415,6 +471,86 @@ const BookingMovie = () => {
           </div>
         )}
       </div>
+
+      {/* Trailer Modal */}
+      {showTrailer && movies.length > 0 && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm animate-fade-in"
+          onClick={closeTrailer}
+        >
+          <div 
+            className="relative w-full max-w-6xl mx-4 bg-gray-900 rounded-3xl overflow-hidden shadow-2xl border border-red-500/30"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={closeTrailer}
+              className="absolute top-6 right-6 z-10 p-3 bg-red-600/90 hover:bg-red-500 rounded-full transition-all duration-300 hover:scale-110 shadow-lg group"
+            >
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <span className="absolute -bottom-10 right-0 bg-gray-800 text-white text-sm px-3 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                Close (ESC)
+              </span>
+            </button>
+
+            {/* Video Container with 16:9 aspect ratio */}
+            <div className="relative pt-[56.25%] bg-black">
+              <iframe
+                className="absolute top-0 left-0 w-full h-full"
+                // src={getYouTubeEmbedUrl(movies[currentIndex].trailerUrl)} sampleTrailerUrl
+                src={getYouTubeEmbedUrl(sampleTrailerUrl)}
+                title="Movie Trailer"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            </div>
+
+            {/* Trailer Info */}
+            <div className="p-8 bg-gradient-to-b from-red-700/45 to-black border-t border-red-500/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-3xl font-bold text-white mb-2">
+                    {movies[currentIndex].title} - Official Trailer
+                  </h3>
+                  <p className="text-gray-400 text-left text-lg">
+                    Press ESC or click outside to close
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => window.open(sampleTrailerUrl, '_blank')}
+                    className="px-6 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-all duration-300 text-white font-semibold flex items-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                      <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+                    </svg>
+                    Watch on YouTube
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom CSS for fade-in animation */}
+      <style jsx>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 };

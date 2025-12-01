@@ -190,7 +190,7 @@ export default function Login() {
   };
 
   const getInputClassName = (fieldName) => {
-    const baseClass = "w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-200 text-base backdrop-blur-sm";
+    const baseClass = "w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-200 text-base";
     const errorClass = formErrors[fieldName] ? "border-red-500/50" : "border-gray-700";
     return `${baseClass} ${errorClass}`;
   };
