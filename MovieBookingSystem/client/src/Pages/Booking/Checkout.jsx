@@ -151,7 +151,7 @@ const Checkout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white py-12 px-4">
+    <div className="min-h-screen bg-transparent text-white py-12 px-4">
       <div className="container mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-8 animate-fade-in">
