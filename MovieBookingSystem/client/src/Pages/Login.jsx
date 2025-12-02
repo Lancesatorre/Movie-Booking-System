@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Phone, User, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, Phone, User, ArrowRight, CheckCircle2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
@@ -7,6 +7,12 @@ export default function Login() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [isSuccessLoading, setIsSuccessLoading] = useState(false);
   const [formErrors, setFormErrors] = useState({});
+  const [showPassword, setShowPassword] = useState({
+    loginPassword: false,
+    signupPassword: false,
+    confirmPassword: false
+  });
+  
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -16,13 +22,26 @@ export default function Login() {
     lastName: '',
     phone: ''
   });
+  
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
     
+    // Special handling for name fields to prevent special characters
+    if (name === 'firstName' || name === 'middleName' || name === 'lastName') {
+      // Only allow letters, spaces, hyphens, and apostrophes
+      const filteredValue = value.replace(/[^a-zA-Z\s\-']/g, '');
+      setFormData({
+        ...formData,
+        [name]: filteredValue
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
+    
+    // Clear specific error when user starts typing
     if (formErrors[name]) {
       setFormErrors({
         ...formErrors,
@@ -48,13 +67,25 @@ export default function Login() {
     return Object.keys(errors).length === 0;
   };
 
-  console.log();
-  
   const validateSignupForm = () => {
     const errors = {};
     
-    if (!formData.firstName) errors.firstName = 'First name is required';
-    if (!formData.lastName) errors.lastName = 'Last name is required';
+    if (!formData.firstName) {
+      errors.firstName = 'First name is required';
+    } else if (!/^[a-zA-Z\s\-']+$/.test(formData.firstName)) {
+      errors.firstName = 'First name can only contain letters, spaces, hyphens, and apostrophes';
+    }
+    
+    if (!formData.lastName) {
+      errors.lastName = 'Last name is required';
+    } else if (!/^[a-zA-Z\s\-']+$/.test(formData.lastName)) {
+      errors.lastName = 'Last name can only contain letters, spaces, hyphens, and apostrophes';
+    }
+    
+    // Validate middle name only if it has value
+    if (formData.middleName && !/^[a-zA-Z\s\-']*$/.test(formData.middleName)) {
+      errors.middleName = 'Middle name can only contain letters, spaces, hyphens, and apostrophes';
+    }
     
     if (!formData.email) {
       errors.email = 'Email is required';
@@ -107,7 +138,11 @@ export default function Login() {
         localStorage.setItem("mobook_user", JSON.stringify(result.user));
         window.location.href = "/Home";
       } else {
-        alert(result.message);
+        // Set error for password field on failed login
+        setFormErrors(prev => ({
+          ...prev,
+          password: 'Incorrect email or password'
+        }));
       }
 
     } catch (error) {
@@ -116,7 +151,6 @@ export default function Login() {
       setIsLoading(false);
     }
   };
-
 
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
@@ -148,19 +182,22 @@ export default function Login() {
           setIsSignup(false);
           setIsSuccessLoading(false);
 
-          setFormData({
-            email: '',
-            password: '',
-            confirmPassword: '',
-            firstName: '',
-            middleName: '',
-            lastName: '',
-            phone: ''
-          });
+          // Reset all form data
+          resetFormData();
         }, 2000);
 
       } else {
-        alert(result.message);
+        // Check if the error is about email already existing
+        if (result.message.toLowerCase().includes('email') && 
+            result.message.toLowerCase().includes('already') || 
+            result.message.toLowerCase().includes('exist')) {
+          setFormErrors(prev => ({
+            ...prev,
+            email: 'Email already exists. Please use a different email or login.'
+          }));
+        } else {
+          alert(result.message);
+        }
       }
 
     } catch (error) {
@@ -170,8 +207,29 @@ export default function Login() {
     }
   };
 
+  // Function to reset all form data
+  const resetFormData = () => {
+    setFormData({
+      email: '',
+      password: '',
+      confirmPassword: '',
+      firstName: '',
+      middleName: '',
+      lastName: '',
+      phone: ''
+    });
+    
+    // Reset password visibility states
+    setShowPassword({
+      loginPassword: false,
+      signupPassword: false,
+      confirmPassword: false
+    });
+  };
 
   const handleSignupClick = () => {
+    // Reset all form data when clicking signup
+    resetFormData();
     setFormErrors({});
     setIsAnimating(true);
     setTimeout(() => {
@@ -189,59 +247,48 @@ export default function Login() {
     }, 300);
   };
 
+  // New function to handle "Login instead?" click from signup form
+  const handleLoginInstead = () => {
+    // Save the email from signup form
+    const emailToTransfer = formData.email;
+    
+    setFormErrors({});
+    setIsAnimating(true);
+    setTimeout(() => {
+      setIsSignup(false);
+      setIsAnimating(false);
+      
+      // Set only the email in the login form, clear password
+      setFormData(prev => ({
+        ...prev,
+        email: emailToTransfer,
+        password: ''
+      }));
+    }, 300);
+  };
+
   const getInputClassName = (fieldName) => {
-    const baseClass = "w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-200 text-base";
-    const errorClass = formErrors[fieldName] ? "border-red-500/50" : "border-gray-700";
+    const baseClass = "w-full px-4 py-3 bg-gray-900/50 border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-all duration-200 text-base";
+    const errorClass = formErrors[fieldName] ? "border-red-500 focus:border-red-500" : "border-gray-700 focus:border-red-500";
     return `${baseClass} ${errorClass}`;
   };
 
   const getSignupInputClassName = (fieldName) => {
-    const baseClass = "w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/30 transition-all duration-200 text-sm";
-    const errorClass = formErrors[fieldName] ? "border-red-500/70" : "border-gray-600";
+    const baseClass = "w-full px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/30 transition-all duration-200 text-sm";
+    const errorClass = formErrors[fieldName] ? "border-red-500 focus:border-red-500" : "border-gray-600 focus:border-red-500";
     return `${baseClass} ${errorClass}`;
+  };
+
+  const togglePasswordVisibility = (field) => {
+    setShowPassword(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
   };
 
   return (
     <div className="min-h-screen flex flex-col xl:flex-row bg-black overflow-hidden">
-      <style>{`
-        @keyframes float-slow {
-          0%, 100% { transform: translateY(0px) translateX(0px); }
-          33% { transform: translateY(-30px) translateX(10px); }
-          66% { transform: translateY(30px) translateX(-10px); }
-        }
-        @keyframes float-medium {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
-        }
-        @keyframes float-fast {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-15px); }
-        }
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        @keyframes glow {
-          0%, 100% { text-shadow: 0 0 20px rgba(220, 38, 38, 0.3); }
-          50% { text-shadow: 0 0 30px rgba(220, 38, 38, 0.6); }
-        }
-        @keyframes fade-in-up {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
-        .animate-float-medium { animation: float-medium 6s ease-in-out infinite; }
-        .animate-float-fast { animation: float-fast 4s ease-in-out infinite; }
-        .animate-shimmer { animation: shimmer 3s infinite; }
-        .animate-glow { animation: glow 3s ease-in-out infinite; }
-        .animate-fade-in-up { animation: fade-in-up 1s ease-out; }
-      `}</style>
+     
 
       {/* Left Side - Hero Section */}
       <div className={`hidden xl:flex xl:w-1/2 relative bg-gradient-to-br from-black via-red-950/20 to-black overflow-hidden items-center justify-center transition-all duration-500 ease-in-out`}>
@@ -327,12 +374,21 @@ export default function Login() {
                   <Lock className="absolute left-3 top-3.5 text-gray-500" size={20} />
                   <input
                     name="password"
-                    type="password"
+                    type={showPassword.loginPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={handleChange}
-                    className={`${getInputClassName('password')} pl-10`}
+                    className={`${getInputClassName('password')} ${formData.password ? 'pr-10' : 'pr-3'} pl-10`}
                     placeholder="••••••••"
                   />
+                  {formData.password && (
+                    <button
+                      type="button"
+                      onClick={() => togglePasswordVisibility('loginPassword')}
+                      className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-300 transition-colors"
+                    >
+                      {showPassword.loginPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  )}
                 </div>
                 {formErrors.password && (
                   <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
@@ -345,7 +401,7 @@ export default function Login() {
               <button
                 onClick={handleSubmit}
                 disabled={isLoading}
-                className={`w-full py-3 px-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-red-500/50 ${
+                className={`w-full py-3 px-4 bg-gradient-to-r from-red-700 to-orange-600/20  hover:from-red-500 hover:to-red-600 text-white font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-red-500/50 ${
                   isLoading 
                     ? 'opacity-70 cursor-not-allowed' 
                     : 'hover:shadow-lg hover:shadow-red-500/30 active:scale-95'
@@ -407,7 +463,7 @@ export default function Login() {
                 {/* Name Fields */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">First Name</label>
+                    <label className="block text-sm font-medium text-gray-700">First Name*</label>
                     <div className="relative">
                       <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
                       <input
@@ -415,8 +471,8 @@ export default function Login() {
                         type="text"
                         value={formData.firstName}
                         onChange={handleChange}
-                        className={`${getSignupInputClassName('firstName')} pl-10 text-white`}
-                        placeholder=""
+                        className={`${getSignupInputClassName('firstName')} pl-10`}
+                        placeholder="John"
                         disabled={isSuccessLoading}
                       />
                     </div>
@@ -428,20 +484,25 @@ export default function Login() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Middle Name</label>
+                    <label className="block text-sm font-medium text-gray-700">Middle Name <span className='text-xs text-gray-500'>(optional)</span></label>
                     <input
                       name="middleName"
                       type="text"
                       value={formData.middleName}
                       onChange={handleChange}
-                      className={`${getSignupInputClassName('middleName')} text-white`}
-                      placeholder=""
+                      className={`${getSignupInputClassName('middleName')}`}
+                      placeholder="James"
                       disabled={isSuccessLoading}
                     />
+                    {formErrors.middleName && (
+                      <p className="text-red-500 text-xs flex items-center gap-1">
+                        <span>•</span> {formErrors.middleName}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Last Name</label>
+                    <label className="block text-sm font-medium text-gray-700">Last Name*</label>
                     <div className="relative">
                       <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
                       <input
@@ -449,8 +510,8 @@ export default function Login() {
                         type="text"
                         value={formData.lastName}
                         onChange={handleChange}
-                        className={`${getSignupInputClassName('lastName')} pl-10 text-white`}
-                        placeholder=""
+                        className={`${getSignupInputClassName('lastName')} pl-10`}
+                        placeholder="Doe"
                         disabled={isSuccessLoading}
                       />
                     </div>
@@ -464,7 +525,7 @@ export default function Login() {
 
                 {/* Email */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Email Address</label>
+                  <label className="block text-sm font-medium text-gray-700">Email Address*</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3.5 text-gray-400" size={18} />
                     <input
@@ -472,21 +533,38 @@ export default function Login() {
                       type="email"
                       value={formData.email}
                       onChange={handleChange}
-                      className={`${getSignupInputClassName('email')} pl-10 text-white`}
+                      className={`${getSignupInputClassName('email')} pl-10 ${
+                        formErrors.email && formErrors.email.includes('already exists') ? 'animate-shake' : ''
+                      }`}
                       placeholder="you@example.com"
                       disabled={isSuccessLoading}
                     />
+                    {formErrors.email && formErrors.email.includes('already exists') && (
+                      <AlertCircle className="absolute right-3 top-3.5 text-red-500" size={18} />
+                    )}
                   </div>
                   {formErrors.email && (
-                    <p className="text-red-500 text-xs flex items-center gap-1">
+                    <p className={`text-xs flex items-center gap-1 ${
+                      formErrors.email.includes('already exists') 
+                        ? 'text-red-600 font-medium' 
+                        : 'text-red-500'
+                    }`}>
                       <span>•</span> {formErrors.email}
+                      {formErrors.email.includes('already exists') && (
+                        <button
+                          onClick={handleLoginInstead}
+                          className="ml-1 text-blue-600 hover:text-blue-800 underline text-xs"
+                        >
+                          Login instead?
+                        </button>
+                      )}
                     </p>
                   )}
                 </div>
 
                 {/* Phone */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+                  <label className="block text-sm font-medium text-gray-700">Phone Number*</label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-3.5 text-gray-400" size={18} />
                     <input
@@ -500,7 +578,7 @@ export default function Login() {
                           setFormErrors({ ...formErrors, phone: '' });
                         }
                       }}
-                      className={`${getSignupInputClassName('phone')} pl-10 text-white`}
+                      className={`${getSignupInputClassName('phone')} pl-10`}
                       placeholder="09123456789"
                       disabled={isSuccessLoading}
                     />
@@ -515,18 +593,27 @@ export default function Login() {
                 {/* Password Fields */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Password</label>
+                    <label className="block text-sm font-medium text-gray-700">Password*</label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3.5 text-gray-400" size={18} />
                       <input
                         name="password"
-                        type="password"
+                        type={showPassword.signupPassword ? "text" : "password"}
                         value={formData.password}
                         onChange={handleChange}
-                        className={`${getSignupInputClassName('password')} pl-10 text-white`}
+                        className={`${getSignupInputClassName('password')} ${formData.password ? 'pr-10' : 'pr-3'} pl-10`}
                         placeholder="••••••••"
                         disabled={isSuccessLoading}
                       />
+                      {formData.password && (
+                        <button
+                          type="button"
+                          onClick={() => togglePasswordVisibility('signupPassword')}
+                          className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          {showPassword.signupPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      )}
                     </div>
                     {formErrors.password && (
                       <p className="text-red-500 text-xs flex items-center gap-1">
@@ -536,18 +623,27 @@ export default function Login() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
+                    <label className="block text-sm font-medium text-gray-700">Confirm Password*</label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3.5 text-gray-400" size={18} />
                       <input
                         name="confirmPassword"
-                        type="password"
+                        type={showPassword.confirmPassword ? "text" : "password"}
                         value={formData.confirmPassword}
                         onChange={handleChange}
-                        className={`${getSignupInputClassName('confirmPassword')} pl-10 text-white`}
+                        className={`${getSignupInputClassName('confirmPassword')} ${formData.confirmPassword ? 'pr-10' : 'pr-3'} pl-10`}
                         placeholder="••••••••"
                         disabled={isSuccessLoading}
                       />
+                      {formData.confirmPassword && (
+                        <button
+                          type="button"
+                          onClick={() => togglePasswordVisibility('confirmPassword')}
+                          className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          {showPassword.confirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      )}
                     </div>
                     {formErrors.confirmPassword && (
                       <p className="text-red-500 text-xs flex items-center gap-1">
@@ -595,6 +691,52 @@ export default function Login() {
           </div>
         </div>
       )}
+
+       <style>{`
+        @keyframes float-slow {
+          0%, 100% { transform: translateY(0px) translateX(0px); }
+          33% { transform: translateY(-30px) translateX(10px); }
+          66% { transform: translateY(30px) translateX(-10px); }
+        }
+        @keyframes float-medium {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+        @keyframes float-fast {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-15px); }
+        }
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        @keyframes glow {
+          0%, 100% { text-shadow: 0 0 20px rgba(220, 38, 38, 0.3); }
+          50% { text-shadow: 0 0 30px rgba(220, 38, 38, 0.6); }
+        }
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          75% { transform: translateX(5px); }
+        }
+        .animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
+        .animate-float-medium { animation: float-medium 6s ease-in-out infinite; }
+        .animate-float-fast { animation: float-fast 4s ease-in-out infinite; }
+        .animate-shimmer { animation: shimmer 3s infinite; }
+        .animate-glow { animation: glow 3s ease-in-out infinite; }
+        .animate-fade-in-up { animation: fade-in-up 1s ease-out; }
+        .animate-shake { animation: shake 0.5s ease-in-out; }
+      `}</style>
     </div>
   );
 }

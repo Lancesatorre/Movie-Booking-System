@@ -438,7 +438,7 @@ const BookingMovie = () => {
 
                     <button 
                     onClick={handleBookNow}
-                    className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-red-600 to-red-700 rounded-xl hover:from-red-500 hover:to-red-600 transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-red-500/50 hover:scale-105 transform"
+                    className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-red-700 to-orange-600/20 rounded-xl hover:from-red-500 hover:to-red-600 transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-red-500/50 hover:scale-105 transform"
                     >
                     Book Now
                   </button>

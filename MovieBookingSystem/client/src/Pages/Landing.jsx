@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Ticket, Smartphone, Lock, Armchair, Menu, X } from 'lucide-react';
 import { useNavigate  } from 'react-router-dom';
+import icon from "/assets/logo.png";
 
 const Landing = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -11,6 +12,9 @@ const Landing = () => {
     navigate('/movies');
   };
 
+  const handleMyTickets = () => {
+      navigate('/my-tickets');
+  }
   const handleNavigation = (path) => {
     navigate(path);
   };
@@ -74,11 +78,13 @@ const Landing = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <button 
               onClick={handleBookTickets}
-              className="group px-8 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg hover:from-red-700 hover:to-orange-700 transition-all duration-300 text-lg font-semibold shadow-lg shadow-red-500/20 hover:shadow-red-500/40"
+              className="group px-8 py-4 bg-gradient-to-r from-red-700 to-orange-600/20 rounded-lg  hover:from-red-500 hover:to-red-600 transition-all duration-300 text-lg font-semibold shadow-lg shadow-red-500/20 hover:shadow-red-500/40"
             >
               Book Tickets Now
             </button>
-            <button className="px-8 py-4 border-2 border-red-500/50 rounded-lg hover:border-red-500 hover:bg-red-900/10 transition-all duration-300 text-lg font-semibold">
+            <button 
+             onClick={handleMyTickets}
+            className="px-8 py-4 border-2 border-red-500/50 rounded-lg hover:border-red-500 hover:bg-red-900/10 transition-all duration-300 text-lg font-semibold">
               My Tickets
             </button>
           </div>
@@ -144,7 +150,7 @@ const Landing = () => {
           <p className="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">Join thousands of cinema-goers who've already discovered the easiest way to book tickets.</p>
           <button 
             onClick={handleBookTickets}
-            className="px-10 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg hover:from-red-700 hover:to-orange-700 transition-all duration-300 text-lg font-semibold shadow-lg shadow-red-500/20 hover:shadow-red-500/40"
+            className="px-10 py-4 bg-gradient-to-r from-red-700 to-orange-600/20 rounded-lg  hover:from-red-500 hover:to-red-600 transition-all duration-300 text-lg font-semibold shadow-lg shadow-red-500/20 hover:shadow-red-500/40"
           >
             Get Started Today
           </button>
@@ -156,9 +162,13 @@ const Landing = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             <div>
-              <h3 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent mb-4">
-                MoBook
-              </h3>
+              <div className='flex flex-row gap-2 justify-center'>
+                  <img src={icon} alt="MoBook Logo" className="w-[4vh] h-[3vh]" />
+                  <h3 className="text-2xl font-bold bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent mb-4">
+                    MoBook
+                  </h3>
+              </div>
+              
               <p className="text-gray-400 leading-relaxed">
                 Your ultimate movie booking experience
               </p>
