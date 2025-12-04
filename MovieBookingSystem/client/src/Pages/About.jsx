@@ -37,13 +37,13 @@ const About = () => {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-6xl md:text-7xl font-bold mb-6">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6">
             About
             <span className="block bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent">
               MoBook
             </span>
           </h1>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+          <p className="text-sm md:text-xl text-gray-400 max-w-3xl mx-auto">
             Revolutionizing the way people book movie tickets with innovative technology and seamless user experience.
           </p>
         </div>
@@ -51,27 +51,27 @@ const About = () => {
         {/* Story Section */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-12 lg:px-20 xl:px-0">
           <div className="space-y-6">
-            <div className="inline-block p-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg mb-4">
+            <div className="inline-block p-2 md:p-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg mb-4">
               <Target size={40} />
             </div>
-            <h2 className="text-4xl font-bold">Our Mission</h2>
-            <p className="text-gray-300 text-lg leading-relaxed">
+            <h2 className="text-3xl md:text-4xl font-bold">Our Mission</h2>
+            <p className="text-gray-300 text-md md:text-lg leading-relaxed">
               To transform the cinema experience by making movie ticket booking effortless, accessible, and enjoyable for everyone. We believe that getting to the movies should be as entertaining as the movies themselves.
             </p>
-            <p className="text-gray-300 text-lg leading-relaxed">
+            <p className="text-gray-300 text-md md:text-lg leading-relaxed">
               MoBook was created with the vision of bridging the gap between movie enthusiasts and their favorite cinemas through technology that works seamlessly across all platforms.
             </p>
           </div>
 
           <div className="space-y-6">
-            <div className="inline-block p-4 bg-gradient-to-r from-orange-600 to-red-600 rounded-lg mb-4">
+            <div className="inline-block p-2 md:p-4 bg-gradient-to-r from-orange-600 to-red-600 rounded-lg mb-4">
               <Eye size={40} />
             </div>
-            <h2 className="text-4xl font-bold">Our Vision</h2>
-            <p className="text-gray-300 text-lg leading-relaxed">
+            <h2 className="text-3xl md:text-4xl font-bold">Our Vision</h2>
+            <p className="text-gray-300 text-md md:text-lg leading-relaxed">
               To become the world's most trusted and user-friendly movie booking platform, empowering cinemas and delighting moviegoers with innovative features and exceptional service.
             </p>
-            <p className="text-gray-300 text-lg leading-relaxed">
+            <p className="text-gray-300 text-md md:text-lg leading-relaxed">
               We envision a future where booking movie tickets is instant, personalized, and perfectly integrated with the modern digital lifestyle.
             </p>
           </div>

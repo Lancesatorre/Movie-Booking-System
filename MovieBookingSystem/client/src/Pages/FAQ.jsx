@@ -131,13 +131,13 @@ const FAQ = () => {
       <div className="container mx-auto px-4 max-w-4xl">
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-6xl md:text-7xl font-bold mb-6">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6">
             Frequently Asked
             <span className="block bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent">
               Questions
             </span>
           </h1>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto mb-8">
+          <p className="text-sm md:text-xl text-gray-400 max-w-3xl mx-auto mb-8">
             Find quick answers to common questions about MoBook
           </p>
 

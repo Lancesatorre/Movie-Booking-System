@@ -56,13 +56,13 @@ const Contact = () => {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-6xl md:text-7xl font-bold mb-6">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6">
             Get In
             <span className="block bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent">
               Touch
             </span>
           </h1>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+          <p className="text-sm md:text-xl text-gray-400 max-w-3xl mx-auto">
             Have questions or need assistance? We're here to help. Reach out to us through any of the channels below.
           </p>
         </div>

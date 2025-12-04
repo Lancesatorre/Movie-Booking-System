@@ -120,10 +120,10 @@ const MyTickets = () => {
       <div className="container mx-auto px-4 max-w-7xl">
         {/* Header */}
         <div className="text-center mb-12 animate-fade-in">
-          <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent">
+          <h1 className="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent">
             My Tickets
           </h1>
-          <p className="text-xl text-gray-400">
+          <p className="text-sm  md:text-xl text-gray-400">
             View and manage your movie bookings
           </p>
         </div>

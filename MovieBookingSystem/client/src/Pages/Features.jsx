@@ -54,13 +54,13 @@ const Features = () => {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-6xl md:text-7xl font-bold mb-6">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6">
             Powerful
             <span className="block bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent">
               Features
             </span>
           </h1>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+          <p className="text-sm md:text-xl text-gray-400 max-w-3xl mx-auto">
             Discover everything MoBook has to offer. Built with modern technology to give you the best movie booking experience.
           </p>
         </div>
@@ -89,7 +89,7 @@ const Features = () => {
         </div>
 
         {/* Additional Features */}
-        <div className="bg-gradient-to-br from-gray-900/50 to-gray-800/50 backdrop-blur-sm rounded-2xl p-12 border border-gray-800">
+        <div className="bg-gradient-to-br from-gray-900/50 to-gray-800/50 backdrop-blur-sm rounded-2xl px-5 py-12 border border-gray-800">
           <h2 className="text-4xl font-bold mb-8 text-center">
             <span className="bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent">
               And Much More...

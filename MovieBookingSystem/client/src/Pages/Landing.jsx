@@ -59,19 +59,19 @@ const Landing = () => {
         {/* Animated Background */}
         <div className="container mx-auto px-4 text-center relative z-10">
           <div className="mb-6 inline-block">
-            <span className="px-4 py-2 rounded-full bg-red-900/30 border border-red-500/50 text-red-300 text-sm font-semibold">
-              ✨ The Future of Movie Booking
+            <span className="px-2 py-1 text-xs md:text-sm md:px-4 md:py-2 rounded-full bg-red-900/30 border border-red-500/50 text-red-300  font-semibold">
+              The Future of Movie Booking
             </span>
           </div>
 
-          <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
+          <h1 className="text-[40px] md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
             Your Ultimate
-            <span className="block bg-gradient-to-r from-red-700 to-orange-600/20   bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-red-700 to-orange-600/20 text-[40px] md:text-7xl lg:text-8xl bg-clip-text text-transparent">
               Movie Experience
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-gray-400 mb-10 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xs md:text-xl text-gray-400 mb-10 max-w-3xl mx-auto leading-relaxed">
             Book tickets, choose your seats, and enjoy the show with MoBook — the modern movie booking system designed for today's cinemas.
           </p>
 
@@ -100,7 +100,7 @@ const Landing = () => {
       <section id="features" className="py-24 relative">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-5xl md:text-6xl font-bold mb-4">Why Choose MoBook?</h2>
+            <h2 className="text-4xl md:text-6xl font-bold mb-4">Why Choose MoBook?</h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
               Experience seamless movie booking with our advanced features designed for both customers and theater staff.
             </p>

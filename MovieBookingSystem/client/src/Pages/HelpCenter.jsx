@@ -166,20 +166,20 @@ const HelpCenter = () => {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-6xl md:text-7xl font-bold mb-6">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6">
             Help
             <span className="block bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent">
               Center
             </span>
           </h1>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto mb-8">
+          <p className="text-sm md:text-xl text-gray-400 max-w-3xl mx-auto mb-8">
             Find answers to your questions and get the help you need
           </p>    
         </div>
 
         {/* Browse by Category */}
         <div className="mb-16">
-          <h2 className="text-3xl font-bold mb-8">Browse by Category</h2>
+          <h2 className="text-2xl md:text-3xl font-bold mb-8">Browse by Category</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {categories.map((category, index) => {
               const IconComponent = category.icon;
@@ -226,10 +226,10 @@ const HelpCenter = () => {
                     className: "text-red-500"
                   })}
                   <div>
-                    <h3 className="text-2xl font-bold text-white">
+                    <h3 className="text-2xl text-left font-bold text-white">
                       {categories[selectedCategory].title}
                     </h3>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-gray-400 text-left text-sm">
                       {categories[selectedCategory].description}
                     </p>
                   </div>

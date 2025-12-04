@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Phone, User, ArrowRight, CheckCircle2, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import icon from "/assets/logo.png";
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
@@ -292,7 +293,7 @@ export default function Login() {
      
 
       {/* Left Side - Hero Section */}
-      <div className={`hidden xl:flex xl:w-1/2 relative bg-gradient-to-br from-black via-red-950/20 to-black overflow-hidden items-center justify-center transition-all duration-500 ease-in-out`}>
+      <div className={`hidden xl:flex xl:w-1/2  rounded-r-[200px] relative bg-gradient-to-br from-black via-red-950/20 to-black overflow-hidden items-center justify-center transition-all duration-500 ease-in-out`}>
         {/* Animated Background */}
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-gradient-to-br from-red-600/10 to-orange-600/10 blur-3xl" />
@@ -303,15 +304,19 @@ export default function Login() {
           <div className="absolute top-1/3 right-1/4 w-64 h-64 bg-red-600/10 rounded-full blur-2xl animate-float-fast" />
           
           {/* Grid Pattern */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/5 to-transparent skew-x-12 animate-shimmer" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/15 to-transparent skew-x-12 animate-shimmer" />
         </div>
 
         {/* Content */}
         <div className="relative z-10 text-center px-8 space-y-8">
           <div className="space-y-4">
+            <div className='flex flex-row gap-5 justify-center'>
+              <img src={icon} alt="MoBook Logo" className="w-[7vh] h-[6vh]" />
             <h1 className="text-7xl font-bold bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent animate-glow">
               MoBook
             </h1>
+            </div>
+            
             <p className="text-3xl font-light text-gray-200">Welcome.</p>
           </div>
           
@@ -330,15 +335,18 @@ export default function Login() {
 
       {/* Right Side / Mobile - Login Form */}
       {!isSignup ? (
-        <div className={`flex-1 flex items-center justify-center w-full xl:w-1/2 py-12 xl:py-0 px-4 transition-all duration-500 ease-in-out ${
+        <div className={`flex-1 flex items-center justify-center w-full xl:w-1/2 py-12  xl:py-0 px-4 transition-all duration-500 ease-in-out ${
           isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
         }`}>
           <div className="w-full max-w-md">
             {/* Logo for Mobile */}
             <div className="xl:hidden text-center mb-8">
-              <h1 className="text-5xl font-bold bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent">
-                MoBook
-              </h1>
+              <div className='flex flex-row gap-3 justify-center'>
+              <img src={icon} alt="MoBook Logo" className="w-[6vh] h-[5vh]" />
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent animate-glow">
+              MoBook
+            </h1>
+            </div>
             </div>
 
             <div className="space-y-2 mb-8 text-center">
@@ -425,9 +433,9 @@ export default function Login() {
                 Don't have an account?{' '}
                 <button 
                   onClick={handleSignupClick}
-                  className="text-red-500 hover:text-red-400 font-semibold transition-colors"
+                  className="text-red-500 hover:text-red-400 underline font-semibold transition-colors"
                 >
-                  Sign up now
+                  Sign up
                 </button>
               </p>
             </div>
@@ -436,261 +444,268 @@ export default function Login() {
       ) : (
         // Signup Form
         <div className={`fixed inset-0 flex items-center justify-center z-50 p-4 transition-all duration-500 ease-in-out ${
-          isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
-        } bg-black/60 backdrop-blur-sm`}>
-          <div className="w-full max-w-2xl max-h-screen overflow-y-auto bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl shadow-2xl">
-            {/* Success Loading Overlay */}
-            {isSuccessLoading && (
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-50/95 to-gray-100/95 flex items-center justify-center rounded-2xl z-10 flex-col gap-4">
-                <div className="relative">
-                  <div className="w-16 h-16 border-4 border-gray-200 rounded-full animate-spin" />
-                  <CheckCircle2 className="absolute inset-0 m-auto text-green-500 animate-pulse" size={32} />
-                </div>
-                <div className="text-center">
-                  <p className="text-gray-800 font-semibold text-lg">Account Created!</p>
-                  <p className="text-gray-600 text-sm mt-2">Redirecting to login...</p>
-                </div>
-              </div>
-            )}
-
-            {/* Form Content */}
-            <div className="p-8 lg:p-10">
-              <div className="text-center mb-8">
-                <h2 className="text-3xl lg:text-4xl font-bold text-gray-900">Create Account</h2>
-                <p className="text-gray-600 mt-2">Join MoBook and start your cinematic journey</p>
-              </div>
-
-              <div className="space-y-6 text-left" onSubmit={handleSignupSubmit}>
-                {/* Name Fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">First Name*</label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                      <input
-                        name="firstName"
-                        type="text"
-                        value={formData.firstName}
-                        onChange={handleChange}
-                        className={`${getSignupInputClassName('firstName')} pl-10`}
-                        placeholder="John"
-                        disabled={isSuccessLoading}
-                      />
-                    </div>
-                    {formErrors.firstName && (
-                      <p className="text-red-500 text-xs flex items-center gap-1">
-                        <span>•</span> {formErrors.firstName}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Middle Name <span className='text-xs text-gray-500'>(optional)</span></label>
-                    <input
-                      name="middleName"
-                      type="text"
-                      value={formData.middleName}
-                      onChange={handleChange}
-                      className={`${getSignupInputClassName('middleName')}`}
-                      placeholder="James"
-                      disabled={isSuccessLoading}
-                    />
-                    {formErrors.middleName && (
-                      <p className="text-red-500 text-xs flex items-center gap-1">
-                        <span>•</span> {formErrors.middleName}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Last Name*</label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                      <input
-                        name="lastName"
-                        type="text"
-                        value={formData.lastName}
-                        onChange={handleChange}
-                        className={`${getSignupInputClassName('lastName')} pl-10`}
-                        placeholder="Doe"
-                        disabled={isSuccessLoading}
-                      />
-                    </div>
-                    {formErrors.lastName && (
-                      <p className="text-red-500 text-xs flex items-center gap-1">
-                        <span>•</span> {formErrors.lastName}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Email */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Email Address*</label>
+            isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+          } bg-black/60 backdrop-blur-sm overflow-y-auto`}>
+            <div className="w-full max-w-2xl my-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl shadow-2xl relative">
+              
+              {/* Success Loading Overlay */}
+              {isSuccessLoading && (
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-50/95 to-gray-100/95 flex items-center justify-center rounded-2xl z-10 flex-col gap-4 animate-fade-in">
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                    <input
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className={`${getSignupInputClassName('email')} pl-10 ${
-                        formErrors.email && formErrors.email.includes('already exists') ? 'animate-shake' : ''
-                      }`}
-                      placeholder="you@example.com"
-                      disabled={isSuccessLoading}
-                    />
-                    {formErrors.email && formErrors.email.includes('already exists') && (
-                      <AlertCircle className="absolute right-3 top-3.5 text-red-500" size={18} />
-                    )}
+                    <div className="w-16 h-16 border-4 border-gray-200 rounded-full animate-spin" />
+                    <CheckCircle2 className="absolute inset-0 m-auto text-green-500 animate-pulse" size={32} />
                   </div>
-                  {formErrors.email && (
-                    <p className={`text-xs flex items-center gap-1 ${
-                      formErrors.email.includes('already exists') 
-                        ? 'text-red-600 font-medium' 
-                        : 'text-red-500'
-                    }`}>
-                      <span>•</span> {formErrors.email}
-                      {formErrors.email.includes('already exists') && (
-                        <button
-                          onClick={handleLoginInstead}
-                          className="ml-1 text-blue-600 hover:text-blue-800 underline text-xs"
-                        >
-                          Login instead?
-                        </button>
-                      )}
-                    </p>
-                  )}
-                </div>
-
-                {/* Phone */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Phone Number*</label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                    <input
-                      name="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/[^\d]/g, '').slice(0, 11);
-                        setFormData({ ...formData, phone: value });
-                        if (formErrors.phone) {
-                          setFormErrors({ ...formErrors, phone: '' });
-                        }
-                      }}
-                      className={`${getSignupInputClassName('phone')} pl-10`}
-                      placeholder="09123456789"
-                      disabled={isSuccessLoading}
-                    />
-                  </div>
-                  {formErrors.phone && (
-                    <p className="text-red-500 text-xs flex items-center gap-1">
-                      <span>•</span> {formErrors.phone}
-                    </p>
-                  )}
-                </div>
-
-                {/* Password Fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Password*</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                      <input
-                        name="password"
-                        type={showPassword.signupPassword ? "text" : "password"}
-                        value={formData.password}
-                        onChange={handleChange}
-                        className={`${getSignupInputClassName('password')} ${formData.password ? 'pr-10' : 'pr-3'} pl-10`}
-                        placeholder="••••••••"
-                        disabled={isSuccessLoading}
-                      />
-                      {formData.password && (
-                        <button
-                          type="button"
-                          onClick={() => togglePasswordVisibility('signupPassword')}
-                          className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          {showPassword.signupPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
-                      )}
-                    </div>
-                    {formErrors.password && (
-                      <p className="text-red-500 text-xs flex items-center gap-1">
-                        <span>•</span> {formErrors.password}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Confirm Password*</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                      <input
-                        name="confirmPassword"
-                        type={showPassword.confirmPassword ? "text" : "password"}
-                        value={formData.confirmPassword}
-                        onChange={handleChange}
-                        className={`${getSignupInputClassName('confirmPassword')} ${formData.confirmPassword ? 'pr-10' : 'pr-3'} pl-10`}
-                        placeholder="••••••••"
-                        disabled={isSuccessLoading}
-                      />
-                      {formData.confirmPassword && (
-                        <button
-                          type="button"
-                          onClick={() => togglePasswordVisibility('confirmPassword')}
-                          className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          {showPassword.confirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
-                      )}
-                    </div>
-                    {formErrors.confirmPassword && (
-                      <p className="text-red-500 text-xs flex items-center gap-1">
-                        <span>•</span> {formErrors.confirmPassword}
-                      </p>
-                    )}
+                  <div className="text-center px-4">
+                    <p className="text-gray-800 font-semibold text-lg">Account Created!</p>
+                    <p className="text-gray-600 text-sm mt-2">Redirecting to login...</p>
                   </div>
                 </div>
+              )}
 
-                {/* Buttons */}
-                <div className="flex gap-4 pt-4">
-                  <button
-                    onClick={handleSignupSubmit}
-                    disabled={isLoading || isSuccessLoading}
-                    className={`flex-1 py-3 px-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-red-500/50 ${
-                      isLoading || isSuccessLoading
-                        ? 'opacity-70 cursor-not-allowed' 
-                        : 'hover:shadow-lg hover:shadow-red-500/20 active:scale-95'
-                    }`}
-                  >
-                    {isLoading ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Creating...
+              {/* Form Content */}
+              <div className="p-4 sm:p-6 lg:p-10 max-h-[90vh] overflow-y-auto">
+                <div className="text-center mb-6 lg:mb-8">
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Create Account</h2>
+                  <p className="text-gray-600 mt-2 text-sm sm:text-base">Join MoBook and start your cinematic journey</p>
+                </div>
+
+                <form className="space-y-4 sm:space-y-6 text-left" onSubmit={handleSignupSubmit}>
+                  {/* Name Fields */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                    <div className="space-y-2">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700">First Name*</label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 sm:top-3.5 text-gray-400" size={18} />
+                        <input
+                          name="firstName"
+                          type="text"
+                          value={formData.firstName}
+                          onChange={handleChange}
+                          className={`${getSignupInputClassName('firstName')} pl-10 py-2.5 sm:py-3`}
+                          placeholder="Lance"
+                          disabled={isSuccessLoading}
+                        />
                       </div>
-                    ) : (
-                      'Create Account'
-                    )}
-                  </button>
+                      {formErrors.firstName && (
+                        <p className="text-red-500 text-xs flex items-center gap-1">
+                          <span>•</span> {formErrors.firstName}
+                        </p>
+                      )}
+                    </div>
 
-                  <button
-                    onClick={handleBackToLogin}
-                    disabled={isSuccessLoading}
-                    className={`flex-1 py-3 px-4 bg-gray-300 hover:bg-gray-400 text-gray-900 font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-400 ${
-                      isSuccessLoading
-                        ? 'opacity-70 cursor-not-allowed'
-                        : 'active:scale-95'
-                    }`}
-                  >
-                    Back
-                  </button>
-                </div>
+                    <div className="space-y-2">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                        Middle Name <span className='text-xs text-gray-500'>(optional)</span>
+                      </label>
+                      <input
+                        name="middleName"
+                        type="text"
+                        value={formData.middleName}
+                        onChange={handleChange}
+                        className={`${getSignupInputClassName('middleName')} py-2.5 sm:py-3`}
+                        placeholder=""
+                        disabled={isSuccessLoading}
+                      />
+                      {formErrors.middleName && (
+                        <p className="text-red-500 text-xs flex items-center gap-1">
+                          <span>•</span> {formErrors.middleName}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700">Last Name*</label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 sm:top-3.5 text-gray-400" size={18} />
+                        <input
+                          name="lastName"
+                          type="text"
+                          value={formData.lastName}
+                          onChange={handleChange}
+                          className={`${getSignupInputClassName('lastName')} pl-10 py-2.5 sm:py-3`}
+                          placeholder="Satorre"
+                          disabled={isSuccessLoading}
+                        />
+                      </div>
+                      {formErrors.lastName && (
+                        <p className="text-red-500 text-xs flex items-center gap-1">
+                          <span>•</span> {formErrors.lastName}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Email */}
+                  <div className="space-y-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">Email Address*</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-3 sm:top-3.5 text-gray-400" size={18} />
+                      <input
+                        name="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className={`${getSignupInputClassName('email')} pl-10 py-2.5 sm:py-3 ${
+                          formErrors.email && formErrors.email.includes('already exists') ? 'animate-shake' : ''
+                        }`}
+                        placeholder="you@example.com"
+                        disabled={isSuccessLoading}
+                      />
+                      {formErrors.email && formErrors.email.includes('already exists') && (
+                        <AlertCircle className="absolute right-3 top-3 sm:top-3.5 text-red-500" size={18} />
+                      )}
+                    </div>
+                    {formErrors.email && (
+                      <p className={`text-xs flex items-start sm:items-center gap-1 ${
+                        formErrors.email.includes('already exists') 
+                          ? 'text-red-600 font-medium' 
+                          : 'text-red-500'
+                      }`}>
+                        <span className="mt-0.5 sm:mt-0">•</span> 
+                        <span className="flex-1">
+                          {formErrors.email}
+                          {formErrors.email.includes('already exists') && (
+                            <button
+                              onClick={handleLoginInstead}
+                              className="ml-1 text-blue-600 hover:text-blue-800 underline text-xs"
+                            >
+                              Login instead?
+                            </button>
+                          )}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Phone */}
+                  <div className="space-y-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">Phone Number*</label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-3 sm:top-3.5 text-gray-400" size={18} />
+                      <input
+                        name="phone"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^\d]/g, '').slice(0, 11);
+                          setFormData({ ...formData, phone: value });
+                          if (formErrors.phone) {
+                            setFormErrors({ ...formErrors, phone: '' });
+                          }
+                        }}
+                        className={`${getSignupInputClassName('phone')} pl-10 py-2.5 sm:py-3`}
+                        placeholder="09123456789"
+                        disabled={isSuccessLoading}
+                      />
+                    </div>
+                    {formErrors.phone && (
+                      <p className="text-red-500 text-xs flex items-center gap-1">
+                        <span>•</span> {formErrors.phone}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Password Fields */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div className="space-y-2">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700">Password*</label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 sm:top-3.5 text-gray-400" size={18} />
+                        <input
+                          name="password"
+                          type={showPassword.signupPassword ? "text" : "password"}
+                          value={formData.password}
+                          onChange={handleChange}
+                          className={`${getSignupInputClassName('password')} ${formData.password ? 'pr-10' : 'pr-3'} pl-10 py-2.5 sm:py-3`}
+                          placeholder="••••••••"
+                          disabled={isSuccessLoading}
+                        />
+                        {formData.password && (
+                          <button
+                            type="button"
+                            onClick={() => togglePasswordVisibility('signupPassword')}
+                            className="absolute right-3 top-3 sm:top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
+                          >
+                            {showPassword.signupPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        )}
+                      </div>
+                      {formErrors.password && (
+                        <p className="text-red-500 text-xs flex items-center gap-1">
+                          <span>•</span> {formErrors.password}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700">Confirm Password*</label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 sm:top-3.5 text-gray-400" size={18} />
+                        <input
+                          name="confirmPassword"
+                          type={showPassword.confirmPassword ? "text" : "password"}
+                          value={formData.confirmPassword}
+                          onChange={handleChange}
+                          className={`${getSignupInputClassName('confirmPassword')} ${formData.confirmPassword ? 'pr-10' : 'pr-3'} pl-10 py-2.5 sm:py-3`}
+                          placeholder="••••••••"
+                          disabled={isSuccessLoading}
+                        />
+                        {formData.confirmPassword && (
+                          <button
+                            type="button"
+                            onClick={() => togglePasswordVisibility('confirmPassword')}
+                            className="absolute right-3 top-3 sm:top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
+                          >
+                            {showPassword.confirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        )}
+                      </div>
+                      {formErrors.confirmPassword && (
+                        <p className="text-red-500 text-xs flex items-center gap-1">
+                          <span>•</span> {formErrors.confirmPassword}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2 sm:pt-4">
+                    <button
+                      type="submit"
+                      disabled={isLoading || isSuccessLoading}
+                      className={`flex-1 py-2.5 sm:py-3 px-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-red-500/50 text-sm sm:text-base ${
+                        isLoading || isSuccessLoading
+                          ? 'opacity-70 cursor-not-allowed' 
+                          : 'hover:shadow-lg hover:shadow-red-500/20 active:scale-95'
+                      }`}
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Creating...
+                        </div>
+                      ) : (
+                        'Create Account'
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleBackToLogin}
+                      disabled={isSuccessLoading}
+                      className={`flex-1 py-2.5 sm:py-3 px-4 bg-gray-300 hover:bg-gray-400 text-gray-900 font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm sm:text-base ${
+                        isSuccessLoading
+                          ? 'opacity-70 cursor-not-allowed'
+                          : 'active:scale-95'
+                      }`}
+                    >
+                      Back
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>
-        </div>
       )}
 
        <style>{`

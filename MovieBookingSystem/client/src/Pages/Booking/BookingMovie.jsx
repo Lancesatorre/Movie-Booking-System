@@ -264,7 +264,7 @@ const BookingMovie = () => {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-white py-12 overflow-hidden">
+    <div className="min-h-[85vh] bg-transparent text-white pb-10 md:pb-8 pt-12 overflow-hidden">
       <div className="container mx-auto px-4 max-w-7xl">
         {/* Header with fade-in animation */}
         <div className="text-center mb-16 animate-fade-in">
