@@ -254,7 +254,7 @@ export default function MovieManagement() {
         style={{ animationDelay: `${index * 100}ms` }}
       >
         <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
-        <div className="absolute -top-5 -right-5 min-[480px]:-top-6 min-[480px]:-right-6 md:-top-8 md:-right-8 lg:-top-12 lg:-right-12 w-16 h-16 min-[480px]:w-20 min-[480px]:h-20 md:w-24 md:h-24 lg:w-32 lg:h-32 bg-gradient-to-br from-red-500/20 to-pink-500/20 rounded-full blur-xl min-[480px]:blur-2xl md:blur-3xl group-hover:scale-150 transition-transform duration-500"></div>
+        <div className="absolute -top-5 -right-5 min-[480px]:-top-6 min-[480px]:-right-6 md:-top-8 md:-right-8 lg:-top-12 lg:-right-12 w-16 h-16 min-[480px]:w-20 min-[480px]:h-20 md:w-24 md:h-24 lg:w-32 lg:h-32  rounded-full blur-xl min-[480px]:blur-2xl md:blur-3xl group-hover:scale-150 transition-transform duration-500"></div>
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-2 min-[480px]:mb-3 md:mb-4">
             <div className='flex flex-row items-center gap-1.5 min-[480px]:gap-2 md:gap-2.5 lg:gap-3 flex-1 min-w-0'>
@@ -265,9 +265,9 @@ export default function MovieManagement() {
                 {stat.label}
               </p>
             </div>
-            <div className={`w-1.5 h-1.5 min-[480px]:w-2 min-[480px]:h-2 rounded-full bg-gradient-to-r ${stat.color} animate-pulse flex-shrink-0 ml-2`}></div>
+            <div className={`w-1.5 h-1.5 min-[480px]:w-2 min-[480px]:h-10 rounded-full bg-gradient-to-r ${stat.color} animate-pulse flex-shrink-0 ml-2`}></div>
           </div>
-          <p className="text-xl min-[480px]:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300 group-hover:from-red-400 group-hover:to-pink-400 transition-all duration-300 leading-tight">
+          <p className="text-xl text-left min-[480px]:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300 group-hover:from-red-400 group-hover:to-pink-400 transition-all duration-300 leading-tight">
             {stat.value}
           </p>
         </div>
