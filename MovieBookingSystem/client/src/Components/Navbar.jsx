@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import icon from "/assets/logo.png";
 import ConfirmationModal from '../Modal/ConfimationModal';
+import LoadingState from './LoadingState';// Import the loading component
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
+  const [pendingLogout, setPendingLogout] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false); // New state for loading
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -36,47 +40,80 @@ export default function Navbar() {
   };
 
   const handleLogout = () => {
-    const doLogout = () => {
+    // Show logout confirmation modal
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    // Check if there's a booking in progress
+    if (hasBookingInProgress()) {
+      setPendingLogout(true);
+      setShowLogoutModal(false);
+      setShowConfirmModal(true);
+    } else {
+      // No booking in progress, proceed with logout directly
+      performLogout();
+    }
+  };
+
+  const performLogout = () => {
+    setIsLoggingOut(true); // Show loading state
+    
+    // Simulate some processing time (e.g., API call, cleanup)
+    setTimeout(() => {
       console.log("Logging out...");
 
-      //clear booking data
+      // Clear booking data
       localStorage.removeItem("bookingInProgress");
       localStorage.removeItem("bookingStep");
       localStorage.removeItem("bookingData");
 
-      //clear auth data (this is the important part)
+      // Clear auth data
       localStorage.removeItem("user");
       localStorage.removeItem("mobook_user");
 
-      //if you ever used sessionStorage for auth
+      // If you ever used sessionStorage for auth
       sessionStorage.removeItem("user");
       sessionStorage.removeItem("mobook_user");
 
-      //close mobile menu + go to login
+      // Close mobile menu
       setMobileMenuOpen(false);
+      
+      // Reset states
+      setIsLoggingOut(false);
+      setShowLogoutModal(false);
+      
+      // Navigate to login page
       navigate("/", { replace: true });
-    };
-
-    if (hasBookingInProgress()) {
-      setPendingNavigation(() => doLogout);
-      setShowConfirmModal(true);
-    } else {
-      doLogout();
-    }
+    }, 1500); // 1.5 second delay to show loading state
   };
 
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
+  };
 
   const confirmNavigation = () => {
-    if (pendingNavigation) {
+    if (pendingLogout && pendingNavigation) {
+      // This is for logout with booking in progress
+      setPendingLogout(false);
+      setShowConfirmModal(false);
+      performLogout(); // Call logout with loading state
+    } else if (pendingNavigation) {
+      // This is for regular navigation with booking in progress
       pendingNavigation();
+      setShowConfirmModal(false);
     }
-    setShowConfirmModal(false);
     setPendingNavigation(null);
   };
 
   const cancelNavigation = () => {
     setShowConfirmModal(false);
     setPendingNavigation(null);
+    if (pendingLogout) {
+      // If they cancel navigation while trying to logout, show logout modal again
+      setShowLogoutModal(true);
+      setPendingLogout(false);
+    }
   };
 
   const isActivePath = (path) => {
@@ -139,9 +176,10 @@ export default function Navbar() {
               <div className="hidden md:flex space-x-4">
                 <button 
                   onClick={handleLogout}
-                  className="px-4 py-2 text-sm bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                  disabled={isLoggingOut}
+                  className="px-4 py-2 text-sm bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Logout
+                  {isLoggingOut ? 'Logging out...' : 'Logout'}
                 </button>
               </div>
             </div>
@@ -150,6 +188,7 @@ export default function Navbar() {
             <button 
               className="md:hidden p-2"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              disabled={isLoggingOut}
             >
               <div className="w-6 h-0.5 bg-white mb-1.5"></div>
               <div className="w-6 h-0.5 bg-white mb-1.5"></div>
@@ -163,34 +202,39 @@ export default function Navbar() {
               <div className="flex flex-col space-y-4">
                 <button 
                   onClick={() => handleNavigation('/Home')} 
-                  className={isActivePath('/Home') ? activeStyles : "text-white hover:text-red-500 transition-colors "}
+                  className={isActivePath('/Home') ? activeStyles : "text-white hover:text-red-500 transition-colors"}
+                  disabled={isLoggingOut}
                 >
                   Home
                 </button>
                 <button 
                   onClick={() => handleNavigation('/movies')} 
-                  className={isActivePath('/movies') ? activeStyles : "text-white hover:text-red-500 transition-colors "}
+                  className={isActivePath('/movies') ? activeStyles : "text-white hover:text-red-500 transition-colors"}
+                  disabled={isLoggingOut}
                 >
                   Movies
                 </button>
                 <button 
                   onClick={() => handleNavigation('/features')} 
                   className={isActivePath('/features') ? activeStyles : "text-white hover:text-red-500 transition-colors"}
+                  disabled={isLoggingOut}
                 >
                   Features
                 </button>
                 <button 
                   onClick={() => handleNavigation('/contact')} 
                   className={isActivePath('/contact') ? activeStyles : "text-white hover:text-red-500 transition-colors"}
+                  disabled={isLoggingOut}
                 >
                   Contact
                 </button>
                 <div className="flex space-x-4 pt-4">
                   <button 
                     onClick={handleLogout}
-                    className="w-full md:w-auto px-4 py-2 text-sm bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                    disabled={isLoggingOut}
+                    className="w-full md:w-auto px-4 py-2 text-sm bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Logout
+                    {isLoggingOut ? 'Logging out...' : 'Logout'}
                   </button>
                 </div>
               </div>
@@ -199,15 +243,39 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Confirmation Modal */}
+      {/* Loading State Overlay */}
+      {isLoggingOut && (
+        <LoadingState message="Logging you out..." />
+      )}
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showLogoutModal}
+        onConfirm={confirmLogout}
+        onCancel={cancelLogout}
+        title="Logout Confirmation"
+        message="Are you sure you want to logout?"
+        confirmText="Confirm"
+        cancelText="Cancel"
+        confirmColor="bg-red-600 hover:bg-red-700"
+        disableButtons={isLoggingOut}
+      />
+
+      {/* Navigation Confirmation Modal (for booking in progress) */}
       <ConfirmationModal
         isOpen={showConfirmModal}
         onConfirm={confirmNavigation}
         onCancel={cancelNavigation}
-        title="Leave Booking Process?"
-        message="You have an ongoing booking. Are you sure you want to leave? Your progress will be lost."
-        confirmText="Confirm"
-        cancelText="Back"
+        title={pendingLogout ? "Logout with Active Booking" : "Leave Booking Process?"}
+        message={
+          pendingLogout 
+            ? "You have an ongoing booking. Logging out will cancel your booking. Are you sure you want to logout?"
+            : "You have an ongoing booking. Are you sure you want to leave? Your progress will be lost."
+        }
+        confirmText={pendingLogout ? "Yes, Logout Anyway" : "Confirm"}
+        cancelText={pendingLogout ? "Continue Booking" : "Back"}
+        confirmColor={pendingLogout ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}
+        disableButtons={isLoggingOut}
       />
     </>
   );

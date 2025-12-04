@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Phone, User, ArrowRight, CheckCircle2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import icon from "/assets/logo.png";
+import LoadingState from '../Components/LoadingState';// Import the LoadingState component
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isSuccessLoading, setIsSuccessLoading] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false); // New state for login loading overlay
   const [formErrors, setFormErrors] = useState({});
   const [showPassword, setShowPassword] = useState({
     loginPassword: false,
@@ -122,6 +124,7 @@ export default function Login() {
     if (!validateLoginForm()) return;
 
     setIsLoading(true);
+    setIsLoggingIn(true); // Show full-screen loading overlay
 
     try {
       const response = await fetch("http://localhost/mobook_api/login.php", {
@@ -138,17 +141,23 @@ export default function Login() {
       if (result.success) {
         localStorage.setItem("mobook_user", JSON.stringify(result.user));
         localStorage.setItem("user", JSON.stringify(result.user)); 
-        window.location.href = "/Home";
-      }else {
+        
+        // Keep the loading state for a moment before redirecting
+        setTimeout(() => {
+          window.location.href = "/Home";
+        }, 1000); // 1 second to show loading state
+      } else {
         // Set error for password field on failed login
         setFormErrors(prev => ({
           ...prev,
           password: 'Incorrect email or password'
         }));
+        setIsLoggingIn(false); // Hide loading overlay on error
       }
 
     } catch (error) {
       console.error("Login failed:", error);
+      setIsLoggingIn(false); // Hide loading overlay on error
     } finally {
       setIsLoading(false);
     }
@@ -290,10 +299,13 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex flex-col xl:flex-row bg-black overflow-hidden">
-     
+      {/* Login Loading Overlay */}
+      {isLoggingIn && (
+        <LoadingState message="Logging you in..." />
+      )}
 
       {/* Left Side - Hero Section */}
-      <div className={`hidden xl:flex xl:w-1/2  rounded-r-[200px] relative bg-gradient-to-br from-black via-red-950/20 to-black overflow-hidden items-center justify-center transition-all duration-500 ease-in-out`}>
+      <div className={`hidden xl:flex xl:w-1/2 rounded-r-[200px] relative bg-gradient-to-br from-black via-red-950/20 to-black overflow-hidden items-center justify-center transition-all duration-500 ease-in-out`}>
         {/* Animated Background */}
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-gradient-to-br from-red-600/10 to-orange-600/10 blur-3xl" />
@@ -335,18 +347,18 @@ export default function Login() {
 
       {/* Right Side / Mobile - Login Form */}
       {!isSignup ? (
-        <div className={`flex-1 flex items-center justify-center w-full xl:w-1/2 py-12  xl:py-0 px-4 transition-all duration-500 ease-in-out ${
+        <div className={`flex-1 flex items-center justify-center w-full xl:w-1/2 py-12 xl:py-0 px-4 transition-all duration-500 ease-in-out ${
           isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
         }`}>
           <div className="w-full max-w-md">
             {/* Logo for Mobile */}
             <div className="xl:hidden text-center mb-8">
               <div className='flex flex-row gap-3 justify-center'>
-              <img src={icon} alt="MoBook Logo" className="w-[6vh] h-[5vh]" />
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent animate-glow">
-              MoBook
-            </h1>
-            </div>
+                <img src={icon} alt="MoBook Logo" className="w-[6vh] h-[5vh]" />
+                <h1 className="text-5xl font-bold bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent animate-glow">
+                  MoBook
+                </h1>
+              </div>
             </div>
 
             <div className="space-y-2 mb-8 text-center">
@@ -367,6 +379,7 @@ export default function Login() {
                     onChange={handleChange}
                     className={`${getInputClassName('email')} pl-10`}
                     placeholder="you@example.com"
+                    disabled={isLoggingIn}
                   />
                 </div>
                 {formErrors.email && (
@@ -388,12 +401,14 @@ export default function Login() {
                     onChange={handleChange}
                     className={`${getInputClassName('password')} ${formData.password ? 'pr-10' : 'pr-3'} pl-10`}
                     placeholder="••••••••"
+                    disabled={isLoggingIn}
                   />
                   {formData.password && (
                     <button
                       type="button"
                       onClick={() => togglePasswordVisibility('loginPassword')}
                       className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-300 transition-colors"
+                      disabled={isLoggingIn}
                     >
                       {showPassword.loginPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
@@ -409,9 +424,9 @@ export default function Login() {
               {/* Submit Button */}
               <button
                 onClick={handleSubmit}
-                disabled={isLoading}
-                className={`w-full py-3 px-4 bg-gradient-to-r from-red-700 to-orange-600/20  hover:from-red-500 hover:to-red-600 text-white font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-red-500/50 ${
-                  isLoading 
+                disabled={isLoading || isLoggingIn}
+                className={`w-full py-3 px-4 bg-gradient-to-r from-red-700 to-orange-600/20 hover:from-red-500 hover:to-red-600 text-white font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-red-500/50 ${
+                  isLoading || isLoggingIn
                     ? 'opacity-70 cursor-not-allowed' 
                     : 'hover:shadow-lg hover:shadow-red-500/30 active:scale-95'
                 }`}
@@ -434,6 +449,7 @@ export default function Login() {
                 <button 
                   onClick={handleSignupClick}
                   className="text-red-500 hover:text-red-400 underline font-semibold transition-colors"
+                  disabled={isLoggingIn}
                 >
                   Sign up
                 </button>
@@ -568,6 +584,7 @@ export default function Login() {
                             <button
                               onClick={handleLoginInstead}
                               className="ml-1 text-blue-600 hover:text-blue-800 underline text-xs"
+                              disabled={isSuccessLoading}
                             >
                               Login instead?
                             </button>
@@ -625,6 +642,7 @@ export default function Login() {
                             type="button"
                             onClick={() => togglePasswordVisibility('signupPassword')}
                             className="absolute right-3 top-3 sm:top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
+                            disabled={isSuccessLoading}
                           >
                             {showPassword.signupPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                           </button>
@@ -655,6 +673,7 @@ export default function Login() {
                             type="button"
                             onClick={() => togglePasswordVisibility('confirmPassword')}
                             className="absolute right-3 top-3 sm:top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
+                            disabled={isSuccessLoading}
                           >
                             {showPassword.confirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                           </button>
