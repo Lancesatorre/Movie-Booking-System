@@ -36,21 +36,35 @@ export default function Navbar() {
   };
 
   const handleLogout = () => {
+    const doLogout = () => {
+      console.log("Logging out...");
+
+      //clear booking data
+      localStorage.removeItem("bookingInProgress");
+      localStorage.removeItem("bookingStep");
+      localStorage.removeItem("bookingData");
+
+      //clear auth data (this is the important part)
+      localStorage.removeItem("user");
+      localStorage.removeItem("mobook_user");
+
+      //if you ever used sessionStorage for auth
+      sessionStorage.removeItem("user");
+      sessionStorage.removeItem("mobook_user");
+
+      //close mobile menu + go to login
+      setMobileMenuOpen(false);
+      navigate("/", { replace: true });
+    };
+
     if (hasBookingInProgress()) {
-      setPendingNavigation(() => () => {
-        console.log('Logging out...');
-        // Clear booking data
-        localStorage.removeItem('bookingInProgress');
-        localStorage.removeItem('bookingStep');
-        localStorage.removeItem('bookingData');
-        navigate('/');
-      });
+      setPendingNavigation(() => doLogout);
       setShowConfirmModal(true);
     } else {
-      console.log('Logging out...');
-      navigate('/');
+      doLogout();
     }
   };
+
 
   const confirmNavigation = () => {
     if (pendingNavigation) {
@@ -84,7 +98,7 @@ export default function Navbar() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <button 
-              onClick={() => handleNavigation('/home')}
+              onClick={() => handleNavigation('/Home')}
               className="flex items-center gap-2 space-x-2"
             >
               <img src={icon} alt="MoBook Logo" className="w-[4vh]" />
@@ -148,8 +162,8 @@ export default function Navbar() {
             <div className="md:hidden py-4 border-t border-gray-800 mt-4">
               <div className="flex flex-col space-y-4">
                 <button 
-                  onClick={() => handleNavigation('/home')} 
-                  className={isActivePath('/home') ? activeStyles : "text-white hover:text-red-500 transition-colors "}
+                  onClick={() => handleNavigation('/Home')} 
+                  className={isActivePath('/Home') ? activeStyles : "text-white hover:text-red-500 transition-colors "}
                 >
                   Home
                 </button>

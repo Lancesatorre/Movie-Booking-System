@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {  MapPin } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const MyTickets = () => {
@@ -10,77 +10,43 @@ const MyTickets = () => {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [canceling, setCanceling] = useState(false);
 
-  // Sample movie tickets data
-  const sampleTickets = [
-    {
-      id: 1,
-      movieTitle: "Altered",
-      movieImage: "assets/Movies/altered.jpg",
-      movieRating: "R-16",
-      showDateTime: "2025-12-05T19:30:00", // 3 days from now - can cancel
-      screenNumber: 3,
-      theatherLocation: "SM CITY, Cebu, Cebu City" ,
-      seats: ["A5", "A6"],
-      totalPrice: 600
-    },
-    {
-      id: 2,
-      movieTitle: "Avengers:Endgame",
-      movieImage: "assets/Movies/avengers-endgame.jpg",
-      movieRating: "G",
-      showDateTime: "2025-12-03T14:00:00", // Less than 24 hours - cannot cancel
-      screenNumber: 1,
-      theatherLocation: "EMALL, Cebu, Cebu City" ,
-      seats: ["C10", "C11", "C12"],
-      totalPrice: 900
-    },
-    {
-      id: 3,
-      movieTitle: "War of the Worlds",
-      movieImage: "assets/Movies/war-of-the-worlds.jpg",
-      movieRating: "PG-13",
-      showDateTime: "2025-12-10T21:00:00", // 8 days from now - can cancel
-      screenNumber: 2,
-      theatherLocation: "SEASIDE CITY, Cebu, Cebu City" ,
-      seats: ["F15"],
-      totalPrice: 300
-    }
-  ];
-
-  // Load sample tickets on mount
+  // Fetch user's tickets from backend
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => {
-      setTickets(sampleTickets);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    const fetchTickets = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem("mobook_user")) 
+                  || JSON.parse(localStorage.getItem("user"));
+        const customerId = user?.CustomerId;
 
-  // Fetch user's tickets from backend (COMMENTED OUT - UNCOMMENT WHEN READY)
-  // useEffect(() => {
-  //   const fetchTickets = async () => {
-  //     try {
-  //       // Replace with your actual API endpoint
-  //       const res = await fetch('http://localhost/mobook_api/get_user_tickets.php', {
-  //         method: 'GET',
-  //         credentials: 'include', // If using sessions
-  //       });
-  //       const data = await res.json();
+        if (!customerId) {
+          alert("You must be logged in to view tickets.");
+          navigate("/login");
+          return;
+        }
 
-  //       if (data.success) {
-  //         setTickets(data.tickets || []);
-  //       } else {
-  //         console.error('Failed to load tickets');
-  //       }
-  //     } catch (err) {
-  //       console.error('Error fetching tickets:', err);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
+        const res = await fetch(
+          `http://localhost/mobook_api/get_booking_details.php?customerId=${customerId}`
+        );
+        const data = await res.json();
 
-  //   fetchTickets();
-  // }, []);
+        if (data.success) {
+          setTickets(data.tickets || []);
+        } else {
+          setTickets([]);
+          console.error(data.message);
+        }
+
+      } catch (err) {
+        console.error("Error fetching tickets:", err);
+        setTickets([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTickets();
+  }, [navigate]);
+
 
   // Check if ticket can be cancelled (not within 24 hours of showtime)
   const canCancelTicket = (showDateTime) => {
@@ -99,27 +65,22 @@ const MyTickets = () => {
   // Confirm cancellation
   const confirmCancellation = async () => {
     setCanceling(true);
-    
+
     try {
-      // Replace with your actual API endpoint
       const res = await fetch('http://localhost/mobook_api/cancel_ticket.php', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticketId: selectedTicket.id }),
       });
-      
+
       const data = await res.json();
 
       if (data.success) {
-        // Remove cancelled ticket from state
-        setTickets(tickets.filter(t => t.id !== selectedTicket.id));
+        setTickets(prev => prev.filter(t => t.id !== selectedTicket.id));
         setShowCancelModal(false);
         setSelectedTicket(null);
       } else {
-        alert('Failed to cancel ticket. Please try again.');
+        alert(data.message || 'Failed to cancel ticket. Please try again.');
       }
     } catch (err) {
       console.error('Error canceling ticket:', err);
@@ -141,15 +102,15 @@ const MyTickets = () => {
   const formatDateTime = (dateTimeString) => {
     const date = new Date(dateTimeString);
     return {
-      date: date.toLocaleDateString('en-US', { 
-        weekday: 'short', 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
+      date: date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
       }),
-      time: date.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
+      time: date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
       })
     };
   };
@@ -180,7 +141,7 @@ const MyTickets = () => {
             {tickets.map((ticket, index) => {
               const { date, time } = formatDateTime(ticket.showDateTime);
               const canCancel = canCancelTicket(ticket.showDateTime);
-              
+
               return (
                 <div
                   key={ticket.id}
@@ -203,7 +164,7 @@ const MyTickets = () => {
                   {/* Ticket Details */}
                   <div className="p-6">
                     <h3 className="text-left text-2xl font-bold mb-3 truncate">{ticket.movieTitle}</h3>
-                    
+
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center gap-2 text-gray-400">
                         <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
@@ -211,7 +172,7 @@ const MyTickets = () => {
                         </svg>
                         <span className="text-sm">{date}</span>
                       </div>
-                      
+
                       <div className="flex items-center gap-2 text-gray-400">
                         <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
@@ -233,11 +194,11 @@ const MyTickets = () => {
                         <span className="text-sm">Seats: {ticket.seats.join(', ')}</span>
                       </div>
 
-                       <div className="flex items-center gap-2 text-gray-400">
+                      <div className="flex items-center gap-2 text-gray-400">
                         <MapPin className="text-red-500" size={20} />
                         <span className="text-sm">{ticket.theatherLocation}</span>
                       </div>
-                       
+
                       <div className="flex items-center gap-2 text-green-400 font-semibold">
                         <span className="text-sm">₱ {ticket.totalPrice}.00</span>
                       </div>
@@ -355,65 +316,27 @@ const MyTickets = () => {
       )}
 
       {/* Custom CSS Animations */}
-      <style jsx>{`
+      <style>{`
         @keyframes fade-in {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
-
         @keyframes slide-up {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-
         @keyframes fade-in-up {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-
         @keyframes scale-in {
-          from {
-            opacity: 0;
-            transform: scale(0.9);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
+          from { opacity: 0; transform: scale(0.9); }
+          to { opacity: 1; transform: scale(1); }
         }
-
-        .animate-fade-in {
-          animation: fade-in 0.6s ease-out;
-        }
-
-        .animate-slide-up {
-          animation: slide-up 0.8s ease-out;
-        }
-
-        .animate-fade-in-up {
-          animation: fade-in-up 0.6s ease-out;
-          animation-fill-mode: both;
-        }
-
-        .animate-scale-in {
-          animation: scale-in 0.3s ease-out;
-        }
+        .animate-fade-in { animation: fade-in 0.6s ease-out; }
+        .animate-slide-up { animation: slide-up 0.8s ease-out; }
+        .animate-fade-in-up { animation: fade-in-up 0.6s ease-out both; }
+        .animate-scale-in { animation: scale-in 0.3s ease-out; }
       `}</style>
     </div>
   );

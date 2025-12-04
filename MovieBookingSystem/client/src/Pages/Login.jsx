@@ -137,8 +137,9 @@ export default function Login() {
 
       if (result.success) {
         localStorage.setItem("mobook_user", JSON.stringify(result.user));
+        localStorage.setItem("user", JSON.stringify(result.user)); 
         window.location.href = "/Home";
-      } else {
+      }else {
         // Set error for password field on failed login
         setFormErrors(prev => ({
           ...prev,

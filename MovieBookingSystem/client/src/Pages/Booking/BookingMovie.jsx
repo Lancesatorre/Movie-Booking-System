@@ -539,7 +539,7 @@ const BookingMovie = () => {
       )}
 
       {/* Custom CSS for fade-in animation */}
-      <style jsx>{`
+      <style>{`
         @keyframes fade-in {
           from {
             opacity: 0;
