@@ -17,7 +17,7 @@ export default function BookingManagement() {
     {
       movieId: 1,
       movieTitle: 'Altered',
-      movieImage: 'assets/Movies/altered.jpg',
+      movieImage: '/assets/Movies/altered.jpg',
       // Now screens is an array to support multiple screens
       screens: ['Screen 1', 'Screen 2', 'Screen 3'],
       totalBookings: 45, // Updated total across all screens
@@ -92,7 +92,7 @@ export default function BookingManagement() {
     {
       movieId: 2,
       movieTitle: 'Avengers: Endgame',
-      movieImage: 'assets/Movies/avengers-endgame.jpg',
+      movieImage: '/assets/Movies/avengers-endgame.jpg',
       screens: ['Screen 1', 'Screen 2'],
       totalBookings: 35,
       bookingDetails: [
@@ -140,7 +140,7 @@ export default function BookingManagement() {
     {
       movieId: 3,
       movieTitle: 'Frankenstein',
-      movieImage: 'assets/Movies/frankenstein.jpg',
+      movieImage: '/assets/Movies/frankenstein.jpg',
       screens: ['Screen 3'],
       totalBookings: 12,
       bookingDetails: [
@@ -175,7 +175,7 @@ export default function BookingManagement() {
     {
       movieId: 4,
       movieTitle: 'In Your Dreams',
-      movieImage: 'assets/Movies/in-your-dreams.jpg',
+      movieImage: '/assets/Movies/in-your-dreams.jpg',
       screens: ['Screen 1', 'Screen 3'],
       totalBookings: 18,
       bookingDetails: [
@@ -210,7 +210,7 @@ export default function BookingManagement() {
     {
       movieId: 5,
       movieTitle: 'Wicked: For Good',
-      movieImage: 'assets/Movies/wicked-for-good.jpg',
+      movieImage: '/assets/Movies/wicked-for-good.jpg',
       screens: ['Screen 2', 'Screen 3'],
       totalBookings: 32,
       bookingDetails: [

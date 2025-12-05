@@ -16,6 +16,7 @@ export default function Login() {
     confirmPassword: false
   });
   
+  const [loginMode, setLoginMode] = useState('customer'); // 'customer' or 'admin'
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -140,11 +141,17 @@ export default function Login() {
 
       if (result.success) {
         localStorage.setItem("mobook_user", JSON.stringify(result.user));
-        localStorage.setItem("user", JSON.stringify(result.user)); 
+        localStorage.setItem("user", JSON.stringify(result.user));
+        localStorage.setItem("userType", result.userType);
         
         // Keep the loading state for a moment before redirecting
         setTimeout(() => {
-          window.location.href = "/Home";
+          // Redirect based on user type
+          if (result.userType === "admin") {
+            window.location.href = "/admin/dashboard";
+          } else {
+            window.location.href = "/Home";
+          }
         }, 1000); // 1 second to show loading state
       } else {
         // Set error for password field on failed login
@@ -442,19 +449,21 @@ export default function Login() {
               </button>
             </div>
 
-            {/* Signup Link */}
-            <div className="mt-8 text-center">
-              <p className="text-gray-400">
-                Don't have an account?{' '}
-                <button 
-                  onClick={handleSignupClick}
-                  className="text-red-500 hover:text-red-400 underline font-semibold transition-colors"
-                  disabled={isLoggingIn}
-                >
-                  Sign up
-                </button>
-              </p>
-            </div>
+            {/* Signup Link - Only show in customer mode */}
+            {loginMode === 'customer' && (
+              <div className="mt-8 text-center">
+                <p className="text-gray-400">
+                  Don't have an account?{' '}
+                  <button 
+                    onClick={handleSignupClick}
+                    className="text-red-500 hover:text-red-400 underline font-semibold transition-colors"
+                    disabled={isLoggingIn}
+                  >
+                    Sign up
+                  </button>
+                </p>
+              </div>
+            )}
           </div>
         </div>
       ) : (

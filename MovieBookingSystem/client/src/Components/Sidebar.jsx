@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, Film, Ticket, User, Settings, LogOut, ChevronDown } from 'lucide-react';
-import icon from "/assets/logo.png";
 import { useNavigate, useLocation } from 'react-router-dom'; // Added useLocation
 
 export default function Sidebar({ onToggle }) {
@@ -14,9 +13,9 @@ export default function Sidebar({ onToggle }) {
   useEffect(() => {
     // Map paths to menu IDs
     const pathToMenuId = {
-      '/dashboard': 'dashboard',
-      '/movie-management': 'movies',
-      '/booking-management': 'bookings',
+      '/admin/dashboard': 'dashboard',
+      '/admin/movie-management': 'movies',
+      '/admin/booking-management': 'bookings',
       '/settings': 'settings'
     };
 
@@ -47,9 +46,9 @@ export default function Sidebar({ onToggle }) {
   }, [isOpen, onToggle]);
 
   const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', id: 'dashboard', path: '/dashboard' },
-    { icon: Film, label: 'Movies', id: 'movies', path: '/movie-management' },
-    { icon: Ticket, label: 'Bookings', id: 'bookings', path: '/booking-management' }
+    { icon: LayoutDashboard, label: 'Dashboard', id: 'dashboard', path: '/admin/dashboard' },
+    { icon: Film, label: 'Movies', id: 'movies', path: '/admin/movie-management' },
+    { icon: Ticket, label: 'Bookings', id: 'bookings', path: '/admin/booking-management' }
   ];
 
   const handleMenuClick = (id, path) => {
@@ -104,11 +103,11 @@ export default function Sidebar({ onToggle }) {
           {/* Logo */}
           <div className={`border-b border-red-900/30 ${isOpen ? 'p-4' : "py-6.5 px-3"}`}>
             <div 
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/admin/dashboard')}
               className={`flex items-center gap-3 ${!isOpen && 'lg:justify-center'} cursor-pointer`}
             >
               <img 
-                src={icon} 
+                src="/assets/logo.png" 
                 alt="MoBook Logo" 
                 className={`w-8 h-8 lg:w-6 lg:h-6 xl:w-7 xl:h-7 transition-all duration-300`} 
               />

@@ -5,36 +5,79 @@ header("Content-Type: application/json");
 // Read JSON login request
 $data = json_decode(file_get_contents("php://input"), true);
 
-$email = $data["email"];
-$password = $data["password"];
-
-$sql = "SELECT * FROM customer WHERE Email = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $email);
-$stmt->execute();
-$result = $stmt->get_result();
-
-// If email not found
-if ($result->num_rows === 0) {
-    echo json_encode(["success" => false, "message" => "Email not found"]);
+// Handle null data
+if (!$data) {
+    echo json_encode(["success" => false, "message" => "Invalid JSON received"]);
     exit;
 }
 
-$user = $result->fetch_assoc();
+$email = $data["email"] ?? null;
+$password = $data["password"] ?? null;
 
-// Check password
-if (password_verify($password, $user["Password"])) {
-    
-    // Remove password before sending user data
-    unset($user["Password"]);
-
-    echo json_encode([
-        "success" => true,
-        "message" => "Login successful",
-        "user" => $user
-    ]);
-    
-} else {
-    echo json_encode(["success" => false, "message" => "Incorrect password"]);
+// Validate inputs
+if (!$email || !$password) {
+    echo json_encode(["success" => false, "message" => "Email and password are required"]);
+    exit;
 }
+
+// First, try to find admin with this email
+$adminSql = "SELECT * FROM admin WHERE Email = ?";
+$adminStmt = $conn->prepare($adminSql);
+$adminStmt->bind_param("s", $email);
+$adminStmt->execute();
+$adminResult = $adminStmt->get_result();
+
+// If admin found
+if ($adminResult->num_rows > 0) {
+    $admin = $adminResult->fetch_assoc();
+    
+    // Check admin password
+    if (password_verify($password, $admin["PasswordHash"])) {
+        // Remove password before sending user data
+        unset($admin["PasswordHash"]);
+        
+        echo json_encode([
+            "success" => true,
+            "message" => "Admin login successful",
+            "userType" => "admin",
+            "user" => $admin
+        ]);
+        exit;
+    } else {
+        echo json_encode(["success" => false, "message" => "Incorrect password"]);
+        exit;
+    }
+}
+
+// Admin not found, try customer
+$customerSql = "SELECT * FROM customer WHERE Email = ?";
+$customerStmt = $conn->prepare($customerSql);
+$customerStmt->bind_param("s", $email);
+$customerStmt->execute();
+$customerResult = $customerStmt->get_result();
+
+// If customer found
+if ($customerResult->num_rows > 0) {
+    $customer = $customerResult->fetch_assoc();
+    
+    // Check customer password
+    if (password_verify($password, $customer["Password"])) {
+        // Remove password before sending user data
+        unset($customer["Password"]);
+        
+        echo json_encode([
+            "success" => true,
+            "message" => "Customer login successful",
+            "userType" => "customer",
+            "user" => $customer
+        ]);
+        exit;
+    } else {
+        echo json_encode(["success" => false, "message" => "Incorrect password"]);
+        exit;
+    }
+}
+
+// Email not found in either table
+echo json_encode(["success" => false, "message" => "Email not found"]);
 ?>

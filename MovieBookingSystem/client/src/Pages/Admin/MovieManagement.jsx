@@ -29,7 +29,7 @@ export default function MovieManagement() {
       rating: 'PG-13',
       location: 'SM City Cebu',
       dateRelease: 'December 4, 2025',
-      image: 'assets/Movies/altered.jpg'
+      image: '/assets/Movies/altered.jpg'
     },
     {
       id: 2,
@@ -41,7 +41,7 @@ export default function MovieManagement() {
       rating: 'R-5',
       location: 'Ayala Center Cebu',
       dateRelease: 'December 4, 2025',
-      image: 'assets/Movies/avengers-endgame.jpg'
+      image: '/assets/Movies/avengers-endgame.jpg'
     },
     {
       id: 3,
@@ -53,7 +53,7 @@ export default function MovieManagement() {
       rating: 'R',
       location: 'SM Seaside City Cebu',
       dateRelease: 'December 25, 2025',
-      image: 'assets/Movies/frankenstein.jpg'
+      image: '/assets/Movies/frankenstein.jpg'
     },
     {
       id: 4,
@@ -65,7 +65,7 @@ export default function MovieManagement() {
       rating: 'PG-13',
       location: 'Robinson Cybergate Cebu',
       dateRelease: 'December 22, 2025',
-      image: 'assets/Movies/in-your-dreams.jpg'
+      image: '/assets/Movies/in-your-dreams.jpg'
     },
     {
       id: 5,
@@ -77,7 +77,7 @@ export default function MovieManagement() {
       rating: 'PG-13',
       location: 'SM City Cebu',
       dateRelease: 'December 10, 2025',
-      image: 'assets/Movies/wicked-for-good.jpg'
+      image: '/assets/Movies/wicked-for-good.jpg'
     },
   ]);
 

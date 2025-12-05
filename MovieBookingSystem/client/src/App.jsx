@@ -14,6 +14,7 @@ import PrivacyPolicy from './Pages/PrivacyPolicy.jsx';
 import Checkout from './Pages/Booking/Checkout.jsx';
 import MyTickets from './Pages/Booking/MyTickets.jsx';
 import ProtectedRoute from "./Components/ProtectedRoute.jsx";
+import ProtectedAdminRoute from "./Components/ProtectedAdminRoute.jsx";
 import LayoutAdmin from './Components/LayoutAdmin.jsx';
 import Dashboard from './Pages/Admin/Dashboard.jsx';
 import MovieManagement from './Pages/Admin/MovieManagement.jsx';
@@ -33,7 +34,7 @@ function App() {
         {/* Public route */}
         <Route path="/" element={<Login />} />
 
-        {/* Protected routes */}
+        {/* Protected Customer Routes */}
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
             <Route path="/Home" element={<Landing />} />
@@ -51,18 +52,21 @@ function App() {
 
             {/* Catch all - redirect to Home */}
             <Route path="*" element={<Navigate to="/Home" replace />} />
-            </Route>
-            <Route path="/profile" element={<UserProfile />} />
-
-        {/*Admin Page */}
-            <Route element={<LayoutAdmin />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/movie-management" element={<MovieManagement />} />
-              <Route path="/booking-management" element={<BookingManagement />} />
-            </Route>
+          </Route>
+          <Route path="/profile" element={<UserProfile />} />
         </Route>
 
-      
+        {/* Protected Admin Routes */}
+        <Route element={<ProtectedAdminRoute />}>
+          <Route element={<LayoutAdmin />}>
+            <Route path="/admin/dashboard" element={<Dashboard />} />
+            <Route path="/admin/movie-management" element={<MovieManagement />} />
+            <Route path="/admin/booking-management" element={<BookingManagement />} />
+          </Route>
+        </Route>
+
+        {/* Catch all - redirect to Home */}
+        <Route path="*" element={<Navigate to="/Home" replace />} />
       </Routes>
     </Router>
   )
