@@ -478,7 +478,7 @@ const handleConfirm = async () => {
                           className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold transition-all duration-300 ${
                             selectedScreen?.id === screen.id
                               ? 'bg-gradient-to-r from-red-700 to-orange-600/20 shadow-lg shadow-red-500/50'
-                              : 'bg-gray-800/50 hover:bg-gray-700/50'
+                              : 'cursor-pointer bg-gray-800/50 hover:bg-gray-700/50'
                           }`}
                         >
                           {screen.name}
@@ -498,7 +498,7 @@ const handleConfirm = async () => {
                         className={`p-4 rounded-lg transition-all duration-300 text-left ${
                           selectedMall?.id === mall.id
                             ? 'bg-gradient-to-r from-red-700 to-orange-600/20 shadow-lg shadow-red-500/50 scale-105'
-                            : 'bg-gray-800/50 hover:bg-gray-700/50 hover:scale-105'
+                            : 'cursor-pointer bg-gray-800/50 hover:bg-gray-700/50 hover:scale-105'
                         }`}
                         style={{ animationDelay: `${idx * 0.05}s` }}
                       >
@@ -520,35 +520,41 @@ const handleConfirm = async () => {
                     <h2 className="text-xl md:text-2xl font-bold">Select Date</h2>
                   </div>
 
-                  <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 md:gap-3">
-                    {dates.map((d, idx) => {
-                      const isEnabled =
-                        !showDates.length || showDates.some(sd => {
+                  {/* Show message when no mall is selected */}
+                  {!selectedMall ? (
+                    <div className="text-center">
+                      
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 md:gap-3">
+                      {dates.map((d, idx) => {
+                        const isEnabled = !showDates.length || showDates.some(sd => {
                           const full = new Date(sd.date);
                           return full.toDateString() === d.full.toDateString();
                         });
 
-                      return (
-                        <button
-                          key={idx}
-                          onClick={() => isEnabled && setSelectedDate(d)}
-                          disabled={!isEnabled}
-                          className={`p-2 md:p-4 rounded-lg md:rounded-xl transition-all duration-300 ${
-                            !isEnabled
-                              ? 'bg-gray-800/30 opacity-50 cursor-not-allowed'
-                              : selectedDate?.date === d.date
-                              ? 'bg-gradient-to-r from-red-700 to-orange-600/20 shadow-lg shadow-red-500/50 scale-105'
-                              : 'bg-gray-800/50 hover:bg-gray-700/50 hover:scale-105'
-                          }`}
-                          style={{ animationDelay: `${idx * 0.05}s` }}
-                        >
-                          <div className="text-xs text-gray-400">{d.day}</div>
-                          <div className="text-lg md:text-2xl font-bold my-1">{d.date}</div>
-                          <div className="text-xs text-gray-400">{d.month}</div>
-                        </button>
-                      );
-                    })}
-                  </div>
+                        return (
+                          <button
+                            key={idx}
+                            onClick={() => isEnabled && setSelectedDate(d)}
+                            disabled={!isEnabled}
+                            className={`p-2 md:p-4 rounded-lg md:rounded-xl transition-all duration-300 ${
+                              !isEnabled
+                                ? 'bg-gray-800/30 opacity-50 cursor-not-allowed'
+                                : selectedDate?.date === d.date
+                                ? 'bg-gradient-to-r from-red-700 to-orange-600/20 shadow-lg shadow-red-500/50 scale-105'
+                                : 'bg-gray-800/50 cursor-pointer  hover:bg-gray-700/50 hover:scale-105'
+                            }`}
+                            style={{ animationDelay: `${idx * 0.05}s` }}
+                          >
+                            <div className="text-xs text-gray-400">{d.day}</div>
+                            <div className="text-lg md:text-2xl font-bold my-1">{d.date}</div>
+                            <div className="text-xs text-gray-400">{d.month}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* Time Selection */}
@@ -572,7 +578,7 @@ const handleConfirm = async () => {
                             ? 'bg-gray-800/30 text-gray-600 cursor-not-allowed'
                             : selectedTime?.id === t.id
                             ? 'bg-gradient-to-r from-red-700 to-orange-600/20 shadow-lg shadow-red-500/50 scale-105'
-                            : 'bg-gray-800/50 hover:bg-gray-700/50 hover:scale-105'
+                            : 'bg-gray-800/50 cursor-pointer  hover:bg-gray-700/50 hover:scale-105'
                         }`}
                         style={{ animationDelay: `${idx * 0.05}s` }}
                       >
@@ -640,7 +646,7 @@ const handleConfirm = async () => {
                                   key={seatId}
                                   onClick={() => handleSeatClick(seatId)}
                                   disabled={status === 'unavailable'}
-                                  className={`w-4 h-4 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-md sm:rounded-lg transition-all duration-300 relative group ${getSeatColor(status)}`}
+                                  className={`cursor-pointer w-4 h-4 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-md sm:rounded-lg transition-all duration-300 relative group ${getSeatColor(status)}`}
                                   title={seatId}
                                 >
                                   <span className="absolute -top-6 sm:-top-7 md:-top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none text-[10px] sm:text-xs z-10">
@@ -663,7 +669,7 @@ const handleConfirm = async () => {
                                   key={seatId}
                                   onClick={() => handleSeatClick(seatId)}
                                   disabled={status === 'unavailable'}
-                                  className={`w-4 h-4 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-md sm:rounded-lg transition-all duration-300 relative group ${getSeatColor(status)}`}
+                                  className={`cursor-pointer w-4 h-4 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-md sm:rounded-lg transition-all duration-300 relative group ${getSeatColor(status)}`}
                                   title={seatId}
                                 >
                                   <span className="absolute -top-6 sm:-top-7 md:-top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none text-[10px] sm:text-xs z-10">
@@ -686,7 +692,7 @@ const handleConfirm = async () => {
                                   key={seatId}
                                   onClick={() => handleSeatClick(seatId)}
                                   disabled={status === 'unavailable'}
-                                  className={`w-4 h-4 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-md sm:rounded-lg transition-all duration-300 relative group ${getSeatColor(status)}`}
+                                  className={`cursor-pointer w-4 h-4 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-md sm:rounded-lg transition-all duration-300 relative group ${getSeatColor(status)}`}
                                   title={seatId}
                                 >
                                   <span className="absolute -top-6 sm:-top-7 md:-top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none text-[10px] sm:text-xs z-10">
@@ -747,10 +753,10 @@ const handleConfirm = async () => {
                         <button
                           key={method.id}
                           onClick={() => setPaymentMethod(method.id)}
-                          className={`p-6 rounded-xl transition-all duration-300 border-2 ${
+                          className={` p-6 rounded-xl transition-all duration-300 border-2 ${
                             paymentMethod === method.id
                               ? 'border-red-500 bg-gray-800/50 scale-105'
-                              : 'border-gray-700 bg-gray-800/30 hover:border-gray-600 hover:scale-105'
+                              : 'cursor-pointer border-gray-700 bg-gray-800/30 hover:border-gray-600 hover:scale-105'
                           }`}
                           style={{ animationDelay: `${idx * 0.05}s` }}
                         >
@@ -855,7 +861,7 @@ const handleConfirm = async () => {
                     {step > 1 && (
                       <button
                         onClick={handleBack}
-                        className="w-full px-6 py-3 border-2 border-gray-700 rounded-lg hover:border-red-500 hover:bg-red-900/10 transition-all duration-300 font-semibold"
+                        className="cursor-pointer w-full px-6 py-3 border-2 border-gray-700 rounded-lg hover:border-red-500 hover:bg-red-900/10 transition-all duration-300 font-semibold"
                       >
                         Back
                       </button>
@@ -863,9 +869,9 @@ const handleConfirm = async () => {
                     <button
                       onClick={handleNext}
                       disabled={!canProceed() || loading.booking}
-                      className={`w-full px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
+                      className={` w-full px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
                         canProceed() && !loading.booking
-                          ? 'bg-gradient-to-r from-red-700 to-orange-600/20  hover:from-red-500 hover:to-red-600 shadow-lg shadow-red-500/20 hover:shadow-red-500/40'
+                          ? 'cursor-pointer bg-gradient-to-r from-red-700 to-orange-600/20  hover:from-red-500 hover:to-red-600 shadow-lg shadow-red-500/20 hover:shadow-red-500/40'
                           : 'bg-gray-700 cursor-not-allowed opacity-50'
                       }`}
                     >
@@ -877,7 +883,7 @@ const handleConfirm = async () => {
                     <button
                       onClick={handleBack}
                       disabled={loading.booking}
-                      className={`w-full px-6 py-3 border-2 border-gray-700 rounded-lg font-semibold transition-all duration-300 ${
+                      className={`cursor-pointer w-full px-6 py-3 border-2 border-gray-700 rounded-lg font-semibold transition-all duration-300 ${
                         loading.booking
                           ? 'opacity-50 cursor-not-allowed'
                           : 'hover:border-red-500 hover:bg-red-900/10'
@@ -888,9 +894,9 @@ const handleConfirm = async () => {
                     <button
                       onClick={handleConfirm}
                       disabled={!canProceed() || loading.booking}
-                      className={`w-full px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
+                      className={` w-full px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
                         canProceed() && !loading.booking
-                          ? 'bg-gradient-to-r from-red-700 to-orange-600/20  hover:from-red-500 hover:to-red-600 shadow-lg shadow-red-500/20 hover:shadow-red-500/40'
+                          ? 'cursor-pointer bg-gradient-to-r from-red-700 to-orange-600/20  hover:from-red-500 hover:to-red-600 shadow-lg shadow-red-500/20 hover:shadow-red-500/40'
                           : 'bg-gray-700 cursor-not-allowed opacity-50'
                       }`}
                     >
@@ -941,7 +947,7 @@ const handleConfirm = async () => {
           }
         }
         .animate-fade-in {
-          animation: fadeIn 0.6s ease-out;
+          animation: fadeIn 0.3s ease-out;
         }
         .animate-slide-up {
           animation: slideUp 0.6s ease-out both;

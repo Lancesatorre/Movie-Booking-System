@@ -58,17 +58,17 @@ export default function Navbar() {
     return currentPath === path;
   };
 
-  const activeStyles = "text-red-500 font-semibold";
-  const inactiveStyles = "text-white hover:text-red-500 transition-colors";
+  const activeStyles = "text-red-500 font-semibold cursor-pointer ";
+  const inactiveStyles = "text-white hover:text-red-500 transition-colors cursor-pointer ";
   
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 bg-black/60 backdrop-blur-sm border-b border-gray-800">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 py-4 lg:px-20 xl:px-4">
           <div className="flex justify-between items-center">
             <button 
               onClick={() => handleNavigation('/Home')}
-              className="flex items-center gap-2 space-x-2"
+              className="flex items-center gap-2 space-x-2 cursor-pointer "
             >
               <img src={icon} alt="MoBook Logo" className="w-[4vh]" />
               <span className="text-3xl font-bold bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent">
@@ -99,7 +99,7 @@ export default function Navbar() {
                 </button>
                 <button 
                   onClick={() => handleNavigation('/contact')} 
-                  className={isActivePath('/contact') ? activeStyles : inactiveStyles}
+                  className={ isActivePath('/contact') ? activeStyles : inactiveStyles}
                 >
                   Contact
                 </button>
@@ -108,7 +108,7 @@ export default function Navbar() {
 
             {/* Mobile Menu Button */}
             <button 
-              className="md:hidden p-2"
+              className="md:hidden p-2 cursor-pointer "
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               <div className="w-6 h-0.5 bg-white mb-1.5"></div>
@@ -123,25 +123,25 @@ export default function Navbar() {
               <div className="flex flex-col space-y-4">
                 <button 
                   onClick={() => handleNavigation('/Home')} 
-                  className={isActivePath('/Home') ? activeStyles : "text-white hover:text-red-500 transition-colors"}
+                  className={isActivePath('/Home') ? activeStyles : "text-white hover:text-red-500 transition-colors cursor-pointer "}
                 >
                   Home
                 </button>
                 <button 
                   onClick={() => handleNavigation('/movies')} 
-                  className={isActivePath('/movies') ? activeStyles : "text-white hover:text-red-500 transition-colors"}
+                  className={isActivePath('/movies') ? activeStyles : "text-white hover:text-red-500 transition-colors cursor-pointer "}
                 >
                   Movies
                 </button>
                 <button 
                   onClick={() => handleNavigation('/features')} 
-                  className={isActivePath('/features') ? activeStyles : "text-white hover:text-red-500 transition-colors"}
+                  className={isActivePath('/features') ? activeStyles : "text-white hover:text-red-500 transition-colors cursor-pointer "}
                 >
                   Features
                 </button>
                 <button 
                   onClick={() => handleNavigation('/contact')} 
-                  className={isActivePath('/contact') ? activeStyles : "text-white hover:text-red-500 transition-colors"}
+                  className={isActivePath('/contact') ? activeStyles : "text-white hover:text-red-500 transition-colors cursor-pointer "}
                 >
                   Contact
                 </button>

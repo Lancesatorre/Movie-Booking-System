@@ -328,7 +328,7 @@ export default function BookingManagement() {
       <div className="mb-8 md:mb-12 pt-15 animate-slide-down">
         <div className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-2 sm:mb-3">
           <h1 className="text-left text-4xl lg:text-5xl pb-2 font-black text-transparent bg-clip-text bg-gradient-to-r from-red-700 to-orange-600/20">
-            Booking Management
+            Bookings
           </h1>
         </div>
         <p className="text-left text-xs xs:text-sm sm:text-base md:text-lg text-gray-400 max-w-2xl">

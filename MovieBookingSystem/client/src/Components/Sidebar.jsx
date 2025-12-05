@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, Film, Ticket, User, Settings, LogOut, ChevronDown } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom'; // Added useLocation
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function Sidebar({ onToggle }) {
   const navigate = useNavigate();
-  const location = useLocation(); // Get current location
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState('dashboard');
+  const [isLoggingOut, setIsLoggingOut] = useState(false); // State for logout loading
 
-  // Set active menu based on current path on initial load and when location changes
+  // Set active menu based on current path
   useEffect(() => {
-    // Map paths to menu IDs
     const pathToMenuId = {
       '/admin/dashboard': 'dashboard',
       '/admin/movie-management': 'movies',
@@ -19,15 +19,12 @@ export default function Sidebar({ onToggle }) {
       '/settings': 'settings'
     };
 
-    // Find the current path in the mapping
     const currentPath = location.pathname;
-    let foundMenu = 'dashboard'; // Default to dashboard
+    let foundMenu = 'dashboard';
     
-    // Check exact match first
     if (pathToMenuId[currentPath]) {
       foundMenu = pathToMenuId[currentPath];
     } else {
-      // Check for partial matches (for nested routes)
       Object.keys(pathToMenuId).forEach(path => {
         if (currentPath.startsWith(path)) {
           foundMenu = pathToMenuId[path];
@@ -36,7 +33,7 @@ export default function Sidebar({ onToggle }) {
     }
 
     setActiveMenu(foundMenu);
-  }, [location.pathname]); // Run when pathname changes
+  }, [location.pathname]);
 
   // Notify parent when sidebar state changes
   useEffect(() => {
@@ -54,7 +51,6 @@ export default function Sidebar({ onToggle }) {
   const handleMenuClick = (id, path) => {
     setActiveMenu(id);
     navigate(path);
-    // On mobile, close sidebar after selection
     if (window.innerWidth < 1024) {
       setIsOpen(false);
     }
@@ -64,8 +60,109 @@ export default function Sidebar({ onToggle }) {
     setIsOpen(!isOpen);
   };
 
+  // Logout handler with loading state
+  // Updated handleLogout function - simpler and more reliable
+const handleLogout = async () => {
+  setIsLoggingOut(true);
+  
+  try {
+    // Clear all user data from localStorage immediately
+    localStorage.removeItem("mobook_user");
+    localStorage.removeItem("user");
+    localStorage.removeItem("userType");
+    localStorage.removeItem("auth_token"); // Add this if you use token
+    
+    // Option 1: Try API call first (if you have logout endpoint)
+    try {
+      const response = await fetch("http://localhost/mobook_api/logout.php", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("auth_token") || ""}`
+        },
+        credentials: 'include' // Important for session cookies
+      });
+      
+      const result = await response.json();
+      console.log("Logout API response:", result);
+    } catch (apiError) {
+      console.log("Logout API failed, proceeding with client-side logout:", apiError);
+    }
+    
+    // Keep the loading state for a moment before redirecting
+    setTimeout(() => {
+      // Clear any remaining localStorage items
+      localStorage.clear();
+      
+      // Redirect to home/login page
+      window.location.href = "/";
+    }, 1500); // Show loading for 1.5 seconds
+    
+  } catch (error) {
+    console.error("Logout error:", error);
+    
+    // Even if there's an error, clear localStorage and redirect
+    localStorage.clear();
+    setTimeout(() => {
+      window.location.href = "/";
+    }, 1000);
+  }
+};
+
   return (
     <>
+      {/* Logout Loading Overlay */}
+      {isLoggingOut && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm">
+          <div className="text-center">
+            {/* Spinner */}
+            <div className="relative mb-6">
+              <div className="absolute inset-0 animate-spin rounded-full border-t-4 border-b-4 border-transparent border-t-red-600 border-b-red-600 h-32 w-32 mx-auto"></div>
+              <div className="relative animate-pulse">
+                <div className="h-32 w-32 mx-auto bg-gradient-to-br from-red-600/20 to-red-600/5 rounded-full flex items-center justify-center">
+                  <div className="h-16 w-16 bg-gradient-to-br from-red-600/30 to-transparent rounded-full"></div>
+                </div>
+              </div>
+              
+              {/* Pulse effect */}
+              <div className="absolute inset-0 mx-auto h-32 w-32">
+                <div className="absolute inset-0 animate-ping rounded-full bg-red-600/20"></div>
+                <div 
+                  className="absolute inset-4 animate-ping rounded-full bg-red-600/10"
+                  style={{ animationDelay: '0.2s' }}
+                ></div>
+              </div>
+            </div>
+
+            {/* Loading text */}
+            <div className="space-y-2">
+              <h3 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent">
+                Logging out...
+              </h3>
+              <p className="text-gray-400 text-sm animate-pulse">
+                Please wait while we secure your session...
+              </p>
+            </div>
+
+            {/* Progress dots */}
+            <div className="flex justify-center mt-6 space-x-2">
+              <div 
+                className="h-2 w-2 bg-red-500 rounded-full animate-bounce"
+                style={{ animationDelay: '0s' }}
+              ></div>
+              <div 
+                className="h-2 w-2 bg-red-500 rounded-full animate-bounce"
+                style={{ animationDelay: '0.1s' }}
+              ></div>
+              <div 
+                className="h-2 w-2 bg-red-500 rounded-full animate-bounce"
+                style={{ animationDelay: '0.2s' }}
+              ></div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Mobile overlay */}
       {isOpen && (
         <div 
@@ -172,7 +269,7 @@ export default function Sidebar({ onToggle }) {
                 </div>
                 {isOpen && (
                   <>
-                    <span className="font-medium flex-1 text-left truncate">Profile</span>
+                    <span className="font-medium flex-1 text-left truncate">Admin</span>
                     <ChevronDown 
                       size={16} 
                       className={`transition-transform duration-200 ${
@@ -193,23 +290,35 @@ export default function Sidebar({ onToggle }) {
                 <div className="mt-2 space-y-1" style={{ animation: 'slideDown 0.2s ease-out' }}>
                   <button
                     onClick={() => {
-                      navigate('/settings');
+                      navigate('/admin/profile');
                       setActiveMenu('settings');
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm text-gray-300 hover:bg-red-900/30 hover:text-white transition-all duration-200 pl-12 group"
+                    disabled={isLoggingOut}
+                    className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm text-gray-300 hover:bg-red-900/30 hover:text-white transition-all duration-200 pl-12 group ${
+                      isLoggingOut ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                   >
-                    <Settings size={16} className="group-hover:rotate-90 transition-transform duration-300" />
-                    <span>System Settings</span>
+                     <User size={16} className="text-white" />
+                    <span>Profile</span>
                   </button>
                   <button
-                    onClick={() => {
-                      // Add logout logic here
-                      console.log('Logging out...');
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm text-gray-300 hover:bg-red-900/30 hover:text-red-400 transition-all duration-200 pl-12"
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                    className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm text-gray-300 hover:bg-red-900/30 hover:text-red-400 transition-all duration-200 pl-12 ${
+                      isLoggingOut ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                   >
-                    <LogOut size={16} />
-                    <span>Logout</span>
+                    {isLoggingOut ? (
+                      <>
+                        <div className="animate-spin h-4 w-4 border-2 border-red-400 border-t-transparent rounded-full"></div>
+                        <span>Logging out...</span>
+                      </>
+                    ) : (
+                      <>
+                        <LogOut size={16} />
+                        <span>Logout</span>
+                      </>
+                    )}
                   </button>
                 </div>
               )}
@@ -218,7 +327,7 @@ export default function Sidebar({ onToggle }) {
         </div>
       </aside>
 
-      {/* Main content spacer - This is what makes the content shift */}
+      {/* Main content spacer */}
       <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-70' : 'lg:ml-20'}`} />
 
       <style>{`
