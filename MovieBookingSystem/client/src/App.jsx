@@ -18,6 +18,7 @@ import LayoutAdmin from './Components/LayoutAdmin.jsx';
 import Dashboard from './Pages/Admin/Dashboard.jsx';
 import MovieManagement from './Pages/Admin/MovieManagement.jsx';
 import BookingManagement from './Pages/Admin/BookingManagement.jsx';
+import UserProfile from './Pages/Booking/UserProfile.jsx';
 
 import './App.css'
 
@@ -49,14 +50,18 @@ function App() {
             {/* Catch all - redirect to Home */}
             <Route path="*" element={<Navigate to="/Home" replace />} />
           </Route>
-        </Route>
+
+            <Route path="/profile" element={<UserProfile />} />
 
         {/*Admin Page */}
-        <Route element={<LayoutAdmin />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/movie-management" element={<MovieManagement />} />
-          <Route path="/booking-management" element={<BookingManagement />} />
+            <Route element={<LayoutAdmin />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/movie-management" element={<MovieManagement />} />
+              <Route path="/booking-management" element={<BookingManagement />} />
+            </Route>
         </Route>
+
+      
       </Routes>
     </Router>
   )
