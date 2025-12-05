@@ -274,10 +274,10 @@ const BookingMovie = () => {
           {/* Header with fade-in animation - Only show when not loading */}
           {!loading && (
             <div className="text-center mb-16 animate-fade-in">
-              <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent">
+              <h1 className="text-6xl font-bold mb-2 pb-2 bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent">
                 Now Showing
               </h1>
-              <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+              <p className="text-lg text-gray-400 max-w-2xl mx-auto">
                 Swipe or drag to explore our latest movies
               </p>
             </div>

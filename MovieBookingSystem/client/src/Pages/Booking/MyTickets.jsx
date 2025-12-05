@@ -1,14 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin } from 'lucide-react';
+import { MapPin, Search, Filter, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const MyTickets = () => {
   const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
+  const [filteredTickets, setFilteredTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [canceling, setCanceling] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'upcoming', 'past', 'cancellable'
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Status labels configuration matching the design
+  const statuses = [
+    { 
+      value: 'upcoming', 
+      label: 'Upcoming', 
+      color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40', 
+      glow: 'shadow-emerald-500/30' 
+    },
+    { 
+      value: 'soon', 
+      label: 'Soon', 
+      color: 'bg-blue-500/20 text-blue-300 border-blue-500/40', 
+      glow: 'shadow-blue-500/30' 
+    },
+    { 
+      value: 'past', 
+      label: 'Past', 
+      color: 'bg-gray-600/20 text-gray-400 border-gray-600/40', 
+      glow: 'shadow-gray-600/30' 
+    }
+  ];
 
   // Fetch user's tickets from backend
   useEffect(() => {
@@ -31,14 +57,17 @@ const MyTickets = () => {
 
         if (data.success) {
           setTickets(data.tickets || []);
+          setFilteredTickets(data.tickets || []);
         } else {
           setTickets([]);
+          setFilteredTickets([]);
           console.error(data.message);
         }
 
       } catch (err) {
         console.error("Error fetching tickets:", err);
         setTickets([]);
+        setFilteredTickets([]);
       } finally {
         setLoading(false);
       }
@@ -47,6 +76,45 @@ const MyTickets = () => {
     fetchTickets();
   }, [navigate]);
 
+  // Filter and search tickets
+  useEffect(() => {
+    let filtered = [...tickets];
+
+    // Apply search filter
+    if (searchTerm.trim() !== '') {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(ticket =>
+        ticket.movieTitle.toLowerCase().includes(term) ||
+        ticket.theatherLocation.toLowerCase().includes(term) ||
+        ticket.seats.some(seat => seat.toLowerCase().includes(term))
+      );
+    }
+
+    // Apply status filter
+    switch (filterStatus) {
+      case 'upcoming':
+        filtered = filtered.filter(ticket => {
+          const showDate = new Date(ticket.showDateTime);
+          return showDate > new Date();
+        });
+        break;
+      case 'past':
+        filtered = filtered.filter(ticket => {
+          const showDate = new Date(ticket.showDateTime);
+          return showDate <= new Date();
+        });
+        break;
+      case 'cancellable':
+        filtered = filtered.filter(ticket => canCancelTicket(ticket.showDateTime));
+        break;
+      case 'all':
+      default:
+        // No additional filtering for 'all'
+        break;
+    }
+
+    setFilteredTickets(filtered);
+  }, [searchTerm, filterStatus, tickets]);
 
   // Check if ticket can be cancelled (not within 24 hours of showtime)
   const canCancelTicket = (showDateTime) => {
@@ -76,7 +144,13 @@ const MyTickets = () => {
       const data = await res.json();
 
       if (data.success) {
-        setTickets(prev => prev.filter(t => t.id !== selectedTicket.id));
+        // Remove cancelled ticket from state
+        const updatedTickets = tickets.filter(t => t.id !== selectedTicket.id);
+        setTickets(updatedTickets);
+        setFilteredTickets(updatedTickets.filter(t => 
+          filterStatus === 'cancellable' ? canCancelTicket(t.showDateTime) : true
+        ));
+        
         setShowCancelModal(false);
         setSelectedTicket(null);
       } else {
@@ -115,6 +189,25 @@ const MyTickets = () => {
     };
   };
 
+  // Get status badge text and color
+  const getStatusInfo = (showDateTime) => {
+    const showDate = new Date(showDateTime);
+    const now = new Date();
+    
+    if (showDate <= new Date()) {
+      return statuses[2]; // Past
+    } else if (canCancelTicket(showDateTime)) {
+      return statuses[0]; // Upcoming
+    } else {
+      return statuses[1]; // Soon
+    }
+  };
+
+  // Clear search
+  const clearSearch = () => {
+    setSearchTerm('');
+  };
+
   return (
     <div className="min-h-[85vh] bg-transparent text-white py-12">
       <div className="container mx-auto px-4 max-w-7xl">
@@ -123,9 +216,104 @@ const MyTickets = () => {
           <h1 className="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent">
             My Tickets
           </h1>
-          <p className="text-sm  md:text-xl text-gray-400">
+          <p className="text-sm md:text-xl text-gray-400">
             View and manage your movie bookings
           </p>
+        </div>
+
+        {/* Search and Filter Bar */}
+        <div className="mb-8 animate-slide-up">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search Bar */}
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by movie title, theater, or seat..."
+                className="w-full pl-10 pr-10 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent text-white placeholder-gray-400"
+              />
+              {searchTerm && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <X className="h-5 w-5 text-gray-400 hover:text-white transition-colors" />
+                </button>
+              )}
+            </div>
+
+            {/* Filter Button */}
+            <div className="relative ">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-gray-800/60 to-gray-900/60 backdrop-blur-sm border border-gray-700/50 rounded-xl hover:border-red-500/30 transition-all duration-300 hover:scale-105 transform"
+              >
+                <Filter className="h-5 w-5" />
+                <span>Filter</span>
+              </button>
+
+              {/* Filter Dropdown */}
+              {showFilters && (
+                <div className="absolute right-0 mt-2 w-56 bg-gray-800/95 backdrop-blur-xl border border-gray-700/50 rounded-xl shadow-2xl z-50 animate-scale-in">
+                  <div className="p-3">
+                    <h4 className="text-sm font-semibold text-gray-300 mb-3 px-2">Filter by Status</h4>
+                    <div className="space-y-2">
+                      {[
+                        { id: 'all', label: 'All Tickets' },
+                        { id: 'upcoming', label: 'Upcoming' },
+                        { id: 'past', label: 'Past Shows' },
+                        { id: 'cancellable', label: 'Cancellable Only' }
+                      ].map((filter) => (
+                        <button
+                          key={filter.id}
+                          onClick={() => {
+                            setFilterStatus(filter.id);
+                            setShowFilters(false);
+                          }}
+                          className={`w-full text-left px-4 py-2 rounded-lg transition-all duration-200 ${
+                            filterStatus === filter.id
+                              ? 'bg-red-600/20 text-red-400 border border-red-500/30'
+                              : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                          }`}
+                        >
+                          {filter.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Active Filter Badge */}
+            {filterStatus !== 'all' && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-700/20 to-orange-600/10 backdrop-blur-sm border border-red-500/30 rounded-xl">
+                <span className="text-sm text-red-300">
+                  {filterStatus === 'upcoming' && 'Showing: Upcoming'}
+                  {filterStatus === 'past' && 'Showing: Past Shows'}
+                  {filterStatus === 'cancellable' && 'Showing: Cancellable'}
+                </span>
+                <button
+                  onClick={() => setFilterStatus('all')}
+                  className="text-red-400 hover:text-red-300 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Results Count */}
+          <div className="mt-4 flex items-center justify-between">
+            <p className="text-gray-400 text-sm">
+              Showing {filteredTickets.length} of {tickets.length} tickets
+              {searchTerm && ` for "${searchTerm}"`}
+            </p>
+          </div>
         </div>
 
         {/* Loading State */}
@@ -136,11 +324,12 @@ const MyTickets = () => {
         )}
 
         {/* Tickets Grid */}
-        {!loading && tickets.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-slide-up">
-            {tickets.map((ticket, index) => {
+        {!loading && filteredTickets.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
+            {filteredTickets.map((ticket, index) => {
               const { date, time } = formatDateTime(ticket.showDateTime);
               const canCancel = canCancelTicket(ticket.showDateTime);
+              const status = getStatusInfo(ticket.showDateTime);
 
               return (
                 <div
@@ -148,7 +337,7 @@ const MyTickets = () => {
                   className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-xl rounded-2xl overflow-hidden border border-gray-700/50 shadow-2xl hover:shadow-red-500/20 transition-all duration-500 hover:scale-105 hover:border-red-500/30 animate-fade-in-up"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  {/* Movie Poster */}
+                  {/* Movie Poster with Status Badge */}
                   <div className="relative h-64 overflow-hidden group">
                     <img
                       src={ticket.movieImage}
@@ -156,6 +345,15 @@ const MyTickets = () => {
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-60"></div>
+                    
+                    {/* Status Badge - Updated to match design */}
+                    <div className="absolute top-4 left-4">
+                      <span className={`px-4 py-2 rounded-xl text-xs font-bold border-2 backdrop-blur-md ${status.color} ${status.glow} shadow-lg animate-pulse-slow`}>
+                        {status.label}
+                      </span>
+                    </div>
+                    
+                    {/* Rating Badge */}
                     <div className="absolute top-4 right-4 bg-red-600/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold">
                       {ticket.movieRating}
                     </div>
@@ -204,20 +402,20 @@ const MyTickets = () => {
                       </div>
                     </div>
 
-                    {/* Cancel Button */}
-                    {canCancel ? (
+                    {/* Cancel Button - Only show for upcoming cancellable tickets */}
+                    {status.label === 'Upcoming' && canCancel ? (
                       <button
                         onClick={() => handleCancelClick(ticket)}
                         className="w-full mt-4 px-4 py-3 bg-gradient-to-r from-red-700 to-orange-600/20 rounded-xl hover:from-red-500 hover:to-red-600 transition-all duration-300 font-bold shadow-lg hover:shadow-red-500/50 hover:scale-105 transform"
                       >
                         Cancel Booking
                       </button>
-                    ) : (
+                    ) : status.label === 'Soon' ? (
                       <div className="w-full mt-4 px-4 py-3 bg-gray-700/50 rounded-xl text-center border border-gray-600/50">
                         <p className="text-sm text-gray-400 font-semibold">Cannot cancel</p>
                         <p className="text-xs text-gray-500 mt-1">Less than 24 hours to showtime</p>
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               );
@@ -225,7 +423,31 @@ const MyTickets = () => {
           </div>
         )}
 
-        {/* Empty State */}
+        {/* No Results State */}
+        {!loading && tickets.length > 0 && filteredTickets.length === 0 && (
+          <div className="text-center py-20 animate-fade-in">
+            <div className="mb-6">
+              <Search className="w-32 h-32 mx-auto text-gray-600" />
+            </div>
+            <h2 className="text-3xl font-bold mb-4 text-gray-400">No Tickets Found</h2>
+            <p className="text-gray-500 mb-8">
+              {searchTerm 
+                ? `No tickets found for "${searchTerm}". Try a different search term.`
+                : `No tickets match your current filter. Try changing the filter settings.`}
+            </p>
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setFilterStatus('all');
+              }}
+              className="px-8 py-4 bg-gradient-to-r from-red-600 to-red-700 rounded-xl hover:from-red-500 hover:to-red-600 transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-red-500/50 hover:scale-105 transform"
+            >
+              Clear Search & Filters
+            </button>
+          </div>
+        )}
+
+        {/* Empty State (No tickets at all) */}
         {!loading && tickets.length === 0 && (
           <div className="text-center py-20 animate-fade-in">
             <div className="mb-6">
@@ -333,10 +555,19 @@ const MyTickets = () => {
           from { opacity: 0; transform: scale(0.9); }
           to { opacity: 1; transform: scale(1); }
         }
+        @keyframes pulse-slow {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.7;
+          }
+        }
         .animate-fade-in { animation: fade-in 0.6s ease-out; }
         .animate-slide-up { animation: slide-up 0.8s ease-out; }
         .animate-fade-in-up { animation: fade-in-up 0.6s ease-out both; }
         .animate-scale-in { animation: scale-in 0.3s ease-out; }
+        .animate-pulse-slow { animation: pulse-slow 3s ease-in-out infinite; }
       `}</style>
     </div>
   );

@@ -41,6 +41,19 @@ export default function Layout() {
               }}
             />
           ))}
+
+            {[...Array(40)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-0.5 h-2 bg-red-600 rounded-full animate-float"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 5}s`,
+                animationDuration: `${10 + Math.random() * 20}s`
+              }}
+            />
+          ))}
         </div>
 
       <div className="relative z-10">
