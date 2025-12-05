@@ -466,7 +466,7 @@ const BookingMovie = () => {
               </div>
             </>
           )}
-
+        
           {!loading && !error && movies.length === 0 && (
             <div className="text-center text-gray-400 mt-8">
               No movies available at the moment.

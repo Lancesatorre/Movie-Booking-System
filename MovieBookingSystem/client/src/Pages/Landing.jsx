@@ -176,7 +176,6 @@ const Landing = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-white">{userName}</p>
-                    <p className="text-xs text-gray-400">Premium Member</p>
                   </div>
                 </div>
               </div>
@@ -293,7 +292,7 @@ const Landing = () => {
                   className="w-full h-full object-cover"
                 />
                 {/* Gradient Overlays */}
-                <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-red-950 via-black/80 to-transparent"></div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
                 <div className="absolute inset-0 bg-black/40"></div>
               </div>
@@ -303,10 +302,23 @@ const Landing = () => {
 
         {/* Animated Particles Effect */}
         <div className="absolute inset-0 z-[2]">
-          {[...Array(20)].map((_, i) => (
+          {[...Array(40)].map((_, i) => (
             <div
               key={i}
-              className="absolute w-1 h-1 bg-red-500/30 rounded-full animate-float"
+              className="absolute w-1 h-1 bg-red-600 rounded-full animate-float"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 5}s`,
+                animationDuration: `${10 + Math.random() * 20}s`
+              }}
+            />
+          ))}
+
+           {[...Array(40)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-2 bg-red-600 rounded-full animate-float"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
