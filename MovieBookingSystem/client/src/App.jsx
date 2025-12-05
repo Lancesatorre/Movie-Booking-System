@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
 import Landing from "./Pages/Landing.jsx";
@@ -19,6 +19,7 @@ import Dashboard from './Pages/Admin/Dashboard.jsx';
 import MovieManagement from './Pages/Admin/MovieManagement.jsx';
 import BookingManagement from './Pages/Admin/BookingManagement.jsx';
 import UserProfile from './Pages/Booking/UserProfile.jsx';
+import ScrollToTop from './Components/ScrolltoUp.jsx';
 
 import './App.css'
 
@@ -27,6 +28,7 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       <Routes>
         {/* Public route */}
         <Route path="/" element={<Login />} />
@@ -49,8 +51,7 @@ function App() {
 
             {/* Catch all - redirect to Home */}
             <Route path="*" element={<Navigate to="/Home" replace />} />
-          </Route>
-
+            </Route>
             <Route path="/profile" element={<UserProfile />} />
 
         {/*Admin Page */}
