@@ -443,7 +443,7 @@ export default function BookingManagement() {
               {/* Movie Header - Responsive layout */}
               <button
                 onClick={() => toggleMovie(movie.movieId)}
-                className="w-full p-4 sm:p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-white/5 transition-colors duration-300 gap-3 sm:gap-0"
+                className="cursor-pointer w-full p-4 sm:p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-white/5 transition-colors duration-300 gap-3 sm:gap-0"
               >
                 <div className="flex items-center gap-3 sm:gap-4 md:gap-6 w-full sm:w-auto">
                   <img 
