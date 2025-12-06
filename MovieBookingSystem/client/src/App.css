@@ -87,5 +87,5 @@
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up 1s ease-out;
+  animation: fade-in-up 0.2s ease-out;
 }

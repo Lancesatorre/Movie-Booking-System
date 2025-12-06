@@ -29,7 +29,7 @@ export default function MovieManagement() {
       rating: 'PG-13',
       location: 'SM City Cebu',
       dateRelease: 'December 4, 2025',
-      image: 'assets/Movies/altered.jpg'
+      image: '/assets/Movies/altered.jpg'
     },
     {
       id: 2,
@@ -41,7 +41,7 @@ export default function MovieManagement() {
       rating: 'R-5',
       location: 'Ayala Center Cebu',
       dateRelease: 'December 4, 2025',
-      image: 'assets/Movies/avengers-endgame.jpg'
+      image: '/assets/Movies/avengers-endgame.jpg'
     },
     {
       id: 3,
@@ -53,7 +53,7 @@ export default function MovieManagement() {
       rating: 'R',
       location: 'SM Seaside City Cebu',
       dateRelease: 'December 25, 2025',
-      image: 'assets/Movies/frankenstein.jpg'
+      image: '/assets/Movies/frankenstein.jpg'
     },
     {
       id: 4,
@@ -65,7 +65,7 @@ export default function MovieManagement() {
       rating: 'PG-13',
       location: 'Robinson Cybergate Cebu',
       dateRelease: 'December 22, 2025',
-      image: 'assets/Movies/in-your-dreams.jpg'
+      image: '/assets/Movies/in-your-dreams.jpg'
     },
     {
       id: 5,
@@ -77,7 +77,7 @@ export default function MovieManagement() {
       rating: 'PG-13',
       location: 'SM City Cebu',
       dateRelease: 'December 10, 2025',
-      image: 'assets/Movies/wicked-for-good.jpg'
+      image: '/assets/Movies/wicked-for-good.jpg'
     },
   ]);
 
@@ -296,7 +296,7 @@ export default function MovieManagement() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full md:w-auto bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl pl-12 pr-12 py-3 text-white focus:outline-none transition-all duration-300 appearance-none cursor-pointer hover:bg-black/80"
+                className=" w-full md:w-auto bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl pl-12 pr-12 py-3 text-white focus:outline-none transition-all duration-300 appearance-none cursor-pointer hover:bg-black/80"
               >
                 <option value="all">All Status</option>
                 <option value="now-showing">Now Showing</option>
@@ -308,7 +308,7 @@ export default function MovieManagement() {
 
             <button
               onClick={() => setPublishFilter('published')}
-              className={`px-5 py-3 rounded-xl font-bold transition-all duration-300 border-2 hover:scale-105 hover:shadow-xl ${
+              className={`cursor-pointer px-5 py-3 rounded-xl font-bold transition-all duration-300 border-2 hover:scale-105 hover:shadow-xl ${
                 publishFilter === 'published'
                   ? 'bg-gradient-to-r from-emerald-600 to-green-600 text-white border-emerald-500/50 shadow-lg shadow-emerald-500/50'
                   : 'bg-black/60 text-gray-300 border-gray-800/50 hover:border-emerald-500/50'
@@ -319,7 +319,7 @@ export default function MovieManagement() {
             
             <button
               onClick={() => setPublishFilter('not-published')}
-              className={`px-5 py-3 rounded-xl font-bold transition-all duration-300 border-2 hover:scale-105 hover:shadow-xl ${
+              className={`cursor-pointer  px-5 py-3 rounded-xl font-bold transition-all duration-300 border-2 hover:scale-105 hover:shadow-xl ${
                 publishFilter === 'not-published'
                   ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white border-orange-500/50 shadow-lg shadow-orange-500/50'
                   : 'bg-black/60 text-gray-300 border-gray-800/50 hover:border-orange-500/50'
@@ -331,7 +331,7 @@ export default function MovieManagement() {
             {publishFilter !== 'all' && (
               <button
                 onClick={() => setPublishFilter('all')}
-                className="px-5 py-3 rounded-xl font-bold transition-all duration-300 border-2 bg-gradient-to-r from-red-600 to-pink-600 text-white border-red-500/50 hover:scale-105 hover:shadow-xl shadow-lg shadow-red-500/50 animate-scale-in"
+                className="cursor-pointer px-5 py-3 rounded-xl font-bold transition-all duration-300 border-2 bg-gradient-to-r from-red-600 to-pink-600 text-white border-red-500/50 hover:scale-105 hover:shadow-xl shadow-lg shadow-red-500/50 animate-scale-in"
               >
                 Clear
               </button>
@@ -367,17 +367,10 @@ export default function MovieManagement() {
                   <div className="absolute top-4 right-4 flex gap-2 animate-slide-left">
                     <button
                       onClick={() => openModal(movie)}
-                      className="p-3 rounded-xl transition-all duration-300 hover:scale-110 backdrop-blur-md border-2 bg-gradient-to-br from-blue-600/90 to-cyan-600/90 hover:from-blue-500 hover:to-cyan-500 border-blue-500/50 shadow-lg shadow-blue-500/50"
+                      className="cursor-pointer p-3 rounded-xl transition-all duration-300 hover:scale-110 backdrop-blur-md border-2 bg-gradient-to-br from-blue-600/90 to-cyan-600/90 hover:from-blue-500 hover:to-cyan-500 border-blue-500/50 shadow-lg shadow-blue-500/50"
                       title="Edit Movie"
                     >
                       <Edit2 size={18} className="text-white" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClick(movie)}
-                      className="p-3 rounded-xl transition-all duration-300 hover:scale-110 backdrop-blur-md border-2 bg-gradient-to-br from-red-600/90 to-pink-600/90 hover:from-red-500 hover:to-pink-500 border-red-500/50 shadow-lg shadow-red-500/50"
-                      title="Delete Movie"
-                    >
-                      <Trash2 size={18} className="text-white" />
                     </button>
                   </div>
                 )}
@@ -467,7 +460,7 @@ export default function MovieManagement() {
               </div>
               <button
                 onClick={closeModal}
-                className="p-3 hover:bg-red-500/20 rounded-xl transition-all duration-300 hover:scale-110 border-2 border-transparent hover:border-red-500/50"
+                className="cursor-pointer  p-3 hover:bg-red-500/20 rounded-xl transition-all duration-300 hover:scale-110 border-2 border-transparent hover:border-red-500/50"
               >
                 <X className="text-gray-400 hover:text-white transition-colors" size={24} />
               </button>
@@ -544,14 +537,14 @@ export default function MovieManagement() {
                 <button
                   onClick={closeModal}
                   disabled={isSaving}
-                  className="flex-1 bg-gray-800/50 hover:bg-gray-700/70 text-white px-8 py-4 rounded-xl font-bold transition-all duration-300 border-2 border-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 hover:shadow-lg"
+                  className="cursor-pointer flex-1 bg-gray-800/50 hover:bg-gray-700/70 text-white px-8 py-4 rounded-xl font-bold transition-all duration-300 border-2 border-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 hover:shadow-lg"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={!hasChanges() || isSaving}
-                  className="flex-1 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white px-8 py-4 rounded-xl font-bold transition-all duration-300 hover:scale-105 shadow-xl flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-red-500/50"
+                  className="cursor-pointer flex-1 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white px-8 py-4 rounded-xl font-bold transition-all duration-300 hover:scale-105 shadow-xl flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-red-500/50"
                 >
                   {isSaving ? (
                     <>

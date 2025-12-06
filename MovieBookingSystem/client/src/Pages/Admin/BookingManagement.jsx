@@ -17,7 +17,7 @@ export default function BookingManagement() {
     {
       movieId: 1,
       movieTitle: 'Altered',
-      movieImage: 'assets/Movies/altered.jpg',
+      movieImage: '/assets/Movies/altered.jpg',
       // Now screens is an array to support multiple screens
       screens: ['Screen 1', 'Screen 2', 'Screen 3'],
       totalBookings: 45, // Updated total across all screens
@@ -92,7 +92,7 @@ export default function BookingManagement() {
     {
       movieId: 2,
       movieTitle: 'Avengers: Endgame',
-      movieImage: 'assets/Movies/avengers-endgame.jpg',
+      movieImage: '/assets/Movies/avengers-endgame.jpg',
       screens: ['Screen 1', 'Screen 2'],
       totalBookings: 35,
       bookingDetails: [
@@ -140,7 +140,7 @@ export default function BookingManagement() {
     {
       movieId: 3,
       movieTitle: 'Frankenstein',
-      movieImage: 'assets/Movies/frankenstein.jpg',
+      movieImage: '/assets/Movies/frankenstein.jpg',
       screens: ['Screen 3'],
       totalBookings: 12,
       bookingDetails: [
@@ -175,7 +175,7 @@ export default function BookingManagement() {
     {
       movieId: 4,
       movieTitle: 'In Your Dreams',
-      movieImage: 'assets/Movies/in-your-dreams.jpg',
+      movieImage: '/assets/Movies/in-your-dreams.jpg',
       screens: ['Screen 1', 'Screen 3'],
       totalBookings: 18,
       bookingDetails: [
@@ -210,7 +210,7 @@ export default function BookingManagement() {
     {
       movieId: 5,
       movieTitle: 'Wicked: For Good',
-      movieImage: 'assets/Movies/wicked-for-good.jpg',
+      movieImage: '/assets/Movies/wicked-for-good.jpg',
       screens: ['Screen 2', 'Screen 3'],
       totalBookings: 32,
       bookingDetails: [
@@ -328,7 +328,7 @@ export default function BookingManagement() {
       <div className="mb-8 md:mb-12 pt-15 animate-slide-down">
         <div className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-2 sm:mb-3">
           <h1 className="text-left text-4xl lg:text-5xl pb-2 font-black text-transparent bg-clip-text bg-gradient-to-r from-red-700 to-orange-600/20">
-            Booking Management
+            Bookings
           </h1>
         </div>
         <p className="text-left text-xs xs:text-sm sm:text-base md:text-lg text-gray-400 max-w-2xl">
@@ -443,7 +443,7 @@ export default function BookingManagement() {
               {/* Movie Header - Responsive layout */}
               <button
                 onClick={() => toggleMovie(movie.movieId)}
-                className="w-full p-4 sm:p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-white/5 transition-colors duration-300 gap-3 sm:gap-0"
+                className="cursor-pointer w-full p-4 sm:p-5 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-white/5 transition-colors duration-300 gap-3 sm:gap-0"
               >
                 <div className="flex items-center gap-3 sm:gap-4 md:gap-6 w-full sm:w-auto">
                   <img 

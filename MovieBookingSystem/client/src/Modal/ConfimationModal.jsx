@@ -28,13 +28,13 @@ const ConfirmationModal = ({
         <div className="flex flex-row gap-3 mt-6">
           <button
             onClick={onCancel}
-            className="flex-1 px-6 py-3 border-2 border-gray-700 rounded-lg hover:border-red-500 text-sm hover:bg-red-900/10 text-white transition-all duration-300 font-semibold"
+            className="cursor-pointer flex-1 px-6 py-3 border-2 border-gray-700 rounded-lg hover:border-red-500 text-sm hover:bg-red-900/10 text-white transition-all duration-300 font-semibold"
           >
             {cancelText}
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 px-6 py-3 rounded-lg font-semibold transition-all text-sm duration-300  bg-gradient-to-r from-red-700 to-orange-600/20 text-white hover:from-red-500 hover:to-red-600"
+            className="cursor-pointer flex-1 px-6 py-3 rounded-lg font-semibold transition-all text-sm duration-300  bg-gradient-to-r from-red-700 to-orange-600/20 text-white hover:from-red-500 hover:to-red-600"
           >
             {confirmText}
           </button>

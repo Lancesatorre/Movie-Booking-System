@@ -47,13 +47,7 @@ const Landing = () => {
   };
 
   const confirmLogout = () => {
-    if (hasBookingInProgress()) {
-      setPendingLogout(true);
-      setShowLogoutModal(false);
-      setShowConfirmModal(true);
-    } else {
-      performLogout();
-    }
+    performLogout(); 
   };
 
   const performLogout = () => {
@@ -198,7 +192,7 @@ const Landing = () => {
               <div className="p-2">
                 <button 
                   onClick={handleMyProfile} 
-                  className="w-full text-left px-4 py-3 hover:bg-gray-700/50 rounded-lg transition-colors flex items-center gap-3 text-gray-300 hover:text-white"
+                  className="cursor-pointer  w-full text-left px-4 py-3 hover:bg-gray-700/50 rounded-lg transition-colors flex items-center gap-3 text-gray-300 hover:text-white"
                   disabled={isLoggingOut}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -209,7 +203,7 @@ const Landing = () => {
                 
                 <button 
                   onClick={handleMyTickets} 
-                  className="w-full text-left px-4 py-3 hover:bg-gray-700/50 rounded-lg transition-colors flex items-center gap-3 text-gray-300 hover:text-white"
+                  className="cursor-pointer w-full text-left px-4 py-3 hover:bg-gray-700/50 rounded-lg transition-colors flex items-center gap-3 text-gray-300 hover:text-white"
                   disabled={isLoggingOut}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -223,7 +217,7 @@ const Landing = () => {
                 <button 
                   onClick={handleLogout}
                   disabled={isLoggingOut}
-                  className="w-full text-left px-4 py-3 hover:bg-red-600/20 rounded-lg transition-colors flex items-center gap-3 text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="cursor-pointer w-full text-left px-4 py-3 hover:bg-red-600/20 rounded-lg transition-colors flex items-center gap-3 text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -238,7 +232,7 @@ const Landing = () => {
           <button
             onClick={() => setIsProfileOpen(!isProfileOpen)}
             disabled={isLoggingOut}
-            className="flex items-center gap-3 bg-black hover:from-gray-700 hover:to-gray-800 px-4 py-3 rounded-full border border-gray-700 hover:border-red-500/50 transition-all duration-300 shadow-lg hover:shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="cursor-pointer flex items-center gap-3 bg-black hover:from-gray-700 hover:to-gray-800 px-4 py-3 rounded-full border border-gray-700 hover:border-red-500/50 transition-all duration-300 shadow-lg hover:shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center text-lg font-bold">
               {userName.charAt(0)}
@@ -256,12 +250,7 @@ const Landing = () => {
         </div>
       </div>
 
-      {/* Loading State Overlay */}
-      {isLoggingOut && (
-        <LoadingState message="Logging you out..." />
-      )}
-
-      {/* Logout Confirmation Modal */}
+ {/* Logout Confirmation Modal */}
       <ConfirmationModal
         isOpen={showLogoutModal}
         onConfirm={confirmLogout}
@@ -273,6 +262,13 @@ const Landing = () => {
         confirmColor="bg-red-600 hover:bg-red-700"
         disableButtons={isLoggingOut}
       />
+      
+      {/* Loading State Overlay */}
+      {isLoggingOut && (
+        <LoadingState message="Logging you out..." />
+      )}
+
+     
 
       {/* Hero Section with Dynamic Background */}
       <section className="min-h-screen flex items-center justify-center relative overflow-hidden">
@@ -282,7 +278,7 @@ const Landing = () => {
             {movies.map((movie, index) => (
               <div
                 key={movie.id}
-                className="absolute inset-0 transition-opacity duration-2000 ease-in-out"
+                className="absolute inset-0 transition-opacity duration-3000 ease-in-out"
                 style={{
                   opacity: index === currentBgIndex ? 1 : 0,
                   zIndex: index === currentBgIndex ? 1 : 0
@@ -353,7 +349,7 @@ const Landing = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
             <button 
               onClick={handleBookTickets}
-              className="group px-8 py-4 bg-gradient-to-r from-red-700 to-orange-600/20 rounded-lg hover:from-red-500 hover:to-orange-500 transition-all duration-300 text-lg font-semibold shadow-lg shadow-red-500/30 hover:shadow-red-500/50 hover:scale-105 transform"
+              className="group px-8 py-4 bg-gradient-to-r from-red-700 to-orange-600/20 rounded-lg hover:from-red-500 hover:to-orange-500 transition-all duration-300 text-lg font-semibold shadow-lg shadow-red-500/30 hover:shadow-red-500/50 hover:scale-105 transform cursor-pointer"
             >
               <span className="flex items-center justify-center gap-2">
                 Book Tickets Now
@@ -364,7 +360,7 @@ const Landing = () => {
             </button>
             <button 
               onClick={handleMyTickets}
-              className="px-8 py-4 border-2 border-red-500/50 rounded-lg hover:border-red-500 hover:bg-red-900/20 transition-all duration-300 text-lg font-semibold backdrop-blur-md hover:scale-105 transform"
+              className="cursor-pointer px-8 py-4 border-2 border-red-500/50 rounded-lg hover:border-red-500 hover:bg-red-900/20 transition-all duration-300 text-lg font-semibold backdrop-blur-md hover:scale-105 transform"
             >
               My Tickets
             </button>
@@ -377,10 +373,10 @@ const Landing = () => {
                 <button
                   key={index}
                   onClick={() => setCurrentBgIndex(index)}
-                  className={`transition-all duration-500 rounded-full ${
+                  className={`transition-all duration-500 rounded-full cursor-pointer ${
                     index === currentBgIndex 
                       ? 'w-8 h-2 bg-red-500' 
-                      : 'w-2 h-2 bg-gray-500 hover:bg-gray-400'
+                      : 'w-2 h-2 bg-black border border-red-800 hover:bg-gray-400'
                   }`}
                 />
               ))}
@@ -452,7 +448,7 @@ const Landing = () => {
           </p>
           <button 
             onClick={handleBookTickets}
-            className="px-10 py-4 bg-gradient-to-r from-red-700 to-orange-600/20 rounded-lg hover:from-red-500 hover:to-orange-500 transition-all duration-300 text-lg font-semibold shadow-lg shadow-red-500/30 hover:shadow-red-500/50 hover:scale-105 transform"
+            className="cursor-pointer px-10 py-4 bg-gradient-to-r from-red-700 to-orange-600/20 rounded-lg hover:from-red-500 hover:to-orange-500 transition-all duration-300 text-lg font-semibold shadow-lg shadow-red-500/30 hover:shadow-red-500/50 hover:scale-105 transform"
           >
             Get Started Today
           </button>
@@ -479,22 +475,22 @@ const Landing = () => {
               <h4 className="text-lg font-semibold mb-4 text-red-500">Quick Links</h4>
               <ul className="space-y-3 text-gray-400">
                 <li>
-                  <button onClick={() => handleNavigation('/movies')} className="hover:text-red-500 transition-colors">
+                  <button onClick={() => handleNavigation('/movies')} className=" cursor-pointer hover:text-red-500 transition-colors">
                     Movies
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => handleNavigation('/features')} className="hover:text-red-500 transition-colors">
+                  <button onClick={() => handleNavigation('/features')} className="cursor-pointer hover:text-red-500 transition-colors">
                     Features
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => handleNavigation('/about')} className="hover:text-red-500 transition-colors">
+                  <button onClick={() => handleNavigation('/about')} className="cursor-pointer hover:text-red-500 transition-colors">
                     About
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => handleNavigation('/contact')} className="hover:text-red-500 transition-colors">
+                  <button onClick={() => handleNavigation('/contact')} className="cursor-pointer hover:text-red-500 transition-colors">
                     Contact
                   </button>
                 </li>
@@ -505,22 +501,22 @@ const Landing = () => {
               <h4 className="text-lg font-semibold mb-4 text-red-500">Support</h4>
               <ul className="space-y-3 text-gray-400">
                 <li>
-                  <button onClick={() => handleNavigation('/help-center')} className="hover:text-red-500 transition-colors">
+                  <button onClick={() => handleNavigation('/help-center')} className="cursor-pointer hover:text-red-500 transition-colors">
                     Help Center
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => handleNavigation('/faq')} className="hover:text-red-500 transition-colors">
+                  <button onClick={() => handleNavigation('/faq')} className="cursor-pointer hover:text-red-500 transition-colors">
                     FAQ
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => handleNavigation('/contact')} className="hover:text-red-500 transition-colors">
+                  <button onClick={() => handleNavigation('/contact')} className="cursor-pointer hover:text-red-500 transition-colors">
                     Contact Us
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => handleNavigation('/privacy-policy')} className="hover:text-red-500 transition-colors">
+                  <button onClick={() => handleNavigation('/privacy-policy')} className="cursor-pointer hover:text-red-500 transition-colors">
                     Privacy Policy
                   </button>
                 </li>

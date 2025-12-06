@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoadingState from '../../Components/LoadingState';
+import { ArrowLeft, Home } from 'lucide-react';
 
 const BookingMovie = () => {
   const navigate = useNavigate();
@@ -54,6 +55,10 @@ const BookingMovie = () => {
         movie: selectedMovie
       } 
     });
+  };
+
+  const handleBackToHome = () => {
+    navigate('/Home');
   };
 
   // Function to convert YouTube URL to embed format
@@ -269,7 +274,19 @@ const BookingMovie = () => {
       {/* Show loading overlay while fetching movies */}
       {loading && <LoadingState message="Loading movies..." />}
       
-      <div className="min-h-[85vh] bg-transparent text-white pb-10 md:pb-8 pt-12 overflow-hidden">
+      <div className="min-h-[85vh] bg-transparent text-white pb-10 md:pb-8 pt-15 overflow-hidden">
+        {/* Back to Home Button - Fixed position */}
+        <button
+          onClick={handleBackToHome}
+          className="cursor-pointer  fixed top-6 left-3 md:left-6 z-50 flex items-center gap-2 px-2 py-1 md:px-4 md:py-2.5 bg-black/50 hover:bg-black/70 backdrop-blur-md rounded-xl border border-gray-700 hover:border-red-600/50 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/20 group"
+        >
+          <ArrowLeft 
+            size={20} 
+            className="group-hover:-translate-x-1 transition-transform duration-300" 
+          />
+          <span className="font-medium text-xs md:text-md">Back to Home</span>
+        </button>
+
         <div className="container mx-auto px-4 max-w-7xl">
           {/* Header with fade-in animation - Only show when not loading */}
           {!loading && (
@@ -314,7 +331,7 @@ const BookingMovie = () => {
                   <button
                     onClick={goToPrev}
                     disabled={isTransitioning}
-                    className="absolute left-0 md:left-8 z-40 p-4 bg-gradient-to-r from-red-600/90 to-red-700/90 rounded-full hover:from-red-500 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-red-500/50 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
+                    className="cursor-pointer absolute left-0 md:left-8 z-40 p-4 bg-gradient-to-r from-red-600/90 to-red-700/90 rounded-full hover:from-red-500 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-red-500/50 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
@@ -323,7 +340,7 @@ const BookingMovie = () => {
                   <button
                     onClick={goToNext}
                     disabled={isTransitioning}
-                    className="absolute right-0 md:right-8 z-40 p-4 bg-gradient-to-r from-red-600/90 to-red-700/90 rounded-full hover:from-red-500 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-red-500/50 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
+                    className="cursor-pointer absolute right-0 md:right-8 z-40 p-4 bg-gradient-to-r from-red-600/90 to-red-700/90 rounded-full hover:from-red-500 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-red-500/50 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
@@ -430,7 +447,7 @@ const BookingMovie = () => {
                       
                        <button 
                         onClick={openTrailer}
-                        className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-gray-500/50 hover:scale-105 transform flex items-center justify-center gap-2"
+                        className="cursor-pointer w-full md:w-auto px-10 py-4 bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-gray-500/50 hover:scale-105 transform flex items-center justify-center gap-2"
                       >
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
@@ -440,7 +457,7 @@ const BookingMovie = () => {
 
                       <button 
                       onClick={handleBookNow}
-                      className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-red-700 to-orange-600/20 rounded-xl hover:from-red-500 hover:to-red-600 transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-red-500/50 hover:scale-105 transform"
+                      className="cursor-pointer w-full md:w-auto px-10 py-4 bg-gradient-to-r from-red-700 to-orange-600/20 rounded-xl hover:from-red-500 hover:to-red-600 transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-red-500/50 hover:scale-105 transform"
                       >
                       Book Now
                     </button>
@@ -456,10 +473,10 @@ const BookingMovie = () => {
                     key={index}
                     onClick={() => goToIndex(index)}
                     disabled={isTransitioning}
-                    className={`transition-all duration-300 rounded-full ${
+                    className={`transition-all duration-300 rounded-full cursor-pointer ${
                       index === currentIndex 
                         ? 'w-12 h-3 bg-gradient-to-r from-red-500 to-red-600 shadow-lg shadow-red-500/50' 
-                        : 'w-3 h-3 bg-gray-600 hover:bg-gray-500 hover:scale-125'
+                        : 'w-3 h-3  bg-black border border-red-800 hover:bg-gray-500 hover:scale-125'
                     }`}
                   />
                 ))}

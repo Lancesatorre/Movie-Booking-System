@@ -239,7 +239,7 @@ const MyTickets = () => {
               {searchTerm && (
                 <button
                   onClick={clearSearch}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="cursor-pointer absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
                   <X className="h-5 w-5 text-gray-400 hover:text-white transition-colors" />
                 </button>
@@ -250,7 +250,7 @@ const MyTickets = () => {
             <div className="relative ">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-gray-800/60 to-gray-900/60 backdrop-blur-sm border border-gray-700/50 rounded-xl hover:border-red-500/30 transition-all duration-300 hover:scale-105 transform"
+                className="cursor-pointer  flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-gray-800/60 to-gray-900/60 backdrop-blur-sm border border-gray-700/50 rounded-xl hover:border-red-500/30 transition-all duration-300 hover:scale-105 transform"
               >
                 <Filter className="h-5 w-5" />
                 <span>Filter</span>
@@ -274,7 +274,7 @@ const MyTickets = () => {
                             setFilterStatus(filter.id);
                             setShowFilters(false);
                           }}
-                          className={`w-full text-left px-4 py-2 rounded-lg transition-all duration-200 ${
+                          className={` cursor-pointer w-full text-left px-4 py-2 rounded-lg transition-all duration-200 ${
                             filterStatus === filter.id
                               ? 'bg-red-600/20 text-red-400 border border-red-500/30'
                               : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
@@ -299,7 +299,7 @@ const MyTickets = () => {
                 </span>
                 <button
                   onClick={() => setFilterStatus('all')}
-                  className="text-red-400 hover:text-red-300 transition-colors"
+                  className="text-red-400 hover:text-red-300 transition-colors cursor-pointer "
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -406,7 +406,7 @@ const MyTickets = () => {
                     {status.label === 'Upcoming' && canCancel ? (
                       <button
                         onClick={() => handleCancelClick(ticket)}
-                        className="w-full mt-4 px-4 py-3 bg-gradient-to-r from-red-700 to-orange-600/20 rounded-xl hover:from-red-500 hover:to-red-600 transition-all duration-300 font-bold shadow-lg hover:shadow-red-500/50 hover:scale-105 transform"
+                        className="cursor-pointer w-full mt-4 px-4 py-3 bg-gradient-to-r from-red-700 to-orange-600/20 rounded-xl hover:from-red-500 hover:to-red-600 transition-all duration-300 font-bold shadow-lg hover:shadow-red-500/50 hover:scale-105 transform"
                       >
                         Cancel Booking
                       </button>
