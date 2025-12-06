@@ -11,7 +11,7 @@ const Landing = () => {
   const [movies, setMovies] = useState([]);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [userName] = useState("John Doe");
+  const [userName, setUserName] = useState("Guest");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingLogout, setPendingLogout] = useState(false);
@@ -94,6 +94,21 @@ const Landing = () => {
       setPendingLogout(false);
     }
   };
+
+  // fethc customer details
+  useEffect(() => {
+    try {
+      const u =
+        JSON.parse(localStorage.getItem("mobook_user")) ||
+        JSON.parse(localStorage.getItem("user"));
+
+      if (u) {
+        const full =
+          `${u.FirstName || ""} ${u.MiddleName ? u.MiddleName + " " : ""}${u.LastName || ""}`.trim();
+        setUserName(full || "Guest");
+      }
+    } catch {}
+  }, []);
 
   // Fetch movies for background
   useEffect(() => {
