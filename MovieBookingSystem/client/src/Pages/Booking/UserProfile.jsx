@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, Lock, Edit2, Save, X, Eye, EyeOff, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+const API_BASE = "http://localhost/mobook_api";
+
 const UserProfile = () => {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
@@ -12,30 +14,116 @@ const UserProfile = () => {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [passwordsMatch, setPasswordsMatch] = useState(true);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
-  // Original user data
+  // --- helpers to keep UI same but DB correct ---
+  const buildFullName = (first, middle, last) => {
+    return `${first || ""} ${middle ? middle + " " : ""}${last || ""}`.trim();
+  };
+
+  // naive splitter: First = first word, Last = last word, Middle = everything between
+  const splitFullName = (fullName) => {
+    const parts = fullName.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return { FirstName: "", MiddleName: "", LastName: "" };
+    if (parts.length === 1) return { FirstName: parts[0], MiddleName: "", LastName: "" };
+    if (parts.length === 2) return { FirstName: parts[0], MiddleName: "", LastName: parts[1] };
+
+    return {
+      FirstName: parts[0],
+      MiddleName: parts.slice(1, -1).join(" "),
+      LastName: parts[parts.length - 1]
+    };
+  };
+
+  const getLoggedInCustomerId = () => {
+    try {
+      const mobookUser =
+        JSON.parse(localStorage.getItem("mobook_user") || sessionStorage.getItem("mobook_user") || "null");
+      const user =
+        JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user") || "null");
+
+      return (
+        mobookUser?.CustomerId ||
+        mobookUser?.id ||
+        user?.CustomerId ||
+        user?.id ||
+        null
+      );
+    } catch {
+      return null;
+    }
+  };
+
+  // Original user data (UI-friendly)
   const [originalData, setOriginalData] = useState({
-    name: 'John Doe',
-    email: 'johndoe@example.com',
-    mobile: '+63 923 1324 213',
+    CustomerId: null,
+    name: '',
+    email: '',
+    mobile: '',
     password: '********'
   });
 
-  // Editable user data
+  // Editable user data (UI-friendly)
   const [userData, setUserData] = useState({
     ...originalData,
     newPassword: '',
     confirmPassword: ''
   });
 
+  // Fetch profile from DB
+  const fetchProfile = async () => {
+    const id = getLoggedInCustomerId();
+    if (!id) {
+      navigate("/", { replace: true });
+      return;
+    }
+
+    setIsLoadingProfile(true);
+    try {
+      const res = await fetch(`${API_BASE}/get_profile.php?customer_id=${id}`);
+      const data = await res.json();
+
+      if (data.success) {
+        const c = data.customer;
+        const fullName = buildFullName(c.FirstName, c.MiddleName, c.LastName);
+
+        const base = {
+          CustomerId: c.CustomerId,
+          name: fullName,
+          email: c.Email || '',
+          mobile: c.Phone_Number || '',
+          password: '********'
+        };
+
+        setOriginalData(base);
+        setUserData({
+          ...base,
+          newPassword: '',
+          confirmPassword: ''
+        });
+      } else {
+        console.error(data.message);
+      }
+    } catch (err) {
+      console.error("Fetch profile failed:", err);
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+    // eslint-disable-next-line
+  }, []);
+
   // Check if there are any changes
   useEffect(() => {
-    const changed = 
+    const changed =
       userData.name !== originalData.name ||
       userData.email !== originalData.email ||
       userData.mobile !== originalData.mobile ||
       userData.newPassword !== '';
-    
+
     setHasChanges(changed);
   }, [userData, originalData]);
 
@@ -52,7 +140,6 @@ const UserProfile = () => {
 
   const handleEdit = () => {
     setIsEditing(true);
-    // Reset password fields when entering edit mode
     setUserData(prev => ({
       ...prev,
       newPassword: '',
@@ -75,45 +162,65 @@ const UserProfile = () => {
     setPasswordsMatch(true);
   };
 
+  // ✅ REAL DB SAVE, UI unchanged
   const handleSave = async () => {
-    // Don't save if passwords don't match
-    if (!passwordsMatch) {
-      return;
-    }
+    if (!passwordsMatch) return;
 
     setIsSaving(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      const updatedData = { ...userData };
-      
-      // If new password was provided, update it
-      if (userData.newPassword) {
-        updatedData.password = '••••••••'; // Show masked password
-      }
-      
-      // Remove temporary password fields
-      delete updatedData.newPassword;
-      delete updatedData.confirmPassword;
-      
-      setOriginalData(updatedData);
-      setUserData({
-        ...updatedData,
-        newPassword: '',
-        confirmPassword: ''
+
+    try {
+      const { FirstName, MiddleName, LastName } = splitFullName(userData.name);
+
+      const payload = {
+        CustomerId: originalData.CustomerId,
+        FirstName,
+        MiddleName,
+        LastName,
+        Email: userData.email,
+        Phone_Number: userData.mobile,
+        NewPassword: userData.newPassword || ""
+      };
+
+      const res = await fetch(`${API_BASE}/update_profile.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
       });
-      
+
+      const data = await res.json();
+
+      if (!data.success) {
+        alert(data.message || "Update failed");
+        return;
+      }
+
+      // refresh from DB
+      await fetchProfile();
+
+      // update localStorage so other pages reflect changes
+      const updatedUser = {
+        ...JSON.parse(localStorage.getItem("mobook_user") || "{}"),
+        FirstName,
+        MiddleName,
+        LastName,
+        Email: userData.email,
+        Phone_Number: userData.mobile
+      };
+
+      localStorage.setItem("mobook_user", JSON.stringify(updatedUser));
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
       setIsEditing(false);
       setHasChanges(false);
-      setIsSaving(false);
-      setShowPassword({
-        newPassword: false,
-        confirmPassword: false
-      });
+      setShowPassword({ newPassword: false, confirmPassword: false });
       setPasswordsMatch(true);
-      
-      console.log('Profile updated successfully!');
-    }, 1500);
+
+    } catch (err) {
+      console.error("Save failed:", err);
+      alert("Save failed. Check console.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleInputChange = (field, value) => {
@@ -133,6 +240,14 @@ const UserProfile = () => {
   const handleHomeClick = () => {
     navigate('/Home');
   };
+
+  if (isLoadingProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        Loading profile...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-black via-[#1a0000] to-red-900 text-white pb-12 pt-17 md:py-12 px-4">
@@ -237,7 +352,6 @@ const UserProfile = () => {
 
               {/* Password Fields */}
               {!isEditing ? (
-                /* View Mode - Single Password Field */
                 <div>
                   <label className="block text-sm font-semibold text-gray-400 mb-2">
                     <div className="flex items-center gap-2">
@@ -255,7 +369,6 @@ const UserProfile = () => {
                   </div>
                 </div>
               ) : (
-                /* Edit Mode - New Password and Confirm Password Fields */
                 <>
                   {/* New Password Field */}
                   <div>
