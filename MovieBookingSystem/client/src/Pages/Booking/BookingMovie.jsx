@@ -12,16 +12,11 @@ const BookingMovie = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const carouselRef = useRef(null);
   const autoRotateRef = useRef(null);
-
-  // NEW: movies from API instead of hardcoded
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Trailer modal state
   const [showTrailer, setShowTrailer] = useState(false);
-  // Sample link trailer
-  const sampleTrailerUrl = "https://www.youtube.com/watch?v=TcMBFSGVi1c";
+  const currentTrailerUrl = movies[currentIndex]?.trailer;
 
   // Fetch movies from backend
   useEffect(() => {
@@ -445,15 +440,22 @@ const BookingMovie = () => {
                     </p>
                     <div className='flex flex-col md:flex-row w-full gap-5'> 
                       
-                       <button 
+                      <button 
                         onClick={openTrailer}
-                        className="cursor-pointer w-full md:w-auto px-10 py-4 bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-gray-500/50 hover:scale-105 transform flex items-center justify-center gap-2"
+                        disabled={!currentTrailerUrl}
+                        className={`w-full md:w-auto px-10 py-4 rounded-xl transition-all duration-300 font-bold text-lg shadow-lg transform flex items-center justify-center gap-2
+                          bg-gradient-to-r from-gray-700 to-gray-800
+                          ${!currentTrailerUrl
+                            ? "opacity-50 cursor-not-allowed"
+                            : "cursor-pointer hover:from-gray-600 hover:to-gray-700 hover:shadow-gray-500/50 hover:scale-105"
+                          }`}
                       >
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
                         </svg>
                         Watch Trailer
                       </button>
+
 
                       <button 
                       onClick={handleBookNow}
@@ -519,7 +521,7 @@ const BookingMovie = () => {
               <div className="relative pt-[56.25%] bg-black">
                 <iframe
                   className="absolute top-0 left-0 w-full h-full"
-                  src={getYouTubeEmbedUrl(sampleTrailerUrl)}
+                  src={getYouTubeEmbedUrl(currentTrailerUrl)}
                   title="Movie Trailer"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -540,7 +542,7 @@ const BookingMovie = () => {
                   </div>
                   <div className="flex gap-3 mt-15 md:w-auto w-full md:mt-0">
                     <button 
-                      onClick={() => window.open(sampleTrailerUrl, '_blank')}
+                      onClick={() => window.open(currentTrailerUrl, "_blank")}
                       className="px-6 py-3 md:w-auto w-full bg-gray-800 hover:bg-gray-700 rounded-lg transition-all duration-300 text-white font-semibold flex justify-center items-center gap-2"
                     >
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 04, 2025 at 02:55 AM
+-- Generation Time: Dec 07, 2025 at 01:04 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -24,6 +24,30 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `admin`
+--
+
+CREATE TABLE `admin` (
+  `AdminID` int(11) NOT NULL,
+  `FirstName` varchar(100) NOT NULL,
+  `MiddleName` varchar(100) DEFAULT NULL,
+  `LastName` varchar(100) NOT NULL,
+  `Email` varchar(150) NOT NULL,
+  `Phone` varchar(11) DEFAULT NULL,
+  `Password` varchar(255) NOT NULL,
+  `CreatedAt` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `admin`
+--
+
+INSERT INTO `admin` (`AdminID`, `FirstName`, `MiddleName`, `LastName`, `Email`, `Phone`, `Password`, `CreatedAt`) VALUES
+(1, 'System', NULL, 'Admin', 'admin@mobook.com', '09123456789', '$2y$10$o4seQeUG3FNrKJM6LWHH1ejkbklxEBZZwKnfPg4d2xzn4Sqp08oge', '2025-12-06 23:14:40');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `booking`
 --
 
@@ -37,6 +61,22 @@ CREATE TABLE `booking` (
   `PaymentMethod` varchar(50) DEFAULT NULL,
   `CreatedAt` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `booking`
+--
+
+INSERT INTO `booking` (`BookingId`, `CustomerId`, `ShowTimeId`, `BookingDate`, `PaymentStatus`, `TotalAmount`, `PaymentMethod`, `CreatedAt`) VALUES
+(1, 1, 1, '2025-12-03', 'Paid', 250.00, 'GCash', '2025-12-03 12:37:12'),
+(2, 1, 147, '2025-12-04', 'PAID', 250.00, 'paypal', '2025-12-04 08:12:54'),
+(9, 2, 147, '2025-12-04', 'PAID', 250.00, 'paypal', '2025-12-04 08:56:18'),
+(10, 2, 121, '2025-12-04', 'PAID', 300.00, 'card', '2025-12-04 09:05:28'),
+(11, 2, 156, '2025-12-04', 'PAID', 320.00, 'paymaya', '2025-12-04 09:06:30'),
+(12, 1, 147, '2025-12-04', 'PAID', 23500.00, 'gcash', '2025-12-04 09:46:14'),
+(13, 1, 149, '2025-12-04', 'PAID', 24000.00, 'paypal', '2025-12-04 09:48:43'),
+(16, 1, 1, '2025-12-05', 'PAID', 250.00, 'paypal', '2025-12-05 07:07:41'),
+(17, 1, 155, '2025-12-05', 'PAID', 250.00, 'paypal', '2025-12-05 16:59:15'),
+(18, 1, 157, '2025-12-06', 'PAID', 250.00, 'paypal', '2025-12-06 20:08:06');
 
 -- --------------------------------------------------------
 
@@ -59,7 +99,7 @@ CREATE TABLE `customer` (
 --
 
 INSERT INTO `customer` (`CustomerId`, `FirstName`, `MiddleName`, `LastName`, `Email`, `Password`, `Phone_Number`) VALUES
-(1, 'Sergio', 'R', 'Neri', 'gioneri1022@gmail.com', '$2y$10$OWCVnhyLLMVvHxPG4ZGsCuxeI0UqRFa7E7SAbbcnG4jB2RYfw5t/C', '09638523852'),
+(1, 'Rj', '', 'Neri', 'gioneri1022@gmail.com', '$2y$10$WuXpnzCI.rY30psx48gP8u0gs47pqe5mR1I1jgQRki1FDwQVVVTCe', '09638523852'),
 (2, 'SampleOne', 'R', 'Neri', 'SampleOne@gmail.com', '$2y$10$K.nX3ql7mHnG8WOLR1VYPOkoe.phym2zixFEjTkYnRinTmfLZpcT.', '09638523853'),
 (3, 'Lance Timothy', 'Baculi', 'Satorre', 'lanceerrotas@gmail.com', '$2y$10$/N0oagqUwTC2.kM99cfyzO30E0YtI7Cve.CUuyX9XWW6ZjtrlDVOi', '09232323232');
 
@@ -76,6 +116,7 @@ CREATE TABLE `movie` (
   `DurationMinutes` int(11) NOT NULL,
   `RatingCode` varchar(10) NOT NULL,
   `PosterPath` varchar(255) NOT NULL,
+  `TrailerUrl` varchar(255) DEFAULT NULL,
   `Description` text NOT NULL,
   `ReleaseDate` date NOT NULL,
   `BasePrice` decimal(10,2) NOT NULL
@@ -85,13 +126,19 @@ CREATE TABLE `movie` (
 -- Dumping data for table `movie`
 --
 
-INSERT INTO `movie` (`MovieId`, `Title`, `Genre`, `DurationMinutes`, `RatingCode`, `PosterPath`, `Description`, `ReleaseDate`, `BasePrice`) VALUES
-(1, 'Altered', 'Science Fiction, Action', 132, 'R-5', '/assets/Movies/altered.jpg', 'In an alternate present, genetically enhanced humans dominate society. Outcasts Leon and Chloe fight for justice against corrupt politicians exploiting genetic disparity, risking everything to challenge the oppressive system.', '2025-11-25', 250.00),
-(2, 'Avengers: Endgame', 'Adventure, Science Fiction, Action', 153, 'R-5', '/assets/Movies/avengers-endgame.jpg', 'After Thanos, devastating snap leaves the universe in ruins, the remaining Avengers reunite to undo his actions and restore balance—no matter the cost.', '2025-11-25', 300.00),
-(3, 'Frankenstein', 'Drama, Horror, Science Fiction', 125, 'R-5', '/assets/Movies/frankenstein.jpg', 'Dr. Victor Frankenstein, a brilliant but egotistical scientist, brings a creature to life in a monstrous experiment that ultimately leads to the undoing of both the creator and his tragic creation.', '2025-11-25', 250.00),
-(4, 'In Your Dreams', 'Comedy, Adventure, Animation, Fantasy, Family', 81, 'R-5', '/assets/Movies/in-your-dreams.jpg', 'Stevie and her little brother Elliot journey into the wildly absurd landscape of their own dreams to ask the Sandman to grant them the perfect family.', '2025-11-25', 200.00),
-(5, 'War of the Worlds', 'Science Fiction, Thriller', 145, 'R-5', '/assets/Movies/war-of-the-worlds.jpg', 'Will Radford, a top Homeland Security cyber-analyst, uncovers a mysterious attack that makes him question whether the government is hiding the truth from him—and the world.', '2025-11-25', 280.00),
-(6, 'Wicked: For Good', 'Romance, Fantasy, Adventure', 137, 'R-5', '/assets/Movies/wicked-for-good.jpg', 'As an angry mob rises against the Wicked Witch, Glinda and Elphaba will need to come together one final time. With their singular friendship now the fulcrum of their futures, they will need to truly see each other, with honesty and empathy, if they are to change themselves, and all of Oz, for good.', '2025-11-25', 320.00);
+INSERT INTO `movie` (`MovieId`, `Title`, `Genre`, `DurationMinutes`, `RatingCode`, `PosterPath`, `TrailerUrl`, `Description`, `ReleaseDate`, `BasePrice`) VALUES
+(1, 'Altered', 'Science Fiction, Action', 132, 'R-5', '/assets/Movies/altered.jpg', 'https://www.youtube.com/watch?v=kvdBGQ8g-Uk', 'In an alternate present, genetically enhanced humans dominate society. Outcasts Leon and Chloe fight for justice against corrupt politicians exploiting genetic disparity, risking everything to challenge the oppressive system.', '2025-11-25', 250.00),
+(2, 'Avengers: Endgame', 'Adventure, Science Fiction, Action', 153, 'R-5', '/assets/Movies/avengers-endgame.jpg', 'https://www.youtube.com/watch?v=TcMBFSGVi1c', 'After Thanos, devastating snap leaves the universe in ruins, the remaining Avengers reunite to undo his actions and restore balance—no matter the cost.', '2025-11-25', 300.00),
+(3, 'Frankenstein', 'Drama, Horror, Science Fiction', 125, 'R-5', '/assets/Movies/frankenstein.jpg', 'https://www.youtube.com/watch?v=x--N03NO130', 'Dr. Victor Frankenstein, a brilliant but egotistical scientist, brings a creature to life in a monstrous experiment that ultimately leads to the undoing of both the creator and his tragic creation.', '2025-11-25', 250.00),
+(4, 'In Your Dreams', 'Comedy, Adventure, Animation, Fantasy, Family', 81, 'R-5', '/assets/Movies/in-your-dreams.jpg', 'https://www.youtube.com/watch?v=DHqLhLee8Gc', 'Stevie and her little brother Elliot journey into the wildly absurd landscape of their own dreams to ask the Sandman to grant them the perfect family.', '2025-11-25', 200.00),
+(5, 'War of the Worlds', 'Science Fiction, Thriller', 145, 'R-5', '/assets/Movies/war-of-the-worlds.jpg', 'https://www.youtube.com/watch?v=mDHgHTho7gs', 'Will Radford, a top Homeland Security cyber-analyst, uncovers a mysterious attack that makes him question whether the government is hiding the truth from him—and the world.', '2025-11-25', 280.00),
+(6, 'Wicked: For Good', 'Romance, Fantasy, Adventure', 137, 'R-5', '/assets/Movies/wicked-for-good.jpg', 'https://www.youtube.com/watch?v=R2Xubj7lazE', 'As an angry mob rises against the Wicked Witch, Glinda and Elphaba will need to come together one final time. With their singular friendship now the fulcrum of their futures, they will need to truly see each other, with honesty and empathy, if they are to change themselves, and all of Oz, for good.', '2025-11-25', 320.00),
+(7, 'TRON: Ares', 'Science Fiction, Adventure, Action', 119, 'PG-13', '/assets/Movies/tron-ares.jpeg', 'https://www.youtube.com/watch?v=9KVG_X_7Naw', 'A highly sophisticated Program called Ares is sent from the digital world into the real world on a dangerous mission, marking humankind\'s first encounter with A.I. beings.', '2025-12-15', 300.00),
+(8, 'Zootopia 2', 'Animation, Family, Comedy, Adventure, Mystery', 107, 'PG', '/assets/Movies/zootopia2.jpg', 'https://www.youtube.com/watch?v=BjkIOU5PhyQ', 'After cracking the biggest case in Zootopia\'s history, rookie cops Judy Hopps and Nick Wilde find themselves on the twisting trail of a great mystery when Gary De’Snake arrives and turns the animal metropolis upside down. To crack the case, Judy and Nick must go undercover to unexpected new parts of town, where their growing partnership is tested like never before.', '2025-12-15', 250.00),
+(9, 'Troll 2', 'Fantasy, Action, Adventure', 104, 'PG-13', '/assets/Movies/troll2.jpg', 'https://www.youtube.com/watch?v=HF3NFXPcYRg', 'Nora, Andreas and Captain Kris leap back into action when a dangerous new troll awakes — and this time they\'ll need more help to take it down.', '2025-12-15', 280.00),
+(10, 'Muzzle: City of Wolves', 'Action, Crime, Thriller, Horror, Drama, Mystery', 93, 'R', '/assets/Movies/city-of-wolves.jpg', 'https://www.youtube.com/watch?v=byxLYzDRGYs', 'LAPD officer Jake Rosser endeavors to lead a peaceful life with his family and retired K-9 officer, Socks. However, tranquility dissolves into chaos when a gang targets them in a brutal attack. Alongside his new K-9 partner Argos, Jake launches into a relentless pursuit of justice, determined to protect his loved ones.', '2025-12-15', 260.00),
+(11, 'The Elixir', 'Horror, Thriller', 116, 'R', '/assets/Movies/the-elixir.jpg', 'https://www.youtube.com/watch?v=nNABgDUcwew', 'A dysfunctional family running a renowned herbal medicine business. The owner of the company attempts to innovate by creating a new potion, which ends up triggering a zombie outbreak.', '2025-12-15', 250.00),
+(12, 'The Conjuring: Last Rites', 'Horror', 135, 'R', '/assets/Movies/the-conjuring.jpg', 'https://www.youtube.com/watch?v=bMgfsdYoEEo', 'Paranormal investigators Ed and Lorraine Warren take on one last terrifying case involving mysterious entities they must confront.', '2025-12-15', 320.00);
 
 -- --------------------------------------------------------
 
@@ -2566,8 +2613,219 @@ CREATE TABLE `ticketing` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
+-- Dumping data for table `ticketing`
+--
+
+INSERT INTO `ticketing` (`TicketId`, `BookingId`, `SeatId`, `Price`) VALUES
+(1, 2, 469, 250),
+(2, 1, 85, 250),
+(3, 9, 480, 250),
+(4, 10, 373, 300),
+(5, 11, 469, 320),
+(6, 12, 385, 250),
+(7, 12, 386, 250),
+(8, 12, 387, 250),
+(9, 12, 397, 250),
+(10, 12, 398, 250),
+(11, 12, 399, 250),
+(12, 12, 388, 250),
+(13, 12, 389, 250),
+(14, 12, 391, 250),
+(15, 12, 392, 250),
+(16, 12, 390, 250),
+(17, 12, 393, 250),
+(18, 12, 394, 250),
+(19, 12, 395, 250),
+(20, 12, 396, 250),
+(21, 12, 408, 250),
+(22, 12, 407, 250),
+(23, 12, 406, 250),
+(24, 12, 405, 250),
+(25, 12, 404, 250),
+(26, 12, 403, 250),
+(27, 12, 402, 250),
+(28, 12, 401, 250),
+(29, 12, 400, 250),
+(30, 12, 409, 250),
+(31, 12, 410, 250),
+(32, 12, 411, 250),
+(33, 12, 412, 250),
+(34, 12, 413, 250),
+(35, 12, 414, 250),
+(36, 12, 415, 250),
+(37, 12, 416, 250),
+(38, 12, 417, 250),
+(39, 12, 418, 250),
+(40, 12, 419, 250),
+(41, 12, 420, 250),
+(42, 12, 432, 250),
+(43, 12, 431, 250),
+(44, 12, 430, 250),
+(45, 12, 429, 250),
+(46, 12, 428, 250),
+(47, 12, 427, 250),
+(48, 12, 426, 250),
+(49, 12, 425, 250),
+(50, 12, 424, 250),
+(51, 12, 421, 250),
+(52, 12, 422, 250),
+(53, 12, 423, 250),
+(54, 12, 433, 250),
+(55, 12, 434, 250),
+(56, 12, 435, 250),
+(57, 12, 436, 250),
+(58, 12, 437, 250),
+(59, 12, 438, 250),
+(60, 12, 439, 250),
+(61, 12, 440, 250),
+(62, 12, 441, 250),
+(63, 12, 442, 250),
+(64, 12, 443, 250),
+(65, 12, 444, 250),
+(66, 12, 445, 250),
+(67, 12, 446, 250),
+(68, 12, 447, 250),
+(69, 12, 448, 250),
+(70, 12, 449, 250),
+(71, 12, 450, 250),
+(72, 12, 451, 250),
+(73, 12, 452, 250),
+(74, 12, 453, 250),
+(75, 12, 454, 250),
+(76, 12, 455, 250),
+(77, 12, 456, 250),
+(78, 12, 457, 250),
+(79, 12, 458, 250),
+(80, 12, 459, 250),
+(81, 12, 460, 250),
+(82, 12, 461, 250),
+(83, 12, 462, 250),
+(84, 12, 463, 250),
+(85, 12, 464, 250),
+(86, 12, 465, 250),
+(87, 12, 466, 250),
+(88, 12, 467, 250),
+(89, 12, 468, 250),
+(90, 12, 470, 250),
+(91, 12, 471, 250),
+(92, 12, 472, 250),
+(93, 12, 473, 250),
+(94, 12, 474, 250),
+(95, 12, 475, 250),
+(96, 12, 476, 250),
+(97, 12, 477, 250),
+(98, 12, 478, 250),
+(99, 12, 479, 250),
+(100, 13, 385, 250),
+(101, 13, 386, 250),
+(102, 13, 387, 250),
+(103, 13, 397, 250),
+(104, 13, 398, 250),
+(105, 13, 399, 250),
+(106, 13, 409, 250),
+(107, 13, 410, 250),
+(108, 13, 411, 250),
+(109, 13, 421, 250),
+(110, 13, 422, 250),
+(111, 13, 423, 250),
+(112, 13, 433, 250),
+(113, 13, 434, 250),
+(114, 13, 435, 250),
+(115, 13, 445, 250),
+(116, 13, 446, 250),
+(117, 13, 447, 250),
+(118, 13, 457, 250),
+(119, 13, 458, 250),
+(120, 13, 459, 250),
+(121, 13, 469, 250),
+(122, 13, 470, 250),
+(123, 13, 471, 250),
+(124, 13, 388, 250),
+(125, 13, 389, 250),
+(126, 13, 390, 250),
+(127, 13, 391, 250),
+(128, 13, 392, 250),
+(129, 13, 393, 250),
+(130, 13, 394, 250),
+(131, 13, 395, 250),
+(132, 13, 396, 250),
+(133, 13, 408, 250),
+(134, 13, 407, 250),
+(135, 13, 406, 250),
+(136, 13, 405, 250),
+(137, 13, 404, 250),
+(138, 13, 450, 250),
+(139, 13, 467, 250),
+(140, 13, 426, 250),
+(141, 13, 443, 250),
+(142, 13, 413, 250),
+(143, 13, 430, 250),
+(144, 13, 437, 250),
+(145, 13, 432, 250),
+(146, 13, 400, 250),
+(147, 13, 402, 250),
+(148, 13, 418, 250),
+(149, 13, 401, 250),
+(150, 13, 403, 250),
+(151, 13, 440, 250),
+(152, 13, 449, 250),
+(153, 13, 464, 250),
+(154, 13, 461, 250),
+(155, 13, 475, 250),
+(156, 13, 472, 250),
+(157, 13, 477, 250),
+(158, 13, 463, 250),
+(159, 13, 436, 250),
+(160, 13, 428, 250),
+(161, 13, 424, 250),
+(162, 13, 429, 250),
+(163, 13, 412, 250),
+(164, 13, 417, 250),
+(165, 13, 416, 250),
+(166, 13, 415, 250),
+(167, 13, 414, 250),
+(168, 13, 438, 250),
+(169, 13, 425, 250),
+(170, 13, 427, 250),
+(171, 13, 439, 250),
+(172, 13, 441, 250),
+(173, 13, 448, 250),
+(174, 13, 453, 250),
+(175, 13, 452, 250),
+(176, 13, 451, 250),
+(177, 13, 460, 250),
+(178, 13, 462, 250),
+(179, 13, 474, 250),
+(180, 13, 473, 250),
+(181, 13, 465, 250),
+(182, 13, 476, 250),
+(183, 13, 478, 250),
+(184, 13, 466, 250),
+(185, 13, 442, 250),
+(186, 13, 431, 250),
+(187, 13, 420, 250),
+(188, 13, 419, 250),
+(189, 13, 444, 250),
+(190, 13, 456, 250),
+(191, 13, 455, 250),
+(192, 13, 454, 250),
+(193, 13, 479, 250),
+(194, 13, 480, 250),
+(195, 13, 468, 250),
+(198, 16, 37, 250),
+(199, 17, 469, 250),
+(200, 18, 469, 250);
+
+--
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `admin`
+--
+ALTER TABLE `admin`
+  ADD PRIMARY KEY (`AdminID`),
+  ADD UNIQUE KEY `Email` (`Email`);
 
 --
 -- Indexes for table `booking`
@@ -2630,10 +2888,16 @@ ALTER TABLE `ticketing`
 --
 
 --
+-- AUTO_INCREMENT for table `admin`
+--
+ALTER TABLE `admin`
+  MODIFY `AdminID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `booking`
 --
 ALTER TABLE `booking`
-  MODIFY `BookingId` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `BookingId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `customer`
@@ -2645,7 +2909,7 @@ ALTER TABLE `customer`
 -- AUTO_INCREMENT for table `movie`
 --
 ALTER TABLE `movie`
-  MODIFY `MovieId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `MovieId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `screen`
@@ -2675,7 +2939,7 @@ ALTER TABLE `theater`
 -- AUTO_INCREMENT for table `ticketing`
 --
 ALTER TABLE `ticketing`
-  MODIFY `TicketId` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `TicketId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=201;
 
 --
 -- Constraints for dumped tables
