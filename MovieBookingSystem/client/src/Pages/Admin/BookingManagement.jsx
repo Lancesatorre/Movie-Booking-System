@@ -12,250 +12,26 @@ export default function BookingManagement() {
     setAnimateCards(true);
   }, []);
 
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const res = await fetch("http://localhost/mobook_api/get_booking_management.php");
+        const data = await res.json();
+        if (data.success) {
+          setBookings(data.bookings || []);
+        } else {
+          console.error(data.message || "Failed to load bookings");
+        }
+      } catch (err) {
+        console.error("Bookings fetch error:", err);
+      }
+    };
+
+    fetchBookings();
+  }, []);
+
   // Mock booking data - updated structure to support multiple screens per movie
-  const [bookings] = useState([
-    {
-      movieId: 1,
-      movieTitle: 'Altered',
-      movieImage: '/assets/Movies/altered.jpg',
-      // Now screens is an array to support multiple screens
-      screens: ['Screen 1', 'Screen 2', 'Screen 3'],
-      totalBookings: 45, // Updated total across all screens
-      bookingDetails: [
-        {
-          id: 'B001',
-          userName: 'John Doe',
-          email: 'john.doe@example.com',
-          seats: ['A1', 'A2', 'A3'],
-          totalSeats: 3,
-          screen: 'Screen 1',
-          dateTime: 'Dec 5, 2025 - 2:30 PM',
-          location: 'SM City Cebu',
-          status: 'confirmed',
-          totalAmount: 750,
-          bookingDate: 'Dec 4, 2025 10:30 AM'
-        },
-        {
-          id: 'B002',
-          userName: 'Jane Smith',
-          email: 'jane.smith@example.com',
-          seats: ['B5', 'B6'],
-          totalSeats: 2,
-          screen: 'Screen 1',
-          dateTime: 'Dec 5, 2025 - 5:00 PM',
-          location: 'SM City Cebu',
-          status: 'confirmed',
-          totalAmount: 500,
-          bookingDate: 'Dec 4, 2025 11:15 AM'
-        },
-        {
-          id: 'B003',
-          userName: 'Michael Johnson',
-          email: 'michael.j@example.com',
-          seats: ['C8'],
-          totalSeats: 1,
-          screen: 'Screen 1',
-          dateTime: 'Dec 6, 2025 - 7:30 PM',
-          location: 'SM City Cebu',
-          status: 'cancelled',
-          totalAmount: 250,
-          bookingDate: 'Dec 4, 2025 2:45 PM'
-        },
-        {
-          id: 'B011',
-          userName: 'Sarah Connor',
-          email: 'sarah.c@example.com',
-          seats: ['D4', 'D5'],
-          totalSeats: 2,
-          screen: 'Screen 2',
-          dateTime: 'Dec 5, 2025 - 3:30 PM',
-          location: 'Ayala Center Cebu',
-          status: 'confirmed',
-          totalAmount: 500,
-          bookingDate: 'Dec 4, 2025 1:30 PM'
-        },
-        {
-          id: 'B012',
-          userName: 'Kevin Brown',
-          email: 'kevin.b@example.com',
-          seats: ['E1', 'E2', 'E3', 'E4'],
-          totalSeats: 4,
-          screen: 'Screen 3',
-          dateTime: 'Dec 7, 2025 - 8:00 PM',
-          location: 'SM Seaside City Cebu',
-          status: 'confirmed',
-          totalAmount: 1000,
-          bookingDate: 'Dec 4, 2025 3:15 PM'
-        }
-      ]
-    },
-    {
-      movieId: 2,
-      movieTitle: 'Avengers: Endgame',
-      movieImage: '/assets/Movies/avengers-endgame.jpg',
-      screens: ['Screen 1', 'Screen 2'],
-      totalBookings: 35,
-      bookingDetails: [
-        {
-          id: 'B004',
-          userName: 'Sarah Williams',
-          email: 'sarah.w@example.com',
-          seats: ['D4', 'D5', 'D6', 'D7'],
-          totalSeats: 4,
-          screen: 'Screen 2',
-          dateTime: 'Dec 5, 2025 - 3:00 PM',
-          location: 'Ayala Center Cebu',
-          status: 'confirmed',
-          totalAmount: 1200,
-          bookingDate: 'Dec 3, 2025 9:20 AM'
-        },
-        {
-          id: 'B005',
-          userName: 'Robert Brown',
-          email: 'robert.b@example.com',
-          seats: ['E10', 'E11'],
-          totalSeats: 2,
-          screen: 'Screen 2',
-          dateTime: 'Dec 7, 2025 - 8:00 PM',
-          location: 'Ayala Center Cebu',
-          status: 'confirmed',
-          totalAmount: 600,
-          bookingDate: 'Dec 4, 2025 4:10 PM'
-        },
-        {
-          id: 'B013',
-          userName: 'Lisa Parker',
-          email: 'lisa.p@example.com',
-          seats: ['F1', 'F2', 'F3'],
-          totalSeats: 3,
-          screen: 'Screen 1',
-          dateTime: 'Dec 6, 2025 - 5:00 PM',
-          location: 'SM City Cebu',
-          status: 'confirmed',
-          totalAmount: 900,
-          bookingDate: 'Dec 4, 2025 2:00 PM'
-        }
-      ]
-    },
-    {
-      movieId: 3,
-      movieTitle: 'Frankenstein',
-      movieImage: '/assets/Movies/frankenstein.jpg',
-      screens: ['Screen 3'],
-      totalBookings: 12,
-      bookingDetails: [
-        {
-          id: 'B006',
-          userName: 'Emily Davis',
-          email: 'emily.davis@example.com',
-          seats: ['F3', 'F4'],
-          totalSeats: 2,
-          screen: 'Screen 3',
-          dateTime: 'Dec 25, 2025 - 6:30 PM',
-          location: 'SM Seaside City Cebu',
-          status: 'confirmed',
-          totalAmount: 500,
-          bookingDate: 'Dec 4, 2025 1:00 PM'
-        },
-        {
-          id: 'B007',
-          userName: 'David Wilson',
-          email: 'david.wilson@example.com',
-          seats: ['G7'],
-          totalSeats: 1,
-          screen: 'Screen 3',
-          dateTime: 'Dec 26, 2025 - 4:00 PM',
-          location: 'SM Seaside City Cebu',
-          status: 'cancelled',
-          totalAmount: 250,
-          bookingDate: 'Dec 4, 2025 3:30 PM'
-        }
-      ]
-    },
-    {
-      movieId: 4,
-      movieTitle: 'In Your Dreams',
-      movieImage: '/assets/Movies/in-your-dreams.jpg',
-      screens: ['Screen 1', 'Screen 3'],
-      totalBookings: 18,
-      bookingDetails: [
-        {
-          id: 'B008',
-          userName: 'Lisa Anderson',
-          email: 'lisa.a@example.com',
-          seats: ['A5', 'A6', 'A7'],
-          totalSeats: 3,
-          screen: 'Screen 1',
-          dateTime: 'Dec 22, 2025 - 2:00 PM',
-          location: 'Robinson Cybergate Cebu',
-          status: 'confirmed',
-          totalAmount: 600,
-          bookingDate: 'Dec 4, 2025 8:45 AM'
-        },
-        {
-          id: 'B014',
-          userName: 'Mark Taylor',
-          email: 'mark.t@example.com',
-          seats: ['B1', 'B2', 'B3'],
-          totalSeats: 3,
-          screen: 'Screen 3',
-          dateTime: 'Dec 23, 2025 - 4:00 PM',
-          location: 'SM Seaside City Cebu',
-          status: 'confirmed',
-          totalAmount: 600,
-          bookingDate: 'Dec 4, 2025 10:00 AM'
-        }
-      ]
-    },
-    {
-      movieId: 5,
-      movieTitle: 'Wicked: For Good',
-      movieImage: '/assets/Movies/wicked-for-good.jpg',
-      screens: ['Screen 2', 'Screen 3'],
-      totalBookings: 32,
-      bookingDetails: [
-        {
-          id: 'B009',
-          userName: 'Thomas Martinez',
-          email: 'thomas.m@example.com',
-          seats: ['B1', 'B2'],
-          totalSeats: 2,
-          screen: 'Screen 2',
-          dateTime: 'Dec 10, 2025 - 7:00 PM',
-          location: 'SM City Cebu',
-          status: 'confirmed',
-          totalAmount: 640,
-          bookingDate: 'Dec 3, 2025 5:20 PM'
-        },
-        {
-          id: 'B010',
-          userName: 'Jennifer Taylor',
-          email: 'jennifer.t@example.com',
-          seats: ['C9', 'C10', 'C11'],
-          totalSeats: 3,
-          screen: 'Screen 2',
-          dateTime: 'Dec 11, 2025 - 5:30 PM',
-          location: 'SM City Cebu',
-          status: 'cancelled',
-          totalAmount: 960,
-          bookingDate: 'Dec 4, 2025 12:00 PM'
-        },
-        {
-          id: 'B015',
-          userName: 'Alex Johnson',
-          email: 'alex.j@example.com',
-          seats: ['D1', 'D2', 'D3', 'D4', 'D5'],
-          totalSeats: 5,
-          screen: 'Screen 3',
-          dateTime: 'Dec 12, 2025 - 6:00 PM',
-          location: 'Ayala Center Cebu',
-          status: 'confirmed',
-          totalAmount: 1600,
-          bookingDate: 'Dec 4, 2025 11:30 AM'
-        }
-      ]
-    }
-  ]);
+  const [bookings, setBookings] = useState([]);
 
   // Get all unique screens from all movies
   const allScreens = Array.from(new Set(bookings.flatMap(movie => movie.screens))).sort();
