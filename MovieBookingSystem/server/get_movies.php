@@ -1,8 +1,11 @@
 <?php
 include "db_connect.php";
 header("Content-Type: application/json");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Methods: GET, OPTIONS");
 
-// Handle preflight (optional but good)
+// Handle preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
@@ -19,12 +22,11 @@ if ($result && $result->num_rows > 0) {
             "id"          => (int)$row["MovieId"],
             "title"       => $row["Title"],
             "genre"       => $row["Genre"],
-            // convert 132 -> "132m"
             "duration"    => $row["DurationMinutes"] . "m",
             "rating"      => $row["RatingCode"],
             "image"       => $row["PosterPath"],
+            "trailer"     => $row["TrailerUrl"],
             "description" => $row["Description"],
-            // 2025-11-25 -> "Nov 25, 2025"
             "dateRelease" => date("M d, Y", strtotime($row["ReleaseDate"])),
             "price"       => (float)$row["BasePrice"]
         ];

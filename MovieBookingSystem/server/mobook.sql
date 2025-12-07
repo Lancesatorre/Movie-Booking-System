@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 04, 2025 at 02:55 AM
+-- Generation Time: Dec 07, 2025 at 03:34 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,6 +20,30 @@ SET time_zone = "+00:00";
 --
 -- Database: `mobook`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `admin`
+--
+
+CREATE TABLE `admin` (
+  `AdminID` int(11) NOT NULL,
+  `FirstName` varchar(100) NOT NULL,
+  `MiddleName` varchar(100) DEFAULT NULL,
+  `LastName` varchar(100) NOT NULL,
+  `Email` varchar(150) NOT NULL,
+  `Phone` varchar(11) DEFAULT NULL,
+  `Password` varchar(255) NOT NULL,
+  `CreatedAt` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `admin`
+--
+
+INSERT INTO `admin` (`AdminID`, `FirstName`, `MiddleName`, `LastName`, `Email`, `Phone`, `Password`, `CreatedAt`) VALUES
+(1, 'Moobook', 'System', 'Admin', 'admin@mobook.com', '09123456789', '$2y$10$/i9M4DXyEXY63Z3NhshbhewAHyWWsiaL2ovubvwhzo0XeEyX6oQWS', '2025-12-06 23:14:40');
 
 -- --------------------------------------------------------
 
@@ -59,7 +83,7 @@ CREATE TABLE `customer` (
 --
 
 INSERT INTO `customer` (`CustomerId`, `FirstName`, `MiddleName`, `LastName`, `Email`, `Password`, `Phone_Number`) VALUES
-(1, 'Sergio', 'R', 'Neri', 'gioneri1022@gmail.com', '$2y$10$OWCVnhyLLMVvHxPG4ZGsCuxeI0UqRFa7E7SAbbcnG4jB2RYfw5t/C', '09638523852'),
+(1, 'Rj', '', 'Neri', 'gioneri1022@gmail.com', '$2y$10$WuXpnzCI.rY30psx48gP8u0gs47pqe5mR1I1jgQRki1FDwQVVVTCe', '09638523852'),
 (2, 'SampleOne', 'R', 'Neri', 'SampleOne@gmail.com', '$2y$10$K.nX3ql7mHnG8WOLR1VYPOkoe.phym2zixFEjTkYnRinTmfLZpcT.', '09638523853'),
 (3, 'Lance Timothy', 'Baculi', 'Satorre', 'lanceerrotas@gmail.com', '$2y$10$/N0oagqUwTC2.kM99cfyzO30E0YtI7Cve.CUuyX9XWW6ZjtrlDVOi', '09232323232');
 
@@ -76,6 +100,7 @@ CREATE TABLE `movie` (
   `DurationMinutes` int(11) NOT NULL,
   `RatingCode` varchar(10) NOT NULL,
   `PosterPath` varchar(255) NOT NULL,
+  `TrailerUrl` varchar(255) DEFAULT NULL,
   `Description` text NOT NULL,
   `ReleaseDate` date NOT NULL,
   `BasePrice` decimal(10,2) NOT NULL
@@ -85,13 +110,19 @@ CREATE TABLE `movie` (
 -- Dumping data for table `movie`
 --
 
-INSERT INTO `movie` (`MovieId`, `Title`, `Genre`, `DurationMinutes`, `RatingCode`, `PosterPath`, `Description`, `ReleaseDate`, `BasePrice`) VALUES
-(1, 'Altered', 'Science Fiction, Action', 132, 'R-5', '/assets/Movies/altered.jpg', 'In an alternate present, genetically enhanced humans dominate society. Outcasts Leon and Chloe fight for justice against corrupt politicians exploiting genetic disparity, risking everything to challenge the oppressive system.', '2025-11-25', 250.00),
-(2, 'Avengers: Endgame', 'Adventure, Science Fiction, Action', 153, 'R-5', '/assets/Movies/avengers-endgame.jpg', 'After Thanos, devastating snap leaves the universe in ruins, the remaining Avengers reunite to undo his actions and restore balance—no matter the cost.', '2025-11-25', 300.00),
-(3, 'Frankenstein', 'Drama, Horror, Science Fiction', 125, 'R-5', '/assets/Movies/frankenstein.jpg', 'Dr. Victor Frankenstein, a brilliant but egotistical scientist, brings a creature to life in a monstrous experiment that ultimately leads to the undoing of both the creator and his tragic creation.', '2025-11-25', 250.00),
-(4, 'In Your Dreams', 'Comedy, Adventure, Animation, Fantasy, Family', 81, 'R-5', '/assets/Movies/in-your-dreams.jpg', 'Stevie and her little brother Elliot journey into the wildly absurd landscape of their own dreams to ask the Sandman to grant them the perfect family.', '2025-11-25', 200.00),
-(5, 'War of the Worlds', 'Science Fiction, Thriller', 145, 'R-5', '/assets/Movies/war-of-the-worlds.jpg', 'Will Radford, a top Homeland Security cyber-analyst, uncovers a mysterious attack that makes him question whether the government is hiding the truth from him—and the world.', '2025-11-25', 280.00),
-(6, 'Wicked: For Good', 'Romance, Fantasy, Adventure', 137, 'R-5', '/assets/Movies/wicked-for-good.jpg', 'As an angry mob rises against the Wicked Witch, Glinda and Elphaba will need to come together one final time. With their singular friendship now the fulcrum of their futures, they will need to truly see each other, with honesty and empathy, if they are to change themselves, and all of Oz, for good.', '2025-11-25', 320.00);
+INSERT INTO `movie` (`MovieId`, `Title`, `Genre`, `DurationMinutes`, `RatingCode`, `PosterPath`, `TrailerUrl`, `Description`, `ReleaseDate`, `BasePrice`) VALUES
+(1, 'Altered', 'Science Fiction, Action', 132, 'R-5', '/assets/Movies/altered.jpg', 'https://www.youtube.com/watch?v=kvdBGQ8g-Uk', 'In an alternate present, genetically enhanced humans dominate society. Outcasts Leon and Chloe fight for justice against corrupt politicians exploiting genetic disparity, risking everything to challenge the oppressive system.', '2025-11-25', 250.00),
+(2, 'Avengers: Endgame', 'Adventure, Science Fiction, Action', 153, 'R-5', '/assets/Movies/avengers-endgame.jpg', 'https://www.youtube.com/watch?v=TcMBFSGVi1c', 'After Thanos, devastating snap leaves the universe in ruins, the remaining Avengers reunite to undo his actions and restore balance—no matter the cost.', '2025-11-25', 300.00),
+(3, 'Frankenstein', 'Drama, Horror, Science Fiction', 125, 'R-5', '/assets/Movies/frankenstein.jpg', 'https://www.youtube.com/watch?v=x--N03NO130', 'Dr. Victor Frankenstein, a brilliant but egotistical scientist, brings a creature to life in a monstrous experiment that ultimately leads to the undoing of both the creator and his tragic creation.', '2025-11-25', 250.00),
+(4, 'In Your Dreams', 'Comedy, Adventure, Animation, Fantasy, Family', 81, 'R-5', '/assets/Movies/in-your-dreams.jpg', 'https://www.youtube.com/watch?v=DHqLhLee8Gc', 'Stevie and her little brother Elliot journey into the wildly absurd landscape of their own dreams to ask the Sandman to grant them the perfect family.', '2025-11-25', 200.00),
+(5, 'War of the Worlds', 'Science Fiction, Thriller', 145, 'R-5', '/assets/Movies/war-of-the-worlds.jpg', 'https://www.youtube.com/watch?v=mDHgHTho7gs', 'Will Radford, a top Homeland Security cyber-analyst, uncovers a mysterious attack that makes him question whether the government is hiding the truth from him—and the world.', '2025-11-25', 280.00),
+(6, 'Wicked: For Good', 'Romance, Fantasy, Adventure', 137, 'R-5', '/assets/Movies/wicked-for-good.jpg', 'https://www.youtube.com/watch?v=R2Xubj7lazE', 'As an angry mob rises against the Wicked Witch, Glinda and Elphaba will need to come together one final time. With their singular friendship now the fulcrum of their futures, they will need to truly see each other, with honesty and empathy, if they are to change themselves, and all of Oz, for good.', '2025-11-25', 320.00),
+(7, 'TRON: Ares', 'Science Fiction, Adventure, Action', 119, 'PG-13', '/assets/Movies/tron-ares.jpeg', 'https://www.youtube.com/watch?v=9KVG_X_7Naw', 'A highly sophisticated Program called Ares is sent from the digital world into the real world on a dangerous mission, marking humankind\'s first encounter with A.I. beings.', '2025-12-15', 300.00),
+(8, 'Zootopia 2', 'Animation, Family, Comedy, Adventure, Mystery', 107, 'PG', '/assets/Movies/zootopia2.jpg', 'https://www.youtube.com/watch?v=BjkIOU5PhyQ', 'After cracking the biggest case in Zootopia\'s history, rookie cops Judy Hopps and Nick Wilde find themselves on the twisting trail of a great mystery when Gary De’Snake arrives and turns the animal metropolis upside down. To crack the case, Judy and Nick must go undercover to unexpected new parts of town, where their growing partnership is tested like never before.', '2025-12-15', 250.00),
+(9, 'Troll 2', 'Fantasy, Action, Adventure', 104, 'PG-13', '/assets/Movies/troll2.jpg', 'https://www.youtube.com/watch?v=HF3NFXPcYRg', 'Nora, Andreas and Captain Kris leap back into action when a dangerous new troll awakes — and this time they\'ll need more help to take it down.', '2025-12-15', 280.00),
+(10, 'Muzzle: City of Wolves', 'Action, Crime, Thriller, Horror, Drama, Mystery', 93, 'R', '/assets/Movies/city-of-wolves.jpg', 'https://www.youtube.com/watch?v=byxLYzDRGYs', 'LAPD officer Jake Rosser endeavors to lead a peaceful life with his family and retired K-9 officer, Socks. However, tranquility dissolves into chaos when a gang targets them in a brutal attack. Alongside his new K-9 partner Argos, Jake launches into a relentless pursuit of justice, determined to protect his loved ones.', '2025-12-15', 260.00),
+(11, 'The Elixir', 'Horror, Thriller', 116, 'R', '/assets/Movies/the-elixir.jpg', 'https://www.youtube.com/watch?v=nNABgDUcwew', 'A dysfunctional family running a renowned herbal medicine business. The owner of the company attempts to innovate by creating a new potion, which ends up triggering a zombie outbreak.', '2025-12-15', 250.00),
+(12, 'The Conjuring: Last Rites', 'Horror', 135, 'R', '/assets/Movies/the-conjuring.jpg', 'https://www.youtube.com/watch?v=bMgfsdYoEEo', 'Paranormal investigators Ed and Lorraine Warren take on one last terrifying case involving mysterious entities they must confront.', '2025-12-15', 320.00);
 
 -- --------------------------------------------------------
 
@@ -2570,6 +2601,13 @@ CREATE TABLE `ticketing` (
 --
 
 --
+-- Indexes for table `admin`
+--
+ALTER TABLE `admin`
+  ADD PRIMARY KEY (`AdminID`),
+  ADD UNIQUE KEY `Email` (`Email`);
+
+--
 -- Indexes for table `booking`
 --
 ALTER TABLE `booking`
@@ -2630,6 +2668,12 @@ ALTER TABLE `ticketing`
 --
 
 --
+-- AUTO_INCREMENT for table `admin`
+--
+ALTER TABLE `admin`
+  MODIFY `AdminID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `booking`
 --
 ALTER TABLE `booking`
@@ -2645,7 +2689,7 @@ ALTER TABLE `customer`
 -- AUTO_INCREMENT for table `movie`
 --
 ALTER TABLE `movie`
-  MODIFY `MovieId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `MovieId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `screen`

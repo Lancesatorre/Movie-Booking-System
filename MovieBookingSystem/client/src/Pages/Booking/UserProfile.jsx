@@ -15,13 +15,14 @@ const UserProfile = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [passwordsMatch, setPasswordsMatch] = useState(true);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [errorMsg, setErrorMsg] = useState(''); // ✅ show backend errors in UI
 
   // --- helpers to keep UI same but DB correct ---
   const buildFullName = (first, middle, last) => {
     return `${first || ""} ${middle ? middle + " " : ""}${last || ""}`.trim();
   };
 
-  // naive splitter: First = first word, Last = last word, Middle = everything between
+  // splitter: First = first word, Last = last word, Middle = everything between
   const splitFullName = (fullName) => {
     const parts = fullName.trim().split(/\s+/).filter(Boolean);
     if (parts.length === 0) return { FirstName: "", MiddleName: "", LastName: "" };
@@ -140,6 +141,7 @@ const UserProfile = () => {
 
   const handleEdit = () => {
     setIsEditing(true);
+    setErrorMsg('');
     setUserData(prev => ({
       ...prev,
       newPassword: '',
@@ -148,6 +150,7 @@ const UserProfile = () => {
   };
 
   const handleCancel = () => {
+    setErrorMsg('');
     setUserData({
       ...originalData,
       newPassword: '',
@@ -162,11 +165,12 @@ const UserProfile = () => {
     setPasswordsMatch(true);
   };
 
-  // ✅ REAL DB SAVE, UI unchanged
+  // ✅ REAL DB SAVE, uniform with AdminProfile
   const handleSave = async () => {
     if (!passwordsMatch) return;
 
     setIsSaving(true);
+    setErrorMsg('');
 
     try {
       const { FirstName, MiddleName, LastName } = splitFullName(userData.name);
@@ -174,7 +178,7 @@ const UserProfile = () => {
       const payload = {
         CustomerId: originalData.CustomerId,
         FirstName,
-        MiddleName,
+        MiddleName, // empty string allowed -> backend will set NULL
         LastName,
         Email: userData.email,
         Phone_Number: userData.mobile,
@@ -190,7 +194,7 @@ const UserProfile = () => {
       const data = await res.json();
 
       if (!data.success) {
-        alert(data.message || "Update failed");
+        setErrorMsg(data.message || "Update failed");
         return;
       }
 
@@ -214,10 +218,11 @@ const UserProfile = () => {
       setHasChanges(false);
       setShowPassword({ newPassword: false, confirmPassword: false });
       setPasswordsMatch(true);
+      setErrorMsg('');
 
     } catch (err) {
       console.error("Save failed:", err);
-      alert("Save failed. Check console.");
+      setErrorMsg("Network error. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -480,6 +485,12 @@ const UserProfile = () => {
                     <X size={20} />
                     Cancel
                   </button>
+
+                  {errorMsg && (
+                    <p className="text-sm text-red-400 mt-2 text-left">
+                      {errorMsg}
+                    </p>
+                  )}
                 </>
               )}
             </div>

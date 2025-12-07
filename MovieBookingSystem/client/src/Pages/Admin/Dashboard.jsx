@@ -1,19 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { Film, Ticket, Users, DollarSign, Play, TrendingUp, Calendar } from 'lucide-react';
 
+const API_BASE = "http://localhost/mobook_api";
+
 export default function Dashboard() {
   const [animateCards, setAnimateCards] = useState(false);
+    
+  const [dashboardStats, setDashboardStats] = useState({
+    totalMovies: 0,
+    bookingsToday: 0,
+    totalUsers: 0,
+    totalRevenue: 0,
+  });
+  const [currentMovies, setCurrentMovies] = useState([]);
 
   useEffect(() => {
     setAnimateCards(true);
+    const fetchDashboard = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/get_dashboard.php`);
+        const data = await res.json();
+        if (data.success) {
+          setDashboardStats(data.stats);
+          setCurrentMovies(data.currentMovies || []);
+        } else {
+            console.error(data.message || "Failed to load dashboard data");
+          }
+      } catch (err) {
+          console.error("Dashboard fetch error:", err);
+        }
+    };
+    fetchDashboard();
   }, []);
+
 
   // Sample data
   const stats = [
     {
       icon: Film,
       label: 'Total Movies',
-      value: '156',
+      value: String(dashboardStats.totalMovies),
       changeLabel: 'from last month',
       color: 'from-red-600 to-red-700',
       bgGlow: 'bg-black',
@@ -21,7 +47,7 @@ export default function Dashboard() {
     {
       icon: Ticket,
       label: 'Total Bookings Today',
-      value: '2,847',
+      value: dashboardStats.bookingsToday.toLocaleString(),
       changeLabel: 'from yesterday',
       color: 'from-orange-600 to-red-600',
       bgGlow: 'bg-black',
@@ -29,7 +55,7 @@ export default function Dashboard() {
     {
       icon: Users,
       label: 'Total Users',
-      value: '48,392',
+      value: dashboardStats.totalUsers.toLocaleString(),
       changeLabel: 'new users',
       color: 'from-purple-600 to-red-600',
       bgGlow: 'bg-black',
@@ -37,78 +63,10 @@ export default function Dashboard() {
     {
       icon: DollarSign,
       label: 'Total Revenue',
-      value: '₱892,450',
+      value: `₱${dashboardStats.totalRevenue.toLocaleString()}`,
       changeLabel: 'from last week',
       color: 'from-green-600 to-emerald-600',
       bgGlow: 'bg-black',
-    },
-  ];
-
-  const currentMovies = [
-    {
-      id: 1,
-      title: 'Dune: Part Two',
-      genre: 'Sci-Fi, Adventure',
-      showings: 8,
-      bookings: 456,
-      revenue: '₱128,400',
-    },
-    {
-      id: 2,
-      title: 'Oppenheimer',
-      genre: 'Biography, Drama',
-      showings: 6,
-      bookings: 389,
-      revenue: '₱109,520',
-    },
-    {
-      id: 3,
-      title: 'Spider-Man: Into the Spider-Verse',
-      genre: 'Animation, Action',
-      showings: 10,
-      bookings: 512,
-      revenue: '₱144,160',
-    },
-    {
-      id: 4,
-      title: 'The Batman',
-      genre: 'Action, Crime',
-      showings: 7,
-      bookings: 423,
-      revenue: '₱119,040',
-    },
-    {
-      id: 5,
-      title: 'Barbie',
-      genre: 'Comedy, Fantasy',
-      showings: 9,
-      bookings: 498,
-      revenue: '₱140,220',
-    },
-    // Add more movies for testing scroll
-    {
-      id: 6,
-      title: 'Avatar: The Way of Water',
-      genre: 'Sci-Fi, Adventure',
-      showings: 12,
-      bookings: 612,
-      revenue: '₱172,340',
-    },
-    {
-      id: 7,
-      title: 'Top Gun: Maverick',
-      genre: 'Action, Drama',
-      showings: 11,
-      bookings: 587,
-      revenue: '₱165,280',
-    },
-    {
-      id: 8,
-      title: 'Black Panther: Wakanda Forever',
-      genre: 'Action, Adventure',
-      showings: 9,
-      bookings: 534,
-      revenue: '₱150,420',
     },
   ];
 

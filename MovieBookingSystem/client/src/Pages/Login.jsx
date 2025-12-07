@@ -373,7 +373,7 @@ export default function Login() {
               <p className="text-gray-400">Login to your MoBook account</p>
             </div>
 
-            <div className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-6" onSubmit={handleSubmit}>
               {/* Email Input */}
               <div className="space-y-2 text-left">
                 <label className="block text-sm font-medium text-gray-300">Email Address</label>
@@ -430,7 +430,6 @@ export default function Login() {
 
               {/* Submit Button */}
               <button
-                onClick={handleSubmit}
                 disabled={isLoading || isLoggingIn}
                 className={`cursor-pointer w-full py-3 px-4 bg-gradient-to-r from-red-700 to-orange-600/20 hover:from-red-500 hover:to-red-600 text-white font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-red-500/50 ${
                   isLoading || isLoggingIn
@@ -447,7 +446,7 @@ export default function Login() {
                   'Login'
                 )}
               </button>
-            </div>
+            </form>
 
             {/* Signup Link - Only show in customer mode */}
             {loginMode === 'customer' && (

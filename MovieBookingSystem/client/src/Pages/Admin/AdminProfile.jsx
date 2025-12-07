@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, Lock, Edit2, Save, X, Eye, EyeOff, Shield, Calendar, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+const API_BASE = "http://localhost/mobook_api";
+
 const AdminProfile = () => {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
@@ -12,14 +14,17 @@ const AdminProfile = () => {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [passwordsMatch, setPasswordsMatch] = useState(true);
+  const [errorMsg, setErrorMsg] = useState(''); // UI error message
 
   // Original admin data
   const [originalData, setOriginalData] = useState({
-    name: 'Admin User',
-    email: 'admin@mobook.com',
-    mobile: '+63 912 345 6789',
+    id: 1,
+    name: '',
+    email: '',
+    mobile: '',
     password: '********',
     role: 'System Administrator',
+    createdAt: ''
   });
 
   // Editable admin data
@@ -29,14 +34,46 @@ const AdminProfile = () => {
     confirmPassword: ''
   });
 
+  // Load admin profile from DB
+  useEffect(() => {
+    const fetchAdminProfile = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/get_admin_profile.php`);
+        const data = await res.json();
+
+        if (data.success) {
+          setOriginalData({
+            ...data.admin,
+            password: '********'
+          });
+
+          setUserData({
+            ...data.admin,
+            password: '********',
+            newPassword: '',
+            confirmPassword: ''
+          });
+        } else {
+          // show fetch error as alert (optional) and console
+          alert(data.message || "Failed to load admin profile");
+          console.error(data.message || "Failed to load admin profile");
+        }
+      } catch (err) {
+        console.error("Admin profile fetch error:", err);
+      }
+    };
+
+    fetchAdminProfile();
+  }, []);
+
   // Check if there are any changes
   useEffect(() => {
-    const changed = 
+    const changed =
       userData.name !== originalData.name ||
       userData.email !== originalData.email ||
       userData.mobile !== originalData.mobile ||
       userData.newPassword !== '';
-    
+
     setHasChanges(changed);
   }, [userData, originalData]);
 
@@ -53,6 +90,7 @@ const AdminProfile = () => {
 
   const handleEdit = () => {
     setIsEditing(true);
+    setErrorMsg('');
     setUserData(prev => ({
       ...prev,
       newPassword: '',
@@ -61,6 +99,7 @@ const AdminProfile = () => {
   };
 
   const handleCancel = () => {
+    setErrorMsg('');
     setUserData({
       ...originalData,
       newPassword: '',
@@ -76,40 +115,59 @@ const AdminProfile = () => {
   };
 
   const handleSave = async () => {
-    if (!passwordsMatch) {
-      return;
-    }
+    if (!passwordsMatch) return;
 
     setIsSaving(true);
-    
-    setTimeout(() => {
-      const updatedData = { ...userData };
-      
-      if (userData.newPassword) {
-        updatedData.password = '••••••••';
+    setErrorMsg('');
+
+    try {
+      const payload = {
+        id: originalData.id || 1,
+        name: userData.name,
+        email: userData.email,
+        mobile: userData.mobile,
+        newPassword: userData.newPassword || ""
+      };
+
+      const res = await fetch(`${API_BASE}/update_admin_profile.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        const updatedData = {
+          ...originalData,
+          name: userData.name,
+          email: userData.email,
+          mobile: userData.mobile,
+          password: userData.newPassword ? "••••••••" : originalData.password
+        };
+
+        setOriginalData(updatedData);
+        setUserData({
+          ...updatedData,
+          newPassword: "",
+          confirmPassword: ""
+        });
+
+        setIsEditing(false);
+        setHasChanges(false);
+        setShowPassword({ newPassword: false, confirmPassword: false });
+        setPasswordsMatch(true);
+        setErrorMsg('');
+      } else {
+        setErrorMsg(data.message || "Update failed");
+        console.error(data.message || "Update failed");
       }
-      
-      delete updatedData.newPassword;
-      delete updatedData.confirmPassword;
-      
-      setOriginalData(updatedData);
-      setUserData({
-        ...updatedData,
-        newPassword: '',
-        confirmPassword: ''
-      });
-      
-      setIsEditing(false);
-      setHasChanges(false);
-      setIsSaving(false);
-      setShowPassword({
-        newPassword: false,
-        confirmPassword: false
-      });
-      setPasswordsMatch(true);
-      
-      console.log('Admin profile updated successfully!');
-    }, 1500);
+    } catch (err) {
+      setErrorMsg("Network error. Please try again.");
+      console.error("Admin save error:", err);
+    }
+
+    setIsSaving(false);
   };
 
   const handleInputChange = (field, value) => {
@@ -176,7 +234,7 @@ const AdminProfile = () => {
                   </div>
                 </div>
               </div>
-              
+
               {!isEditing && (
                 <button
                   onClick={handleEdit}
@@ -202,8 +260,8 @@ const AdminProfile = () => {
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   disabled={!isEditing}
                   className={`w-full px-4 py-3 bg-black/40 border rounded-lg text-white transition-all duration-300 ${
-                    isEditing 
-                      ? 'border-red-600/50 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:bg-black/60' 
+                    isEditing
+                      ? 'border-red-600/50 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:bg-black/60'
                       : 'border-red-900/30 cursor-not-allowed opacity-70'
                   } outline-none`}
                 />
@@ -221,8 +279,8 @@ const AdminProfile = () => {
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   disabled={!isEditing}
                   className={`w-full px-4 py-3 bg-black/40 border rounded-lg text-white transition-all duration-300 ${
-                    isEditing 
-                      ? 'border-red-600/50 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:bg-black/60' 
+                    isEditing
+                      ? 'border-red-600/50 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:bg-black/60'
                       : 'border-red-900/30 cursor-not-allowed opacity-70'
                   } outline-none`}
                 />
@@ -240,8 +298,8 @@ const AdminProfile = () => {
                   onChange={(e) => handleInputChange('mobile', e.target.value)}
                   disabled={!isEditing}
                   className={`w-full px-4 py-3 bg-black/40 border rounded-lg text-white transition-all duration-300 ${
-                    isEditing 
-                      ? 'border-red-600/50 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:bg-black/60' 
+                    isEditing
+                      ? 'border-red-600/50 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:bg-black/60'
                       : 'border-red-900/30 cursor-not-allowed opacity-70'
                   } outline-none`}
                 />
@@ -376,6 +434,12 @@ const AdminProfile = () => {
                   <X size={20} />
                   Cancel
                 </button>
+
+                {errorMsg && (
+                  <p className="text-sm text-red-400 mt-2 text-left">
+                    {errorMsg}
+                  </p>
+                )}
               </div>
             )}
           </div>

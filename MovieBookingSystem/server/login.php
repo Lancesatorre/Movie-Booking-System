@@ -20,22 +20,25 @@ if (!$email || !$password) {
     exit;
 }
 
-// First, try to find admin with this email
+/* =========================
+   ADMIN LOGIN (customer style)
+   admin table has:
+   Email
+   Password  (admin123)
+   ========================= */
 $adminSql = "SELECT * FROM admin WHERE Email = ?";
 $adminStmt = $conn->prepare($adminSql);
 $adminStmt->bind_param("s", $email);
 $adminStmt->execute();
 $adminResult = $adminStmt->get_result();
 
-// If admin found
 if ($adminResult->num_rows > 0) {
     $admin = $adminResult->fetch_assoc();
-    
-    // Check admin password
-    if (password_verify($password, $admin["PasswordHash"])) {
-        // Remove password before sending user data
-        unset($admin["PasswordHash"]);
-        
+
+    // admin password stored like customer: hashed in "Password"
+    if (password_verify($password, $admin["Password"])) {
+        unset($admin["Password"]); // remove hash before returning
+
         echo json_encode([
             "success" => true,
             "message" => "Admin login successful",
@@ -49,22 +52,19 @@ if ($adminResult->num_rows > 0) {
     }
 }
 
-// Admin not found, try customer
+/* ========================= CUSTOMER LOGIN ========================= */
 $customerSql = "SELECT * FROM customer WHERE Email = ?";
 $customerStmt = $conn->prepare($customerSql);
 $customerStmt->bind_param("s", $email);
 $customerStmt->execute();
 $customerResult = $customerStmt->get_result();
 
-// If customer found
 if ($customerResult->num_rows > 0) {
     $customer = $customerResult->fetch_assoc();
-    
-    // Check customer password
+
     if (password_verify($password, $customer["Password"])) {
-        // Remove password before sending user data
         unset($customer["Password"]);
-        
+
         echo json_encode([
             "success" => true,
             "message" => "Customer login successful",
