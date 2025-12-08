@@ -17,8 +17,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$uploadedAbsPath = ""; // for cleanup if rollback happens
-
 try {
     $conn->begin_transaction();
 
@@ -67,7 +65,7 @@ try {
         exit;
     }
 
-    // --------- poster upload (optional) ---------
+    // --------- poster upload (optional, NO rename) ---------
     $existingPosterPath = trim($_POST["existingPosterPath"] ?? "");
     $posterPath = $existingPosterPath;
 
@@ -78,19 +76,17 @@ try {
             mkdir($uploadDir, 0777, true);
         }
 
-        $ext = pathinfo($_FILES["poster"]["name"], PATHINFO_EXTENSION);
-        $safeName = uniqid("movie_", true) . "." . $ext;
+        $originalName = basename($_FILES["poster"]["name"]);
+        $safeName = preg_replace("/[^a-zA-Z0-9._-]/", "_", $originalName);
         $targetPath = $uploadDir . $safeName;
 
+        // overwrite if exists (no copy)
         if (!move_uploaded_file($_FILES["poster"]["tmp_name"], $targetPath)) {
             $conn->rollback();
             echo json_encode(["success" => false, "message" => "Poster upload failed"]);
             exit;
         }
 
-        $uploadedAbsPath = $targetPath;
-
-        // ✅ store RELATIVE
         $posterPath = "/assets/Movies/" . $safeName;
     }
 
@@ -144,7 +140,6 @@ try {
     );
 
     if (!$stmt->execute()) {
-        if ($uploadedAbsPath && file_exists($uploadedAbsPath)) unlink($uploadedAbsPath);
         $conn->rollback();
         echo json_encode(["success" => false, "message" => "Failed to update movie", "error" => $stmt->error]);
         exit;
@@ -164,7 +159,6 @@ try {
             if ($gid > 0) {
                 $insG->bind_param("ii", $movieId, $gid);
                 if (!$insG->execute()) {
-                    if ($uploadedAbsPath && file_exists($uploadedAbsPath)) unlink($uploadedAbsPath);
                     $conn->rollback();
                     echo json_encode(["success" => false, "message" => "Failed syncing genres"]);
                     exit;
@@ -187,7 +181,6 @@ try {
             if ($tid > 0) {
                 $insT->bind_param("ii", $movieId, $tid);
                 if (!$insT->execute()) {
-                    if ($uploadedAbsPath && file_exists($uploadedAbsPath)) unlink($uploadedAbsPath);
                     $conn->rollback();
                     echo json_encode(["success" => false, "message" => "Failed syncing theaters"]);
                     exit;
@@ -197,11 +190,12 @@ try {
         $insT->close();
     }
 
-    // --------- OPTIONAL showtime resync ---------
+    // --------- OPTIONAL showtime resync WITH conflict check ---------
     $hasShowtimePayload = (count($screens) > 0 && count($times) > 0 && count($theaters) > 0);
 
     if ($hasShowtimePayload) {
 
+        // delete THIS movie showtimes only
         $delS = $conn->prepare("DELETE FROM showtime WHERE MovieId=?");
         $delS->bind_param("i", $movieId);
         $delS->execute();
@@ -212,6 +206,23 @@ try {
             FROM screen
             WHERE TheaterId = ?
               AND ScreenNumber = ?
+            LIMIT 1
+        ");
+
+        $theaterLookup = $conn->prepare("
+            SELECT Name, Location
+            FROM theater
+            WHERE TheaterId = ?
+            LIMIT 1
+        ");
+
+        $conflictCheck = $conn->prepare("
+            SELECT 1
+            FROM showtime
+            WHERE ScreenId = ?
+              AND ShowDate = ?
+              AND StartTime < ADDTIME(?, '00:30:00')
+              AND EndTime   > SUBTIME(?, '00:30:00')
             LIMIT 1
         ");
 
@@ -250,10 +261,37 @@ try {
                     $endTime   = $endObj->format("H:i:s");
                     $showDate  = $releaseDate;
 
-                    $showStmt->bind_param("iisss", $movieId, $screenId, $showDate, $startTime, $endTime);
+                    // conflict check
+                    $conflictCheck->bind_param("isss", $screenId, $showDate, $endTime, $startTime);
+                    $conflictCheck->execute();
+                    $conflictRes = $conflictCheck->get_result();
 
+                    if ($conflictRes->fetch_assoc()) {
+                        $theaterName = "Theater {$tid}";
+                        $theaterLoc  = "";
+
+                        $theaterLookup->bind_param("i", $tid);
+                        $theaterLookup->execute();
+                        $tRes = $theaterLookup->get_result();
+                        if ($tRow = $tRes->fetch_assoc()) {
+                            $theaterName = $tRow["Name"];
+                            $theaterLoc  = $tRow["Location"];
+                        }
+
+                        $conn->rollback();
+                        $prettyLoc = $theaterLoc ? ", {$theaterLoc}" : "";
+
+                        echo json_encode([
+                            "success" => false,
+                            "message" =>
+                                "⚠️ Schedule Conflict: Less than 30-minute gap between Screen {$sn} events at {$theaterName}{$prettyLoc}."
+                        ]);
+                        exit;
+                    }
+
+                    // insert
+                    $showStmt->bind_param("iisss", $movieId, $screenId, $showDate, $startTime, $endTime);
                     if (!$showStmt->execute()) {
-                        if ($uploadedAbsPath && file_exists($uploadedAbsPath)) unlink($uploadedAbsPath);
                         $conn->rollback();
                         echo json_encode(["success" => false, "message" => "Failed syncing showtimes"]);
                         exit;
@@ -263,6 +301,8 @@ try {
         }
 
         $screenLookup->close();
+        $theaterLookup->close();
+        $conflictCheck->close();
         $showStmt->close();
     }
 
@@ -274,7 +314,6 @@ try {
     ]);
 
 } catch (Exception $e) {
-    if ($uploadedAbsPath && file_exists($uploadedAbsPath)) unlink($uploadedAbsPath);
     if ($conn) $conn->rollback();
     echo json_encode([
         "success" => false,
