@@ -19,14 +19,14 @@ const MyTickets = () => {
     { 
       value: 'now-showing', 
       label: 'Now Showing', 
-      color: 'bg-emerald-500/50 text-emerald-300 border-emerald-500/40',
-      glow: 'shadow-emerald-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-emerald-500/50 text-emerald-300 border-emerald-500/40 shadow-emerald-500/60 shadow-lg animate-pulse-slow0',   
+     color: 'bg-red-500/50 text-red-100 border-red-500/40',
+     glow: 'shadow-red-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-red-500/50 text-red-300 border-red-500/40 shadow-red-500/60 shadow-lg animate-pulse-slow0',  
     },
     { 
       value: 'coming-soon', 
       label: 'Coming Soon', 
-      color: 'bg-red-500/50 text-red-500 border-red-500/40',
-     glow: 'shadow-red-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-red-500/50 text-red-300 border-red-500/40 shadow-red-500/60 shadow-lg animate-pulse-slow0',
+      color: 'bg-emerald-500/50 text-emerald-100 border-emerald-500/40',
+      glow: 'shadow-emerald-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-emerald-500/50 text-emerald-300 border-emerald-500/40 shadow-emerald-500/60 shadow-lg animate-pulse-slow0', 
     },
     { 
       value: 'past', 
@@ -77,47 +77,49 @@ const MyTickets = () => {
 
   // Filter and search tickets
   useEffect(() => {
-    let filtered = [...tickets];
+  let filtered = [...tickets];
 
-    // Apply search filter
-    if (searchTerm.trim() !== '') {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(ticket =>
-        ticket.movieTitle.toLowerCase().includes(term) ||
-        ticket.theatherLocation.toLowerCase().includes(term) ||
-        ticket.seats.some(seat => seat.toLowerCase().includes(term))
-      );
-    }
+  // Apply search filter
+  if (searchTerm.trim() !== '') {
+    const term = searchTerm.toLowerCase();
+    filtered = filtered.filter(ticket =>
+      ticket.movieTitle.toLowerCase().includes(term) ||
+      ticket.theatherLocation.toLowerCase().includes(term) ||
+      ticket.seats.some(seat => seat.toLowerCase().includes(term))
+    );
+  }
 
-    // Apply status filter
-    switch (filterStatus) {
-      case 'upcoming':
-        filtered = filtered.filter(ticket => {
-          const showDate = new Date(ticket.showDateTime);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          return showDate >= today;
-        });
-        break;
-      case 'past':
-        filtered = filtered.filter(ticket => {
-          const showDate = new Date(ticket.showDateTime);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          return showDate < today;
-        });
-        break;
-      case 'cancellable':
-        filtered = filtered.filter(ticket => canCancelTicket(ticket.showDateTime));
-        break;
-      case 'all':
-      default:
-        // No additional filtering for 'all'
-        break;
-    }
+  // Apply status filter - UPDATED WITH NEW OPTIONS
+  switch (filterStatus) {
+    case 'now-showing':
+      filtered = filtered.filter(ticket => {
+        const status = getStatusInfo(ticket.showDateTime);
+        return status.label === 'Now Showing';
+      });
+      break;
+    case 'coming-soon':
+      filtered = filtered.filter(ticket => {
+        const status = getStatusInfo(ticket.showDateTime);
+        return status.label === 'Coming Soon';
+      });
+      break;
+    case 'past':
+      filtered = filtered.filter(ticket => {
+        const status = getStatusInfo(ticket.showDateTime);
+        return status.label === 'Past';
+      });
+      break;
+    case 'cancellable':
+      filtered = filtered.filter(ticket => canCancelTicket(ticket.showDateTime));
+      break;
+    case 'all':
+    default:
+      // No additional filtering for 'all'
+      break;
+  }
 
-    setFilteredTickets(filtered);
-  }, [searchTerm, filterStatus, tickets]);
+  setFilteredTickets(filtered);
+}, [searchTerm, filterStatus, tickets]);
 
   // Check if ticket can be cancelled (not within 24 hours of showtime)
   const canCancelTicket = (showDateTime) => {
@@ -312,7 +314,8 @@ const MyTickets = () => {
                     <div className="space-y-2">
                       {[
                         { id: 'all', label: 'All Tickets' },
-                        { id: 'upcoming', label: 'Now Showing & Coming Soon' },
+                        { id: 'now-showing', label: 'Now Showing' }, // NEW: Separate Now Showing
+                        { id: 'coming-soon', label: 'Coming Soon' }, // NEW: Separate Coming Soon
                         { id: 'past', label: 'Past Shows' },
                         { id: 'cancellable', label: 'Cancellable Only' }
                       ].map((filter) => (
@@ -322,7 +325,7 @@ const MyTickets = () => {
                             setFilterStatus(filter.id);
                             setShowFilters(false);
                           }}
-                          className={` cursor-pointer w-full text-left px-4 py-2 rounded-lg transition-all duration-200 ${
+                          className={`cursor-pointer w-full text-left px-4 py-2 rounded-lg transition-all duration-200 ${
                             filterStatus === filter.id
                               ? 'bg-red-600/20 text-red-400 border border-red-500/30'
                               : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
@@ -339,20 +342,21 @@ const MyTickets = () => {
 
             {/* Active Filter Badge */}
             {filterStatus !== 'all' && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-700/20 to-orange-600/10 backdrop-blur-sm border border-red-500/30 rounded-xl">
-                <span className="text-sm text-red-300">
-                  {filterStatus === 'upcoming' && 'Showing: Now Showing & Coming Soon'}
-                  {filterStatus === 'past' && 'Showing: Past Shows'}
-                  {filterStatus === 'cancellable' && 'Showing: Cancellable'}
-                </span>
-                <button
-                  onClick={() => setFilterStatus('all')}
-                  className="text-red-400 hover:text-red-300 transition-colors cursor-pointer "
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            )}
+                <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-700/20 to-orange-600/10 backdrop-blur-sm border border-red-500/30 rounded-xl">
+                  <span className="text-sm text-red-300">
+                    {filterStatus === 'now-showing' && 'Showing: Now Showing'}
+                    {filterStatus === 'coming-soon' && 'Showing: Coming Soon'}
+                    {filterStatus === 'past' && 'Showing: Past Shows'}
+                    {filterStatus === 'cancellable' && 'Showing: Cancellable'}
+                  </span>
+                  <button
+                    onClick={() => setFilterStatus('all')}
+                    className="text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
           </div>
 
           {/* Results Count */}

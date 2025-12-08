@@ -24,15 +24,15 @@ const BookingMovie = () => {
   const statusConfig = {
     nowShowing: {
       label: 'Now Showing',
-      color: 'bg-emerald-500/50 text-emerald-300 border-emerald-500/40',
-      glow: 'shadow-emerald-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-emerald-500/50 text-emerald-300 border-emerald-500/40 shadow-emerald-500/60 shadow-lg animate-pulse-slow0',
+     color: 'bg-red-500/50 text-red-100 border-red-500/40',
+     glow: 'shadow-red-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-red-500/50 text-red-300 border-red-500/40 shadow-red-500/60 shadow-lg animate-pulse-slow0',
       text: 'Now Showing'
     },
     comingSoon: {
       label: 'Coming Soon',
-      color: 'bg-red-500/50 text-red-500 border-red-500/40',
-     glow: 'shadow-red-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-red-500/50 text-red-300 border-red-500/40 shadow-red-500/60 shadow-lg animate-pulse-slow0',
-      text: 'Coming Soon'
+     color: 'bg-emerald-500/50 text-emerald-100 border-emerald-500/40',
+      glow: 'shadow-emerald-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-emerald-500/50 text-emerald-300 border-emerald-500/40 shadow-emerald-500/60 shadow-lg animate-pulse-slow0',
+     text: 'Coming Soon'
     }
   };
 
