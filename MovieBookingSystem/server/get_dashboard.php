@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // helper for safe number output
-function num($v) { return $v ? (float)$v : 0; }
+function num($v) { return $v !== null ? (float)$v : 0; }
 
 /**
  * TOTAL MOVIES (admin sees all)
@@ -40,7 +40,7 @@ $totalUsers = $conn->query($qUsers)->fetch_assoc()["totalUsers"] ?? 0;
  * TOTAL REVENUE (paid only)
  */
 $qRevenue = "
-    SELECT SUM(TotalAmount) AS totalRevenue
+    SELECT COALESCE(SUM(TotalAmount),0) AS totalRevenue
     FROM booking
     WHERE UPPER(TRIM(PaymentStatus)) = 'PAID'
 ";
@@ -48,40 +48,47 @@ $totalRevenue = num($conn->query($qRevenue)->fetch_assoc()["totalRevenue"] ?? 0)
 
 /**
  * CURRENT MOVIES LIST
- * ✅ use GROUP_CONCAT for genre
- * ✅ only published + not expired (same logic as booking)
+ * ✅ genres joined separately (no revenue multiplication)
+ * ✅ showings/bookings/revenue computed in subquery
+ * ✅ only published + not expired
  */
 $qCurrentMovies = "
-  SELECT 
-    m.MovieId AS id,
-    m.Title AS title,
+SELECT
+  m.MovieId AS id,
+  m.Title AS title,
+  GROUP_CONCAT(DISTINCT g.Name ORDER BY g.Name SEPARATOR ', ') AS genre,
 
-    GROUP_CONCAT(DISTINCT g.Name ORDER BY g.Name SEPARATOR ', ') AS genre,
+  COALESCE(x.showings, 0) AS showings,
+  COALESCE(x.bookings, 0) AS bookings,
+  COALESCE(x.revenue, 0)  AS revenue
 
-    COUNT(DISTINCT s.ShowTimeId) AS showings,
+FROM movie m
+LEFT JOIN movie_genre mg ON m.MovieId = mg.MovieId
+LEFT JOIN genre g ON mg.GenreId = g.GenreId
+
+LEFT JOIN (
+  SELECT
+    st.MovieId,
+    COUNT(DISTINCT st.ShowTimeId) AS showings,
     COUNT(DISTINCT b.BookingId) AS bookings,
-
-    COALESCE(SUM(
+    SUM(
       CASE 
-        WHEN UPPER(TRIM(b.PaymentStatus)) = 'PAID' THEN b.TotalAmount
-        ELSE 0
+        WHEN UPPER(TRIM(b.PaymentStatus))='PAID'
+        THEN b.TotalAmount 
+        ELSE 0 
       END
-    ), 0) AS revenue
+    ) AS revenue
+  FROM showtime st
+  LEFT JOIN booking b ON b.ShowTimeId = st.ShowTimeId
+  GROUP BY st.MovieId
+) x ON x.MovieId = m.MovieId
 
-  FROM movie m
+WHERE m.Published = 1
+  AND CURDATE() <= DATE_ADD(m.ReleaseDate, INTERVAL m.ShowingDays DAY)
 
-  LEFT JOIN movie_genre mg ON m.MovieId = mg.MovieId
-  LEFT JOIN genre g ON mg.GenreId = g.GenreId
-
-  LEFT JOIN showtime s ON s.MovieId = m.MovieId
-  LEFT JOIN booking b ON b.ShowTimeId = s.ShowTimeId
-
-  WHERE m.Published = 1
-    AND CURDATE() <= DATE_ADD(m.ReleaseDate, INTERVAL m.ShowingDays DAY)
-
-  GROUP BY m.MovieId
-  ORDER BY showings DESC, bookings DESC
-  LIMIT 20
+GROUP BY m.MovieId
+ORDER BY showings DESC, bookings DESC
+LIMIT 20
 ";
 
 $currentMoviesRes = $conn->query($qCurrentMovies);
