@@ -178,36 +178,67 @@ const Checkout = () => {
   }, [selectedMall?.id, selectedScreen?.id, movie.id]);
 
   // --------- Load Showtimes when date changes ----------
-  useEffect(() => {
-    if (!selectedMall || !selectedScreen || !selectedDate) return;
+useEffect(() => {
+  if (!selectedMall || !selectedScreen || !selectedDate) return;
 
-    const loadTimes = async () => {
-      setLoading(l => ({ ...l, times: true }));
-      setError(null);
-      try {
-        const dateStr = toYMD(selectedDate.full);
-        const res = await fetch(
-          `${API_BASE}/get_showtimes.php?movieId=${movie.id}&screenId=${selectedScreen.id}&theaterId=${selectedMall.id}&date=${dateStr}`
-        );
-        const json = await res.json();
-        if (!json.success) throw new Error(json.message || "Failed to load showtimes");
-        setTimes(json.times || []);
-        setSelectedTime(null);
-      } catch (e) {
-        setError(e.message);
-        setTimes([]);
-      } finally {
-        setLoading(l => ({ ...l, times: false }));
-      }
-    };
+  const loadTimes = async () => {
+    setLoading(l => ({ ...l, times: true }));
+    setError(null);
+    try {
+      const dateStr = toYMD(selectedDate.full);
+      const res = await fetch(
+        `${API_BASE}/get_showtimes.php?movieId=${movie.id}&screenId=${selectedScreen.id}&theaterId=${selectedMall.id}&date=${dateStr}`
+      );
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message || "Failed to load showtimes");
+      
+      // Check if selected date is TODAY
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const selectedDateOnly = new Date(selectedDate.full.getFullYear(), selectedDate.full.getMonth(), selectedDate.full.getDate());
+      
+      const isToday = selectedDateOnly.getTime() === today.getTime();
+      
+      // Filter out times that are within 3 hours from now ONLY if it's today
+      const filteredTimes = (json.times || []).map(time => {
+        // If not today, just return original availability
+        if (!isToday) {
+          return time;
+        }
+        
+        // Parse the showtime
+        const [hours, minutes] = time.time.split(':').map(Number);
+        const showDateTime = new Date(selectedDate.full);
+        showDateTime.setHours(hours, minutes, 0, 0);
+        
+        // Calculate time difference in hours
+        const timeDiffHours = (showDateTime - now) / (1000 * 60 * 60);
+        
+        // Mark as unavailable if within 3 hours (ONLY for today)
+        return {
+          ...time,
+          // Keep original available status AND check if within cutoff
+          available: time.available && timeDiffHours > 3
+        };
+      });
+      
+      setTimes(filteredTimes);
+      setSelectedTime(null);
+    } catch (e) {
+      setError(e.message);
+      setTimes([]);
+    } finally {
+      setLoading(l => ({ ...l, times: false }));
+    }
+  };
 
-    // reset downstream
-    setSelectedTime(null);
-    setSelectedSeats([]);
-    setUnavailableSeats([]);
+  // reset downstream
+  setSelectedTime(null);
+  setSelectedSeats([]);
+  setUnavailableSeats([]);
 
-    loadTimes();
-  }, [selectedDate?.date, selectedMall?.id, selectedScreen?.id, movie.id]);
+  loadTimes();
+}, [selectedDate?.date, selectedMall?.id, selectedScreen?.id, movie.id]);
 
   // --------- Load Unavailable Seats when time changes ----------
   useEffect(() => {
@@ -433,7 +464,7 @@ const handleConfirm = async () => {
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all duration-300 ${
                     step >= s.num
                       ? 'bg-gradient-to-r from-red-600 to-orange-600 shadow-lg shadow-red-500/50'
-                      : 'bg-gray-800 border-2 border-gray-700'
+                      : 'bg-gray-800 border-2 border-red-900'
                   }`}>
                     {step > s.num ? <Check size={20} /> : s.num}
                   </div>
@@ -443,7 +474,7 @@ const handleConfirm = async () => {
                 </div>
                 {idx < 2 && (
                   <div className={`flex-1 h-1 mx-4 rounded transition-all duration-300 ${
-                    step > s.num ? 'bg-gradient-to-r from-red-600 to-orange-600' : 'bg-gray-800'
+                    step > s.num ? 'bg-gradient-to-r from-red-600 to-orange-600' : 'bg-red-950'
                   }`} />
                 )}
               </React.Fragment>
@@ -451,7 +482,7 @@ const handleConfirm = async () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
 
@@ -459,7 +490,7 @@ const handleConfirm = async () => {
             {step === 1 && (
               <div className="space-y-6 animate-slide-up">
                 {/* Mall Selection */}
-                <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-xl rounded-2xl p-4 md:p-6 border border-gray-700/50">
+                <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-xl rounded-2xl p-4 md:p-6 border border-red-500/25">
                   <div className="flex items-center justify-between mb-4 md:mb-6">
                     <div className="flex items-center gap-3">
                       <MapPin className="text-red-500" size={20} />
@@ -514,7 +545,7 @@ const handleConfirm = async () => {
                 </div>
 
                 {/* Date Selection */}
-                <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-xl rounded-2xl p-4 md:p-6 border border-gray-700/50">
+                <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-xl rounded-2xl p-4 md:p-6 border border-red-500/25">
                   <div className="flex items-center gap-3 mb-4 md:mb-6">
                     <Calendar className="text-red-500" size={20} />
                     <h2 className="text-xl md:text-2xl font-bold">Select Date</h2>
@@ -538,7 +569,7 @@ const handleConfirm = async () => {
                             key={idx}
                             onClick={() => isEnabled && setSelectedDate(d)}
                             disabled={!isEnabled}
-                            className={`p-2 md:p-4 rounded-lg md:rounded-xl transition-all duration-300 ${
+                            className={`p T2 md:p-4 rounded-lg md:rounded-xl transition-all duration-300 ${
                               !isEnabled
                                 ? 'bg-gray-800/30 opacity-50 cursor-not-allowed'
                                 : selectedDate?.date === d.date
@@ -558,7 +589,7 @@ const handleConfirm = async () => {
                 </div>
 
                 {/* Time Selection */}
-                <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50">
+                <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-xl rounded-2xl p-6 border border-red-500/25">
                   <div className="flex items-center gap-3 mb-6">
                     <Clock className="text-red-500" size={24} />
                     <h2 className="text-2xl font-bold">Select Time</h2>
@@ -599,7 +630,7 @@ const handleConfirm = async () => {
 
             {/* Step 2: Seat Selection */}
             {step === 2 && (
-              <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-xl rounded-2xl p-8 border border-gray-700/50 animate-slide-up">
+              <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-xl rounded-2xl p-8 border border-red-500/25 animate-slide-up">
                 <h2 className="text-2xl font-bold mb-8 text-center">Select Your Seats</h2>
 
                 {/* Screen with 3D effect */}
@@ -713,7 +744,7 @@ const handleConfirm = async () => {
                 </div>
 
                 {/* Legend */}
-                <div className="flex flex-row md:flex-wrap gap-8 justify-center pt-6 border-t border-gray-700/50">
+                <div className="flex flex-row md:flex-wrap gap-8 justify-center pt-6 border-t border-red-500/25">
                   <div className="flex items-center gap-3">
                     <div className="w-5 h-5 sm:w-8 sm:h-8 md:w-9 md:h-9 bg-gray-800 rounded-lg" />
                     <span className="text-xs md:text-sm text-gray-300 font-medium">Available</span>
@@ -744,7 +775,7 @@ const handleConfirm = async () => {
             {/* Step 3: Payment */}
             {step === 3 && (
               <div className="space-y-6 animate-slide-up">
-                <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50">
+                <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-xl rounded-2xl p-6 border border-red-500/25">
                   <h2 className="text-2xl font-bold mb-6">Payment Method</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {paymentMethods.map((method, idx) => {
@@ -771,7 +802,7 @@ const handleConfirm = async () => {
                 </div>
 
                 {paymentMethod && (
-                  <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50 animate-fade-in">
+                  <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-xl rounded-2xl p-6 border border-red-500/25 animate-fade-in">
                     <h3 className="text-xl font-bold mb-4">Enter Payment Details</h3>
                     <div className="space-y-4">
                       <input
@@ -802,111 +833,162 @@ const handleConfirm = async () => {
               </div>
             )}
           </div>
-
+                 
           {/* Order Summary Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50 sticky top-4 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-              <h3 className="text-xl font-bold mb-4">Order Summary</h3>
+        <div className="lg:col-span-2">
+          <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-xl rounded-2xl p-6 border border-red-500/25 sticky top-4 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            <h3 className="text-xl font-bold mb-6 text-center">Order Summary</h3>
 
-              {/* Movie Info */}
-              <div className="mb-6">
-                <img src={movie.image} alt={movie.title} className="w-full h-[40vh] xl:h-[55vh] object-cover rounded-lg mb-4" />
-                <h4 className="font-bold text-2xl mb-2">{movie.title}</h4>
-                <div className="flex items-center justify-center gap-4 text-sm text-gray-400">
-                  <span>{movie.duration}</span>
-                  <span>{movie.rating}</span>
-                </div>
-              </div>
-
-              <div className="space-y-3 mb-6 text-sm">
-                {selectedMall && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Mall:</span>
-                    <span className="font-semibold text-right">{selectedMall.name}</span>
+            {/* Movie Info - Image on Left, Details on Right */}
+            <div className="mb-8">
+              <div className="flex flex-col md:flex-row gap-6 items-start">
+                {/* Image on the Left */}
+                <div className="w-full md:w-2/5 lg:w-[27vh]">
+                  <div className="aspect-[2/3]">
+                    <img 
+                      src={movie.image} 
+                      alt={movie.title} 
+                      className="w-full h-full object-cover rounded-xl shadow-lg shadow-black/80"
+                    />
                   </div>
-                )}
-                {selectedDate && selectedTime && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Date & Time:</span>
-                    <span className="font-semibold">
-                      {selectedDate.month} {selectedDate.date}, {selectedTime.time}
-                    </span>
-                  </div>
-                )}
-                {selectedSeats.length > 0 && (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Seats:</span>
-                      <span className="font-semibold">{selectedSeats.join(', ')}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Tickets:</span>
-                      <span className="font-semibold">{selectedSeats.length} × ₱{movie.price}</span>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <div className="border-t border-gray-700 pt-4 mb-6">
-                <div className="flex justify-between text-xl font-bold">
-                  <span>Total:</span>
-                  <span className="text-red-500">₱{totalAmount.toLocaleString()}</span>
                 </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="space-y-3">
-                {step < 3 ? (
-                  <>
-                    {step > 1 && (
-                      <button
-                        onClick={handleBack}
-                        className="cursor-pointer w-full px-6 py-3 border-2 border-gray-700 rounded-lg hover:border-red-500 hover:bg-red-900/10 transition-all duration-300 font-semibold"
-                      >
-                        Back
-                      </button>
-                    )}
-                    <button
-                      onClick={handleNext}
-                      disabled={!canProceed() || loading.booking}
-                      className={` w-full px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
-                        canProceed() && !loading.booking
-                          ? 'cursor-pointer bg-gradient-to-r from-red-700 to-orange-600/20  hover:from-red-500 hover:to-red-600 shadow-lg shadow-red-500/20 hover:shadow-red-500/40'
-                          : 'bg-gray-700 cursor-not-allowed opacity-50'
-                      }`}
-                    >
-                      Continue
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={handleBack}
-                      disabled={loading.booking}
-                      className={`cursor-pointer w-full px-6 py-3 border-2 border-gray-700 rounded-lg font-semibold transition-all duration-300 ${
-                        loading.booking
-                          ? 'opacity-50 cursor-not-allowed'
-                          : 'hover:border-red-500 hover:bg-red-900/10'
-                      }`}
-                    >
-                      Back
-                    </button>
-                    <button
-                      onClick={handleConfirm}
-                      disabled={!canProceed() || loading.booking}
-                      className={` w-full px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
-                        canProceed() && !loading.booking
-                          ? 'cursor-pointer bg-gradient-to-r from-red-700 to-orange-600/20  hover:from-red-500 hover:to-red-600 shadow-lg shadow-red-500/20 hover:shadow-red-500/40'
-                          : 'bg-gray-700 cursor-not-allowed opacity-50'
-                      }`}
-                    >
-                      {loading.booking ? 'Processing...' : 'Confirm Booking'}
-                    </button>
-                  </>
-                )}
+                
+                {/* Details on the Right */}
+                <div className="flex-1 w-full text-left md:w-3/5 lg:w-2/3">
+                  <h4 className="font-bold text-2xl md:text-4xl mb-4 text-red-400">{movie.title}</h4>
+                  <div className="space-y-3 text-left md:text-lg">
+                    <div className="flex items-start gap-3">
+                      <span className="text-gray-400 min-w-[60px]">Duration:</span>
+                      <span className="font-medium text-white">{movie.duration}</span>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <span className="text-gray-400 min-w-[60px]">Rating:</span>
+                      <span className="font-medium text-white bg-red-600/20 px-3 py-1 text-xs rounded-full border border-red-500/30">
+                        {movie.rating}
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <span className="text-gray-400 min-w-[60px]">Genre:</span>
+                      <span className="font-medium text-white">{movie.genre}</span>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <span className="text-gray-400 min-w-[60px]">Price:</span>
+                      <span className="font-bold text-2xl text-red-400">₱{movie.price}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
+
+            {/* Booking Details */}
+            <div className="space-y-4 mb-6">
+              <div className="border-t border-red-900 pt-4">
+                <h4 className="font-semibold text-xl text-gray-300 mb-4 flex items-center gap-2">
+                  <Calendar size={20} className="text-red-500" />
+                  Booking Details
+                </h4>
+                <div className="space-y-3 text-base">
+                  {selectedMall && (
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                      <span className="text-gray-400 flex items-center gap-2">
+                        <MapPin size={16} />
+                        Mall:
+                      </span>
+                      <span className="font-semibold text-right text-white">{selectedMall.name}</span>
+                    </div>
+                  )}
+                  {selectedDate && selectedTime && (
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                      <span className="text-gray-400 flex items-center gap-2">
+                        <Clock size={16} />
+                        Date & Time:
+                      </span>
+                      <span className="font-semibold text-right text-white">
+                        {selectedDate.month} {selectedDate.date}, {selectedTime.time}
+                      </span>
+                    </div>
+                  )}
+                  {selectedSeats.length > 0 && (
+                    <>
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <span className="text-gray-400">Selected Seats:</span>
+                        <span className="font-semibold text-right text-red-400 bg-red-900/20 px-3 py-1 rounded-full">
+                          {selectedSeats.join(', ')}
+                        </span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <span className="text-gray-400">Tickets:</span>
+                        <span className="font-semibold text-white">
+                          {selectedSeats.length} × ₱{movie.price}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Total Amount */}
+            <div className="border-t border-red-900 pt-4 mb-6">
+              <div className="flex justify-between items-center text-xl md:text-2xl font-bold">
+                <span className="text-gray-300">Total Amount:</span>
+                <span className="text-red-500 text-3xl md:text-4xl">₱{totalAmount.toLocaleString()}</span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              {step < 3 ? (
+                <>
+                  {step > 1 && (
+                    <button
+                      onClick={handleBack}
+                      className="cursor-pointer w-full px-6 py-4 border-2 border-gray-700 rounded-xl hover:border-red-500 hover:bg-red-900/10 transition-all duration-300 font-semibold text-lg"
+                    >
+                      ← Back
+                    </button>
+                  )}
+                  <button
+                    onClick={handleNext}
+                    disabled={!canProceed() || loading.booking}
+                    className={`w-full px-6 py-4 rounded-xl font-semibold text-lg transition-all duration-300 ${
+                      canProceed() && !loading.booking
+                        ? 'cursor-pointer bg-gradient-to-r from-red-700 to-orange-600/20 hover:from-red-500 hover:to-red-600 shadow-lg shadow-red-500/20 hover:shadow-red-500/40 hover:scale-[1.02]'
+                        : 'bg-gray-700 cursor-not-allowed opacity-50'
+                    }`}
+                  >
+                    Continue to {step === 1 ? 'Seat Selection' : 'Payment'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={handleBack}
+                    disabled={loading.booking}
+                    className={`cursor-pointer w-full px-6 py-4 border-2 border-gray-700 rounded-xl font-semibold text-lg transition-all duration-300 ${
+                      loading.booking
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'hover:border-red-500 hover:bg-red-900/10 hover:scale-[1.02]'
+                    }`}
+                  >
+                    ← Back to Seats
+                  </button>
+                  <button
+                    onClick={handleConfirm}
+                    disabled={!canProceed() || loading.booking}
+                    className={`w-full px-6 py-4 rounded-xl font-semibold text-lg transition-all duration-300 ${
+                      canProceed() && !loading.booking
+                        ? 'cursor-pointer bg-gradient-to-r from-red-700 to-orange-600/20 hover:from-red-500 hover:to-red-600 shadow-lg shadow-red-500/20 hover:shadow-red-500/40 hover:scale-[1.02]'
+                        : 'bg-gray-700 cursor-not-allowed opacity-50'
+                    }`}
+                  >
+                    {loading.booking ? 'Processing Booking...' : 'Confirm Booking'}
+                  </button>
+                </>
+              )}
+            </div>
           </div>
+        </div>
         </div>
       </div>
 
@@ -957,6 +1039,18 @@ const handleConfirm = async () => {
         }
         .perspective-1000 {
           perspective: 1000px;
+        }
+        .line-clamp-1 {
+          overflow: hidden;
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 1;
+        }
+        .line-clamp-2 {
+          overflow: hidden;
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
         }
       `}</style>
     </div>

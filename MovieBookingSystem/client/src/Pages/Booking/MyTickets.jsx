@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Search, Filter, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import LoadingState from '../../Components/LoadingState';
 
 const MyTickets = () => {
   const navigate = useNavigate();
@@ -19,8 +20,8 @@ const MyTickets = () => {
     { 
       value: 'now-showing', 
       label: 'Now Showing', 
-     color: 'bg-red-500/50 text-red-100 border-red-500/40',
-     glow: 'shadow-red-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-red-500/50 text-red-300 border-red-500/40 shadow-red-500/60 shadow-lg animate-pulse-slow0',  
+      color: 'bg-red-500/50 text-red-100 border-red-500/40',
+      glow: 'shadow-red-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-red-500/50 text-red-300 border-red-500/40 shadow-red-500/60 shadow-lg animate-pulse-slow0',  
     },
     { 
       value: 'coming-soon', 
@@ -40,6 +41,7 @@ const MyTickets = () => {
   useEffect(() => {
     const fetchTickets = async () => {
       try {
+        setLoading(true); // Start loading
         const user = JSON.parse(localStorage.getItem("mobook_user")) 
                   || JSON.parse(localStorage.getItem("user"));
         const customerId = user?.CustomerId;
@@ -49,6 +51,7 @@ const MyTickets = () => {
           navigate("/login");
           return;
         }
+        
         const res = await fetch(
           `http://localhost/mobook_api/get_booking_details.php?customerId=${customerId}`
         );
@@ -68,7 +71,7 @@ const MyTickets = () => {
         setTickets([]);
         setFilteredTickets([]);
       } finally {
-        setLoading(false);
+        setLoading(false); // Stop loading
       }
     };
 
@@ -77,49 +80,49 @@ const MyTickets = () => {
 
   // Filter and search tickets
   useEffect(() => {
-  let filtered = [...tickets];
+    let filtered = [...tickets];
 
-  // Apply search filter
-  if (searchTerm.trim() !== '') {
-    const term = searchTerm.toLowerCase();
-    filtered = filtered.filter(ticket =>
-      ticket.movieTitle.toLowerCase().includes(term) ||
-      ticket.theatherLocation.toLowerCase().includes(term) ||
-      ticket.seats.some(seat => seat.toLowerCase().includes(term))
-    );
-  }
+    // Apply search filter
+    if (searchTerm.trim() !== '') {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(ticket =>
+        ticket.movieTitle.toLowerCase().includes(term) ||
+        ticket.theatherLocation.toLowerCase().includes(term) ||
+        ticket.seats.some(seat => seat.toLowerCase().includes(term))
+      );
+    }
 
-  // Apply status filter - UPDATED WITH NEW OPTIONS
-  switch (filterStatus) {
-    case 'now-showing':
-      filtered = filtered.filter(ticket => {
-        const status = getStatusInfo(ticket.showDateTime);
-        return status.label === 'Now Showing';
-      });
-      break;
-    case 'coming-soon':
-      filtered = filtered.filter(ticket => {
-        const status = getStatusInfo(ticket.showDateTime);
-        return status.label === 'Coming Soon';
-      });
-      break;
-    case 'past':
-      filtered = filtered.filter(ticket => {
-        const status = getStatusInfo(ticket.showDateTime);
-        return status.label === 'Past';
-      });
-      break;
-    case 'cancellable':
-      filtered = filtered.filter(ticket => canCancelTicket(ticket.showDateTime));
-      break;
-    case 'all':
-    default:
-      // No additional filtering for 'all'
-      break;
-  }
+    // Apply status filter - UPDATED WITH NEW OPTIONS
+    switch (filterStatus) {
+      case 'now-showing':
+        filtered = filtered.filter(ticket => {
+          const status = getStatusInfo(ticket.showDateTime);
+          return status.label === 'Now Showing';
+        });
+        break;
+      case 'coming-soon':
+        filtered = filtered.filter(ticket => {
+          const status = getStatusInfo(ticket.showDateTime);
+          return status.label === 'Coming Soon';
+        });
+        break;
+      case 'past':
+        filtered = filtered.filter(ticket => {
+          const status = getStatusInfo(ticket.showDateTime);
+          return status.label === 'Past';
+        });
+        break;
+      case 'cancellable':
+        filtered = filtered.filter(ticket => canCancelTicket(ticket.showDateTime));
+        break;
+      case 'all':
+      default:
+        // No additional filtering for 'all'
+        break;
+    }
 
-  setFilteredTickets(filtered);
-}, [searchTerm, filterStatus, tickets]);
+    setFilteredTickets(filtered);
+  }, [searchTerm, filterStatus, tickets]);
 
   // Check if ticket can be cancelled (not within 24 hours of showtime)
   const canCancelTicket = (showDateTime) => {
@@ -129,38 +132,13 @@ const MyTickets = () => {
     return hoursDifference > 24;
   };
 
-  // NEW: Check if date is today
-  const isToday = (date) => {
-    const today = new Date();
-    const checkDate = new Date(date);
-    
-    return (
-      checkDate.getDate() === today.getDate() &&
-      checkDate.getMonth() === today.getMonth() &&
-      checkDate.getFullYear() === today.getFullYear()
-    );
-  };
-
-  // NEW: Check if date is tomorrow
-  const isTomorrow = (date) => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const checkDate = new Date(date);
-    
-    return (
-      checkDate.getDate() === tomorrow.getDate() &&
-      checkDate.getMonth() === tomorrow.getMonth() &&
-      checkDate.getFullYear() === tomorrow.getFullYear()
-    );
-  };
-
   // Handle cancel button click
   const handleCancelClick = (ticket) => {
     setSelectedTicket(ticket);
     setShowCancelModal(true);
   };
 
-  // Confirm cancellation
+   // Confirm cancellation
   const confirmCancellation = async () => {
     setCanceling(true);
 
@@ -174,23 +152,27 @@ const MyTickets = () => {
       const data = await res.json();
 
       if (data.success) {
-        // Remove cancelled ticket from state
-        const updatedTickets = tickets.filter(t => t.id !== selectedTicket.id);
-        setTickets(updatedTickets);
-        setFilteredTickets(updatedTickets.filter(t => 
-          filterStatus === 'cancellable' ? canCancelTicket(t.showDateTime) : true
-        ));
-        
-        setShowCancelModal(false);
-        setSelectedTicket(null);
+        // ✅ Remove cancelled ticket from state AFTER 2 seconds
+        setTimeout(() => {
+          const updatedTickets = tickets.filter(t => t.id !== selectedTicket.id);
+          setTickets(updatedTickets);
+          setFilteredTickets(updatedTickets.filter(t => 
+            filterStatus === 'cancellable' ? canCancelTicket(t.showDateTime) : true
+          ));
+          
+          setShowCancelModal(false);
+          setSelectedTicket(null);
+          setCanceling(false); // Stop loading after 2 seconds
+          
+        }, 2000); // 2 second delay
       } else {
         alert(data.message || 'Failed to cancel ticket. Please try again.');
+        setCanceling(false); // Stop loading on error
       }
     } catch (err) {
       console.error('Error canceling ticket:', err);
       alert('An error occurred. Please try again.');
-    } finally {
-      setCanceling(false);
+      setCanceling(false); // Stop loading on error
     }
   };
 
@@ -246,7 +228,7 @@ const MyTickets = () => {
     setSearchTerm('');
   };
 
-  // NEW: Helper to get cancel eligibility
+  // Helper to get cancel eligibility
   const getCancelEligibility = (ticket) => {
     const status = getStatusInfo(ticket.showDateTime);
     const canCancel = canCancelTicket(ticket.showDateTime);
@@ -260,6 +242,9 @@ const MyTickets = () => {
 
   return (
     <div className="min-h-[85vh] bg-transparent text-white py-12">
+      {/* Show Loading State when loading */}
+      {loading && <LoadingState message="Loading Your Tickets..." />}
+    {canceling && <LoadingState message="Canceling Your Ticket..." />}
       <div className="container mx-auto px-4 max-w-7xl">
         {/* Header */}
         <div className="text-center mb-12 animate-fade-in">
@@ -314,8 +299,8 @@ const MyTickets = () => {
                     <div className="space-y-2">
                       {[
                         { id: 'all', label: 'All Tickets' },
-                        { id: 'now-showing', label: 'Now Showing' }, // NEW: Separate Now Showing
-                        { id: 'coming-soon', label: 'Coming Soon' }, // NEW: Separate Coming Soon
+                        { id: 'now-showing', label: 'Now Showing' },
+                        { id: 'coming-soon', label: 'Coming Soon' },
                         { id: 'past', label: 'Past Shows' },
                         { id: 'cancellable', label: 'Cancellable Only' }
                       ].map((filter) => (
@@ -342,21 +327,21 @@ const MyTickets = () => {
 
             {/* Active Filter Badge */}
             {filterStatus !== 'all' && (
-                <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-700/20 to-orange-600/10 backdrop-blur-sm border border-red-500/30 rounded-xl">
-                  <span className="text-sm text-red-300">
-                    {filterStatus === 'now-showing' && 'Showing: Now Showing'}
-                    {filterStatus === 'coming-soon' && 'Showing: Coming Soon'}
-                    {filterStatus === 'past' && 'Showing: Past Shows'}
-                    {filterStatus === 'cancellable' && 'Showing: Cancellable'}
-                  </span>
-                  <button
-                    onClick={() => setFilterStatus('all')}
-                    className="text-red-400 hover:text-red-300 transition-colors cursor-pointer"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
+              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-700/20 to-orange-600/10 backdrop-blur-sm border border-red-500/30 rounded-xl">
+                <span className="text-sm text-red-300">
+                  {filterStatus === 'now-showing' && 'Showing: Now Showing'}
+                  {filterStatus === 'coming-soon' && 'Showing: Coming Soon'}
+                  {filterStatus === 'past' && 'Showing: Past Shows'}
+                  {filterStatus === 'cancellable' && 'Showing: Cancellable'}
+                </span>
+                <button
+                  onClick={() => setFilterStatus('all')}
+                  className="text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Results Count */}
@@ -367,13 +352,6 @@ const MyTickets = () => {
             </p>
           </div>
         </div>
-
-        {/* Loading State */}
-        {loading && (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-red-600"></div>
-          </div>
-        )}
 
         {/* Tickets Grid */}
         {!loading && filteredTickets.length > 0 && (
@@ -572,7 +550,7 @@ const MyTickets = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-4">
+                           <div className="flex gap-4">
                 <button
                   onClick={closeModal}
                   disabled={canceling}
