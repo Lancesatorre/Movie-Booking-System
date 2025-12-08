@@ -1,17 +1,8 @@
 <?php
+include "db_connect.php";
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
-$conn = new mysqli("localhost", "root", "", "mobook");
-if ($conn->connect_error) {
-  echo json_encode(["success" => false, "message" => "DB connection failed"]);
-  exit;
-}
-
-/*
-  If later you store admin id in localStorage/session,
-  you can change this to WHERE AdminID = $_GET['id']
-*/
 $q = "SELECT AdminID, FirstName, MiddleName, LastName, Email, Phone, CreatedAt
       FROM admin
       ORDER BY AdminID ASC

@@ -9,11 +9,7 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
   exit;
 }
 
-$conn = new mysqli("localhost", "root", "", "mobook");
-if ($conn->connect_error) {
-  echo json_encode(["success" => false, "message" => "DB connection failed"]);
-  exit;
-}
+include "db_connect.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 if (!$data) {
