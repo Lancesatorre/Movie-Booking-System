@@ -437,6 +437,32 @@ export default function MovieManagement() {
         return;
       }
     }
+
+     if (newMovie.dateRelease) {
+    const selectedDate = startOfDay(parseDate(newMovie.dateRelease));
+    const today = startOfDay(new Date());
+    if (selectedDate < today) {
+      alert('Release date cannot be in the past. Please select today or a future date.');
+      return;
+    }
+
+    if (selectedDate.getTime() === today.getTime() && newMovie.times && newMovie.times.length > 0) {
+      const now = new Date();
+      const threeHoursFromNow = new Date(now.getTime() + (3 * 60 * 60 * 1000));
+      const currentTimeInMinutes = threeHoursFromNow.getHours() * 60 + threeHoursFromNow.getMinutes();
+      
+      for (const time of newMovie.times) {
+        const [hours, minutes] = time.split(':').map(Number);
+        const timeInMinutes = hours * 60 + minutes;
+        
+        if (timeInMinutes < currentTimeInMinutes) {
+          alert(`Showtimes must be at least 3 hours from now. The earliest allowed time today is ${threeHoursFromNow.getHours().toString().padStart(2, '0')}:${threeHoursFromNow.getMinutes().toString().padStart(2, '0')}`);
+          return;
+        }
+      }
+    }
+    }
+
     if (!newMovie.genre || newMovie.genre.length === 0) {
       alert("Please select at least one genre");
       return;

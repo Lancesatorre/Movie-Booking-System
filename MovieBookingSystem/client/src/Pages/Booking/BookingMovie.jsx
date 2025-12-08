@@ -20,6 +20,22 @@ const BookingMovie = () => {
 
   const currentTrailerUrl = movies[currentIndex]?.trailer;
 
+  // Status labels configuration matching the MyTickets design
+  const statusConfig = {
+    nowShowing: {
+      label: 'Now Showing',
+      color: 'bg-emerald-500/50 text-emerald-300 border-emerald-500/40',
+      glow: 'shadow-emerald-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-emerald-500/50 text-emerald-300 border-emerald-500/40 shadow-emerald-500/60 shadow-lg animate-pulse-slow0',
+      text: 'Now Showing'
+    },
+    comingSoon: {
+      label: 'Coming Soon',
+      color: 'bg-red-500/50 text-red-700 border-red-500/40',
+      glow: 'shadow-red-500/60',
+      text: 'Coming Soon'
+    }
+  };
+
   // -------------------------
   // Helpers to adapt DB shape
   // -------------------------
@@ -51,9 +67,9 @@ const BookingMovie = () => {
     return 0;
   };
 
-  const isComingSoon = (movie) => {
-    const raw = movie.releaseDateRaw || "";
-    if (!raw) return false;
+  const getMovieStatus = (movie) => {
+    const raw = movie.releaseDateRaw || movie.releaseDate || "";
+    if (!raw) return 'nowShowing';
 
     const today = new Date();
     today.setHours(0,0,0,0);
@@ -61,7 +77,7 @@ const BookingMovie = () => {
     const showDate = new Date(raw + "T00:00:00");
     showDate.setHours(0,0,0,0);
 
-    return showDate > today;
+    return showDate > today ? 'comingSoon' : 'nowShowing';
   };
 
   // Fetch movies from backend
@@ -79,6 +95,7 @@ const BookingMovie = () => {
             genre: normalizeGenres(m),
             duration: normalizeDuration(m),
             price: normalizePrice(m),
+            status: getMovieStatus(m) // Add status to each movie
           }));
 
           // ✅ only show published movies
@@ -108,7 +125,6 @@ const BookingMovie = () => {
       state: { movie: selectedMovie } 
     });
   };
-
 
   const handleBackToHome = () => navigate('/Home');
 
@@ -270,8 +286,8 @@ const BookingMovie = () => {
         <div className="container mx-auto px-4 max-w-7xl">
           {!loading && (
             <div className="text-center mb-16 animate-fade-in">
-              <h1 className="text-6xl font-bold mb-2 pb-2 bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent">
-                Now Showing
+              <h1 className="text-6xl md:text-7xl font-bold mb-2 pb-2 bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent">
+                Movies
               </h1>
               <p className="text-lg text-gray-400 max-w-2xl mx-auto">
                 Swipe or drag to explore our latest movies
@@ -318,8 +334,9 @@ const BookingMovie = () => {
                   </button>
 
                   {movies.map((movie, index) => {
-                    const soon = isComingSoon(movie);
                     const isCenter = index === currentIndex;
+                    const status = movie.status;
+                    const statusInfo = statusConfig[status];
 
                     return (
                       <div key={`${movie.id}-${index}`} className="absolute will-change-transform" style={getMoviePosition(index)}>
@@ -336,15 +353,16 @@ const BookingMovie = () => {
 
                             <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-60"></div>
 
+                            {/* Status Badge - Matching MyTickets design */}
+                            <div className="absolute top-4 left-4">
+                              <span className={`px-4 py-2 rounded-xl text-xs font-bold border-2 backdrop-blur-md ${statusInfo.color} ${statusInfo.glow} shadow-lg animate-pulse-slow`}>
+                                {statusInfo.text}
+                              </span>
+                            </div>
+
                             <div className="absolute top-4 right-4 bg-red-600/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold">
                               {movie.rating}
                             </div>
-
-                            {soon && (
-                              <div className="absolute top-4 left-4 bg-yellow-500/90 text-black px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                                Coming Soon
-                              </div>
-                            )}
                           </div>
 
                           <div className="p-5">
@@ -378,11 +396,14 @@ const BookingMovie = () => {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                      {isComingSoon(movies[currentIndex]) && (
-                        <div className="absolute bottom-4 left-4 bg-yellow-500 text-black px-4 py-2 rounded-xl text-sm font-bold">
-                          Coming Soon
-                        </div>
-                      )}
+                      {/* Status Badge for Main Image */}
+                      <div className="absolute top-90 left-4">
+                        <span className={`px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md ${
+                          statusConfig[movies[currentIndex].status].color
+                        } ${statusConfig[movies[currentIndex].status].glow} shadow-lg animate-pulse-slow`}>
+                          {statusConfig[movies[currentIndex].status].text}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -420,14 +441,14 @@ const BookingMovie = () => {
 
                       <button
                         onClick={handleBookNow}
-                        disabled={Number(movies[currentIndex].published) !== 1}
+                        disabled={movies[currentIndex].status === 'comingSoon' || Number(movies[currentIndex].published) !== 1}
                         className={`w-full md:w-auto px-10 py-4 rounded-xl transition-all duration-300 font-bold text-lg shadow-lg transform ${
-                          Number(movies[currentIndex].published) !== 1
+                          movies[currentIndex].status === 'comingSoon' || Number(movies[currentIndex].published) !== 1
                             ? "bg-gray-700/50 text-gray-400 cursor-not-allowed"
                             : "cursor-pointer bg-gradient-to-r from-red-700 to-orange-600/20 hover:from-red-500 hover:to-red-600 hover:shadow-red-500/50 hover:scale-105"
                         }`}
                       >
-                        Book Now
+                        {movies[currentIndex].status === 'comingSoon' ? 'Coming Soon' : 'Book Now'}
                       </button>
                     </div>
                   </div>
@@ -495,7 +516,16 @@ const BookingMovie = () => {
             from { opacity: 0; }
             to { opacity: 1; }
           }
+          @keyframes pulse-slow {
+            0%, 100% {
+              opacity: 1;
+            }
+            50% {
+              opacity: 0.7;
+            }
+          }
           .animate-fade-in { animation: fade-in 0.3s ease-out; }
+          .animate-pulse-slow { animation: pulse-slow 3s ease-in-out infinite; }
         `}</style>
       </div>
     </>
