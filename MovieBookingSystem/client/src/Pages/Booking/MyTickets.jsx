@@ -14,19 +14,19 @@ const MyTickets = () => {
   const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'upcoming', 'past', 'cancellable'
   const [showFilters, setShowFilters] = useState(false);
 
-  // Status labels configuration matching the design
+  // Status labels configuration matching the design - UPDATED
   const statuses = [
     { 
-      value: 'upcoming', 
-      label: 'Upcoming', 
-      color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40', 
-      glow: 'shadow-emerald-500/30' 
+      value: 'now-showing', 
+      label: 'Now Showing', 
+      color: 'bg-emerald-500/50 text-emerald-300 border-emerald-500/40',
+      glow: 'shadow-emerald-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-emerald-500/50 text-emerald-300 border-emerald-500/40 shadow-emerald-500/60 shadow-lg animate-pulse-slow0',   
     },
     { 
-      value: 'soon', 
-      label: 'Soon', 
-      color: 'bg-blue-500/20 text-blue-300 border-blue-500/40', 
-      glow: 'shadow-blue-500/30' 
+      value: 'coming-soon', 
+      label: 'Coming Soon', 
+      color: 'bg-red-500/50 text-red-500 border-red-500/40',
+     glow: 'shadow-red-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-red-500/50 text-red-300 border-red-500/40 shadow-red-500/60 shadow-lg animate-pulse-slow0',
     },
     { 
       value: 'past', 
@@ -49,7 +49,6 @@ const MyTickets = () => {
           navigate("/login");
           return;
         }
-
         const res = await fetch(
           `http://localhost/mobook_api/get_booking_details.php?customerId=${customerId}`
         );
@@ -95,13 +94,17 @@ const MyTickets = () => {
       case 'upcoming':
         filtered = filtered.filter(ticket => {
           const showDate = new Date(ticket.showDateTime);
-          return showDate > new Date();
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          return showDate >= today;
         });
         break;
       case 'past':
         filtered = filtered.filter(ticket => {
           const showDate = new Date(ticket.showDateTime);
-          return showDate <= new Date();
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          return showDate < today;
         });
         break;
       case 'cancellable':
@@ -122,6 +125,31 @@ const MyTickets = () => {
     const now = new Date();
     const hoursDifference = (showDate - now) / (1000 * 60 * 60);
     return hoursDifference > 24;
+  };
+
+  // NEW: Check if date is today
+  const isToday = (date) => {
+    const today = new Date();
+    const checkDate = new Date(date);
+    
+    return (
+      checkDate.getDate() === today.getDate() &&
+      checkDate.getMonth() === today.getMonth() &&
+      checkDate.getFullYear() === today.getFullYear()
+    );
+  };
+
+  // NEW: Check if date is tomorrow
+  const isTomorrow = (date) => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const checkDate = new Date(date);
+    
+    return (
+      checkDate.getDate() === tomorrow.getDate() &&
+      checkDate.getMonth() === tomorrow.getMonth() &&
+      checkDate.getFullYear() === tomorrow.getFullYear()
+    );
   };
 
   // Handle cancel button click
@@ -189,23 +217,43 @@ const MyTickets = () => {
     };
   };
 
-  // Get status badge text and color
+  // Get status badge text and color - UPDATED LOGIC
   const getStatusInfo = (showDateTime) => {
     const showDate = new Date(showDateTime);
-    const now = new Date();
+    const today = new Date();
     
-    if (showDate <= new Date()) {
-      return statuses[2]; // Past
-    } else if (canCancelTicket(showDateTime)) {
-      return statuses[0]; // Upcoming
+    // Reset today to start of day for comparison
+    const todayStart = new Date(today);
+    todayStart.setHours(0, 0, 0, 0);
+    
+    // Reset show date to start of day
+    const showDayStart = new Date(showDate);
+    showDayStart.setHours(0, 0, 0, 0);
+    
+    if (showDayStart < todayStart) {
+      return statuses[2]; // Past (yesterday or earlier)
+    } else if (showDayStart.getTime() === todayStart.getTime()) {
+      return statuses[0]; // Now Showing (today)
     } else {
-      return statuses[1]; // Soon
+      return statuses[1]; // Coming Soon (tomorrow or later)
     }
   };
 
   // Clear search
   const clearSearch = () => {
     setSearchTerm('');
+  };
+
+  // NEW: Helper to get cancel eligibility
+  const getCancelEligibility = (ticket) => {
+    const status = getStatusInfo(ticket.showDateTime);
+    const canCancel = canCancelTicket(ticket.showDateTime);
+    
+    return {
+      showCancelButton: status.label === 'Now Showing' || status.label === 'Coming Soon',
+      canCancel: canCancel,
+      status: status
+    };
   };
 
   return (
@@ -264,7 +312,7 @@ const MyTickets = () => {
                     <div className="space-y-2">
                       {[
                         { id: 'all', label: 'All Tickets' },
-                        { id: 'upcoming', label: 'Upcoming' },
+                        { id: 'upcoming', label: 'Now Showing & Coming Soon' },
                         { id: 'past', label: 'Past Shows' },
                         { id: 'cancellable', label: 'Cancellable Only' }
                       ].map((filter) => (
@@ -293,7 +341,7 @@ const MyTickets = () => {
             {filterStatus !== 'all' && (
               <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-700/20 to-orange-600/10 backdrop-blur-sm border border-red-500/30 rounded-xl">
                 <span className="text-sm text-red-300">
-                  {filterStatus === 'upcoming' && 'Showing: Upcoming'}
+                  {filterStatus === 'upcoming' && 'Showing: Now Showing & Coming Soon'}
                   {filterStatus === 'past' && 'Showing: Past Shows'}
                   {filterStatus === 'cancellable' && 'Showing: Cancellable'}
                 </span>
@@ -328,8 +376,8 @@ const MyTickets = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
             {filteredTickets.map((ticket, index) => {
               const { date, time } = formatDateTime(ticket.showDateTime);
-              const canCancel = canCancelTicket(ticket.showDateTime);
-              const status = getStatusInfo(ticket.showDateTime);
+              const eligibility = getCancelEligibility(ticket);
+              const status = eligibility.status;
 
               return (
                 <div
@@ -387,7 +435,7 @@ const MyTickets = () => {
 
                       <div className="flex items-center gap-2 text-gray-400">
                         <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                          <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 012 2H4a2 2 0 01-2-2V6z" />
                         </svg>
                         <span className="text-sm">Seats: {ticket.seats.join(', ')}</span>
                       </div>
@@ -402,18 +450,29 @@ const MyTickets = () => {
                       </div>
                     </div>
 
-                    {/* Cancel Button - Only show for upcoming cancellable tickets */}
-                    {status.label === 'Upcoming' && canCancel ? (
-                      <button
-                        onClick={() => handleCancelClick(ticket)}
-                        className="cursor-pointer w-full mt-4 px-4 py-3 bg-gradient-to-r from-red-700 to-orange-600/20 rounded-xl hover:from-red-500 hover:to-red-600 transition-all duration-300 font-bold shadow-lg hover:shadow-red-500/50 hover:scale-105 transform"
-                      >
-                        Cancel Booking
-                      </button>
-                    ) : status.label === 'Soon' ? (
+                    {/* Cancel Button - Show for Now Showing and Coming Soon tickets */}
+                    {eligibility.showCancelButton ? (
+                      eligibility.canCancel ? (
+                        <button
+                          onClick={() => handleCancelClick(ticket)}
+                          className="cursor-pointer w-full mt-4 px-4 py-3 bg-gradient-to-r from-red-700 to-orange-600/20 rounded-xl hover:from-red-500 hover:to-red-600 transition-all duration-300 font-bold shadow-lg hover:shadow-red-500/50 hover:scale-105 transform"
+                        >
+                          Cancel Booking
+                        </button>
+                      ) : (
+                        <div className="w-full mt-4 px-4 py-3 bg-gray-700/50 rounded-xl text-center border border-gray-600/50">
+                          <p className="text-sm text-gray-400 font-semibold">Cannot cancel</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {status.label === 'Now Showing' 
+                              ? 'Showtime is within 24 hours' 
+                              : 'Showtime is within 24 hours'}
+                          </p>
+                        </div>
+                      )
+                    ) : status.label === 'Past' ? (
                       <div className="w-full mt-4 px-4 py-3 bg-gray-700/50 rounded-xl text-center border border-gray-600/50">
-                        <p className="text-sm text-gray-400 font-semibold">Cannot cancel</p>
-                        <p className="text-xs text-gray-500 mt-1">Less than 24 hours to showtime</p>
+                        <p className="text-sm text-gray-400 font-semibold">Show Completed</p>
+                        <p className="text-xs text-gray-500 mt-1">This show has already passed</p>
                       </div>
                     ) : null}
                   </div>

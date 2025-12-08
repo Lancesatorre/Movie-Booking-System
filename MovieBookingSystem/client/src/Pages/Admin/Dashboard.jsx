@@ -40,15 +40,13 @@ export default function Dashboard() {
       icon: Film,
       label: 'Total Movies',
       value: String(dashboardStats.totalMovies),
-      changeLabel: 'from last month',
       color: 'from-red-600 to-red-700',
       bgGlow: 'bg-black',
     },
     {
       icon: Ticket,
-      label: 'Total Bookings Today',
+      label: 'Total Bookings',
       value: dashboardStats.bookingsToday.toLocaleString(),
-      changeLabel: 'from yesterday',
       color: 'from-orange-600 to-red-600',
       bgGlow: 'bg-black',
     },
@@ -56,7 +54,6 @@ export default function Dashboard() {
       icon: Users,
       label: 'Total Users',
       value: dashboardStats.totalUsers.toLocaleString(),
-      changeLabel: 'new users',
       color: 'from-purple-600 to-red-600',
       bgGlow: 'bg-black',
     },
@@ -64,7 +61,6 @@ export default function Dashboard() {
       icon: DollarSign,
       label: 'Total Revenue',
       value: `₱${dashboardStats.totalRevenue.toLocaleString()}`,
-      changeLabel: 'from last week',
       color: 'from-green-600 to-emerald-600',
       bgGlow: 'bg-black',
     },
@@ -114,8 +110,7 @@ export default function Dashboard() {
               </div>
               
              
-              <p className="text-xl md:text-2xl lg:text-4xl text-left font-bold text-white mb-1 mt-6 md:mt-8 truncate">{stat.value}</p>
-              <p className="text-xs md:text-sm text-left text-gray-500 truncate">{stat.changeLabel}</p>
+              <p className="text-xl md:text-2xl lg:text-5xl text-left font-bold text-white mb-1 mt-6 md:mt-8 truncate">{stat.value}</p>
             </div>
           </div>
         ))}

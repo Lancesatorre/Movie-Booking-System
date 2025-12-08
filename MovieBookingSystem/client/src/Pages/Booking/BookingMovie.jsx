@@ -30,8 +30,8 @@ const BookingMovie = () => {
     },
     comingSoon: {
       label: 'Coming Soon',
-      color: 'bg-red-500/50 text-red-700 border-red-500/40',
-      glow: 'shadow-red-500/60',
+      color: 'bg-red-500/50 text-red-500 border-red-500/40',
+     glow: 'shadow-red-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-red-500/50 text-red-300 border-red-500/40 shadow-red-500/60 shadow-lg animate-pulse-slow0',
       text: 'Coming Soon'
     }
   };
@@ -441,14 +441,10 @@ const BookingMovie = () => {
 
                       <button
                         onClick={handleBookNow}
-                        disabled={movies[currentIndex].status === 'comingSoon' || Number(movies[currentIndex].published) !== 1}
-                        className={`w-full md:w-auto px-10 py-4 rounded-xl transition-all duration-300 font-bold text-lg shadow-lg transform ${
-                          movies[currentIndex].status === 'comingSoon' || Number(movies[currentIndex].published) !== 1
-                            ? "bg-gray-700/50 text-gray-400 cursor-not-allowed"
-                            : "cursor-pointer bg-gradient-to-r from-red-700 to-orange-600/20 hover:from-red-500 hover:to-red-600 hover:shadow-red-500/50 hover:scale-105"
+                        className={`w-full md:w-auto px-10 py-4 rounded-xl transition-all duration-300 font-bold text-lg shadow-lg transform cursor-pointer bg-gradient-to-r from-red-700 to-orange-600/20 hover:from-red-500 hover:to-red-600 hover:shadow-red-500/50 hover:scale-105"
                         }`}
                       >
-                        {movies[currentIndex].status === 'comingSoon' ? 'Coming Soon' : 'Book Now'}
+                      Book Now
                       </button>
                     </div>
                   </div>

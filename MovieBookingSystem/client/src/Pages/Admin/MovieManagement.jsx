@@ -63,8 +63,10 @@ export default function MovieManagement() {
   ];
 
   const statuses = [
-    { value: 'now-showing', label: 'Now Showing', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40', glow: 'shadow-emerald-500/30' },
-    { value: 'coming-soon', label: 'Coming Soon', color: 'bg-blue-500/20 text-blue-300 border-blue-500/40', glow: 'shadow-blue-500/30' },
+    { value: 'now-showing', label: 'Now Showing', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40', 
+      glow: 'shadow-emerald-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-emerald-500/50 text-emerald-300 border-emerald-500/40 shadow-emerald-500/60 shadow-lg animate-pulse-slow0', },
+    { value: 'coming-soon', label: 'Coming Soon',  color: 'bg-red-500/50 text-red-500 border-red-500/40',
+      glow: 'shadow-red-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-red-500/50 text-red-300 border-red-500/40 shadow-red-500/60 shadow-lg animate-pulse-slow0',},
     { value: 'expired', label: 'Expired', color: 'bg-gray-600/20 text-gray-400 border-gray-600/40', glow: 'shadow-gray-600/30' },
     { value: 'not-published', label: 'Not Published', color: 'bg-orange-500/20 text-orange-300 border-orange-500/40', glow: 'shadow-orange-500/30' }
   ];
@@ -438,7 +440,7 @@ export default function MovieManagement() {
       }
     }
 
-     if (newMovie.dateRelease) {
+    if (newMovie.dateRelease) {
     const selectedDate = startOfDay(parseDate(newMovie.dateRelease));
     const today = startOfDay(new Date());
     if (selectedDate < today) {

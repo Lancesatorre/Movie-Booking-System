@@ -185,20 +185,6 @@ export default function BookingManagement() {
           
           <div className="flex flex-col md:flex-row gap-3 sm:gap-3 md:gap-4 w-full sm:w-auto">
             <div className="relative flex-1 xs:flex-initial group">
-              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 pointer-events-none w-4 h-4 sm:w-5 sm:h-5" />
-              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 pointer-events-none w-3 h-3 sm:w-4 sm:h-4" />
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-lg sm:rounded-xl md:rounded-xl pl-9 sm:pl-12 pr-8 sm:pr-12 py-2.5 sm:py-3 text-sm sm:text-base text-white focus:outline-none transition-all duration-300 appearance-none cursor-pointer hover:bg-black/80"
-              >
-                <option value="all">All Status</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-
-            <div className="relative flex-1 xs:flex-initial group">
               <Film className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 pointer-events-none w-4 h-4 sm:w-5 sm:h-5" />
               <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 pointer-events-none w-3 h-3 sm:w-4 sm:h-4" />
               <select
