@@ -1,6 +1,9 @@
 <?php
 include "db_connect.php";
 header("Content-Type: application/json");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Methods: GET, OPTIONS");
 
 // Preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -17,6 +20,11 @@ if ($customerId <= 0) {
 /*
 booking -> showtime -> movie + screen + theater
 ticketing -> seat (for seat numbers)
+
+AUTO-HIDE LOGIC:
+Showtime is expired if:
+  ShowDate < today
+  OR (ShowDate = today AND EndTime < now)
 */
 $sql = "
 SELECT
@@ -37,8 +45,12 @@ JOIN theater th ON sc.TheaterId = th.TheaterId
 JOIN ticketing tk ON tk.BookingId = b.BookingId
 JOIN seat se ON tk.SeatId = se.SeatId
 WHERE b.CustomerId = ?
+  AND (
+       st.ShowDate > CURDATE()
+       OR (st.ShowDate = CURDATE() AND st.EndTime >= CURTIME())
+  )
 GROUP BY b.BookingId
-ORDER BY st.ShowDate DESC, st.StartTime DESC
+ORDER BY st.ShowDate ASC, st.StartTime ASC
 ";
 
 $stmt = $conn->prepare($sql);

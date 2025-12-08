@@ -1,6 +1,9 @@
 <?php
 include "db_connect.php";
 header("Content-Type: application/json");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Methods: GET, OPTIONS");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -9,15 +12,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $movieId = isset($_GET["movieId"]) ? (int)$_GET["movieId"] : 0;
 
+/**
+ * MODE A (Add Movie use):
+ * If no movieId provided, return ALL distinct ScreenNumbers.
+ */
 if ($movieId <= 0) {
-    echo json_encode(["success" => false, "message" => "movieId is required"]);
+    $sql = "
+        SELECT DISTINCT ScreenNumber
+        FROM screen
+        ORDER BY ScreenNumber ASC
+    ";
+
+    $result = $conn->query($sql);
+    $screens = [];
+
+    while ($row = $result->fetch_assoc()) {
+        $num = (int)$row["ScreenNumber"];
+        $screens[] = [
+            "id" => $num,               // screen NUMBER
+            "name" => "Screen " . $num
+        ];
+    }
+
+    echo json_encode([
+        "success" => true,
+        "screens" => $screens
+    ]);
     exit;
 }
 
-/*
-  We group by ScreenNumber (not ScreenID),
-  because ScreenNumber repeats across theaters.
-*/
+/**
+ * MODE B (Booking use):
+ * Screens available for a given movieId based on showtime table.
+ * We group by ScreenNumber (not ScreenID),
+ * because ScreenNumber repeats across theaters.
+ */
 $sql = "
     SELECT DISTINCT s.ScreenNumber
     FROM showtime st
@@ -35,7 +64,7 @@ $screens = [];
 while ($row = $result->fetch_assoc()) {
     $num = (int)$row["ScreenNumber"];
     $screens[] = [
-        "id" => $num,              // IMPORTANT: id is the screen NUMBER now
+        "id" => $num,
         "name" => "Screen " . $num
     ];
 }

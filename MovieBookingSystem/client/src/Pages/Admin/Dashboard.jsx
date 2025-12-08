@@ -126,7 +126,7 @@ export default function Dashboard() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 md:mb-6 gap-2">
           <h2 className="text-xl md:text-3xl font-bold text-white flex items-center gap-2 md:gap-3 truncate">
             <Play size={18} className="md:size-[24px] flex-shrink-0" />
-            Movies Currently Showing
+            Movies On Bookings
           </h2>
           <span className="text-xs md:text-sm text-gray-400 bg-red-900/20 px-3 py-1 md:px-4 md:py-2 rounded-lg border border-red-900/30 truncate">
             {currentMovies.length} Active Movies

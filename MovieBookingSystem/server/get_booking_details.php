@@ -1,6 +1,9 @@
 <?php
 include "db_connect.php";
 header("Content-Type: application/json");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 
 // Preflight support
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -24,7 +27,7 @@ if (isset($_GET['customerId'])) {
 }
 
 // Validate
-if (!$customerId) {
+if (!$customerId || $customerId <= 0) {
     echo json_encode([
         "success" => false,
         "message" => "customerId is required"
@@ -52,8 +55,10 @@ $sql = "
     LEFT JOIN ticketing t ON b.BookingId = t.BookingId
     LEFT JOIN seat se ON t.SeatId = se.SeatId
     WHERE b.CustomerId = ?
+      -- AUTO-HIDE PAST BOOKINGS
+      AND TIMESTAMP(st.ShowDate, st.StartTime) >= NOW()
     GROUP BY b.BookingId
-    ORDER BY st.ShowDate DESC, st.StartTime DESC
+    ORDER BY st.ShowDate ASC, st.StartTime ASC
 ";
 
 $stmt = $conn->prepare($sql);

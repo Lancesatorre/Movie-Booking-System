@@ -1,3 +1,4 @@
+// BookingManagement.jsx
 import React, { useState, useEffect } from 'react';
 import { Film, Users, Calendar, MapPin, ChevronDown, ChevronUp, X, Search, Filter, CheckCircle, XCircle, Clock } from 'lucide-react';
 
@@ -8,6 +9,9 @@ export default function BookingManagement() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedScreen, setSelectedScreen] = useState('all');
 
+  // ✅ bookings must exist BEFORE any filter logic runs
+  const [bookings, setBookings] = useState([]);
+
   useEffect(() => {
     setAnimateCards(true);
   }, []);
@@ -15,26 +19,33 @@ export default function BookingManagement() {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
+        // ✅ correct endpoint (php)
         const res = await fetch("http://localhost/mobook_api/get_booking_management.php");
         const data = await res.json();
+
         if (data.success) {
-          setBookings(data.bookings || []);
+          // ✅ always normalize to array
+          const safeBookings = Array.isArray(data.bookings) ? data.bookings : [];
+          setBookings(safeBookings);
         } else {
           console.error(data.message || "Failed to load bookings");
+          setBookings([]);
         }
       } catch (err) {
         console.error("Bookings fetch error:", err);
+        setBookings([]);
       }
     };
 
     fetchBookings();
   }, []);
 
-  // Mock booking data - updated structure to support multiple screens per movie
-  const [bookings, setBookings] = useState([]);
-
   // Get all unique screens from all movies
-  const allScreens = Array.from(new Set(bookings.flatMap(movie => movie.screens))).sort();
+  const allScreens = Array.from(
+    new Set(
+      bookings.flatMap(movie => Array.isArray(movie.screens) ? movie.screens : [])
+    )
+  ).sort();
 
   const toggleMovie = (movieId) => {
     setExpandedMovie(expandedMovie === movieId ? null : movieId);
@@ -63,33 +74,46 @@ export default function BookingManagement() {
   };
 
   const filteredBookings = bookings.filter(booking => {
-    const matchesSearch = booking.movieTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         booking.bookingDetails.some(detail => 
-                           detail.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           detail.email.toLowerCase().includes(searchQuery.toLowerCase())
-                         );
-    
-    // Check if movie is showing in selected screen
-    const matchesScreen = selectedScreen === 'all' || booking.screens.includes(selectedScreen);
-    
+    const movieTitle = String(booking.movieTitle || "").toLowerCase();
+    const details = Array.isArray(booking.bookingDetails) ? booking.bookingDetails : [];
+
+    const matchesSearch =
+      movieTitle.includes(searchQuery.toLowerCase()) ||
+      details.some(detail =>
+        String(detail.userName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(detail.email || "").toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+    // ✅ selectedScreen is string like "Screen 1"
+    const screens = Array.isArray(booking.screens) ? booking.screens : [];
+    const matchesScreen = selectedScreen === 'all' || screens.includes(selectedScreen);
+
     if (filterStatus === 'all') {
       return matchesSearch && matchesScreen;
     }
-    
-    // Filter bookings by status
-    const hasMatchingStatus = booking.bookingDetails.some(detail => detail.status === filterStatus);
+
+    const hasMatchingStatus = details.some(detail => detail.status === filterStatus);
     return matchesSearch && matchesScreen && hasMatchingStatus;
   });
 
-  const totalBookings = bookings.reduce((sum, movie) => sum + movie.totalBookings, 0);
-  const confirmedBookings = bookings.reduce((sum, movie) => 
-    sum + movie.bookingDetails.filter(b => b.status === 'confirmed').length, 0);
-  const cancelledBookings = bookings.reduce((sum, movie) => 
-    sum + movie.bookingDetails.filter(b => b.status === 'cancelled').length, 0);
-  const totalRevenue = bookings.reduce((sum, movie) => 
-    sum + movie.bookingDetails
-      .filter(b => b.status === 'confirmed')
-      .reduce((bookingSum, b) => bookingSum + b.totalAmount, 0), 0);
+  const totalBookings = bookings.reduce((sum, movie) => sum + (movie.totalBookings || 0), 0);
+
+  const confirmedBookings = bookings.reduce((sum, movie) =>
+    sum + (Array.isArray(movie.bookingDetails)
+      ? movie.bookingDetails.filter(b => b.status === 'confirmed').length
+      : 0), 0);
+
+  const cancelledBookings = bookings.reduce((sum, movie) =>
+    sum + (Array.isArray(movie.bookingDetails)
+      ? movie.bookingDetails.filter(b => b.status === 'cancelled').length
+      : 0), 0);
+
+  const totalRevenue = bookings.reduce((sum, movie) =>
+    sum + (Array.isArray(movie.bookingDetails)
+      ? movie.bookingDetails
+          .filter(b => b.status === 'confirmed')
+          .reduce((bookingSum, b) => bookingSum + Number(b.totalAmount || 0), 0)
+      : 0), 0);
 
   const stats = [
     { label: 'Total Bookings', value: totalBookings, color: 'from-red-600 via-red-500 to-pink-600', icon: Calendar, glow: 'shadow-red-500/50' },
@@ -196,7 +220,7 @@ export default function BookingManagement() {
       <div className="space-y-4 sm:space-y-5 md:space-y-6">
         {filteredBookings.map((movie, index) => {
           const isExpanded = expandedMovie === movie.movieId;
-          let visibleBookings = movie.bookingDetails;
+          let visibleBookings = Array.isArray(movie.bookingDetails) ? movie.bookingDetails : [];
           
           // Apply screen filter to individual bookings
           if (selectedScreen !== 'all') {

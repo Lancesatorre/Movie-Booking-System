@@ -1,25 +1,15 @@
 <?php
+include "db_connect.php";
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Content-Type: application/json");
 
-$conn = new mysqli("localhost", "root", "", "mobook");
-if ($conn->connect_error) {
-  echo json_encode(["success" => false, "message" => "DB connection failed"]);
+// ✅ Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+  http_response_code(200);
   exit;
 }
-
-/*
-mobook table
-booking(BookingId, CustomerId, ShowTimeId, PaymentStatus, TotalAmount, CreatedAt)
-customer(CustomerId, FirstName, MiddleName, LastName, Email)
-ticketing(TicketId, BookingId, SeatId)
-seat(SeatId, ScreenId, Seatnumber)
-showtime(ShowTimeId, MovieId, ScreenId, ShowDate, StartTime)
-movie(MovieId, Title, PosterPath)
-screen(ScreenID, ScreenNumber, TheaterId)
-theater(TheaterId, Name, Location)
-*/
 
 $sql = "
 SELECT 
@@ -57,49 +47,52 @@ ORDER BY m.MovieId, b.BookingId
 
 $result = $conn->query($sql);
 if (!$result) {
-  echo json_encode(["success" => false, "message" => "Query failed", "sql_error" => $conn->error]);
+  echo json_encode([
+    "success" => false,
+    "message" => "Query failed",
+    "sql_error" => $conn->error
+  ]);
   exit;
 }
 
-$moviesMap = []; // movieId => movie object
-$bookingMap = []; // BookingId => ref to booking detail (so seats can be pushed)
+$moviesMap = [];   // movieId => grouped movie object
+$bookingMap = [];  // bookingId => ref to booking detail
 
 while ($row = $result->fetch_assoc()) {
   $movieId = (int)$row["MovieId"];
   $bookingId = (int)$row["BookingId"];
 
-  // Build full name (customer middle name optional)
+  // Build full name
   $middle = trim($row["MiddleName"] ?? "");
   $fullName = trim(
     $row["FirstName"] . " " . ($middle !== "" ? $middle . " " : "") . $row["LastName"]
   );
 
-  // Screen label like UI expects
   $screenLabel = "Screen " . $row["ScreenNumber"];
 
-  // Status mapping
-  $ps = strtolower(trim($row["PaymentStatus"]));
-  $status = ($ps === "paid" || $ps === "pa id" || $ps === "paid ") ? "confirmed" : "cancelled";
-  // If you add a real booking status later, change this mapping.
+  // ✅ Status mapping (safe)
+  $ps = strtolower(trim($row["PaymentStatus"] ?? ""));
+  $status = ($ps === "paid") ? "confirmed" : "cancelled";
 
-  // Format showtime: "Dec 5, 2025 - 2:30 PM"
+  // ✅ ShowDate + StartTime safe parse
   $showDate = $row["ShowDate"];
   $startTime = $row["StartTime"];
-  $dtObj = DateTime::createFromFormat("Y-m-d H:i:s", "$showDate $startTime");
-  if (!$dtObj) {
-    $dtObj = DateTime::createFromFormat("Y-m-d H:i", "$showDate $startTime");
-  }
+
+  $dtObj = DateTime::createFromFormat("Y-m-d H:i:s", "$showDate $startTime")
+        ?: DateTime::createFromFormat("Y-m-d H:i", "$showDate $startTime");
+
   $dateTimeFormatted = $dtObj
     ? $dtObj->format("M j, Y - g:i A")
     : "$showDate $startTime";
 
-  // Format booking date similar to UI: "Dec 4, 2025 10:30 AM"
-  $createdObj = DateTime::createFromFormat("Y-m-d H:i:s", $row["CreatedAt"]);
+  // ✅ Booking date safe parse
+  $createdRaw = $row["CreatedAt"] ?? "";
+  $createdObj = DateTime::createFromFormat("Y-m-d H:i:s", $createdRaw);
   $bookingDateFormatted = $createdObj
     ? $createdObj->format("M j, Y g:i A")
-    : $row["CreatedAt"];
+    : $createdRaw;
 
-  // --- Create movie group if not exists ---
+  // Create movie group
   if (!isset($moviesMap[$movieId])) {
     $moviesMap[$movieId] = [
       "movieId" => $movieId,
@@ -111,12 +104,12 @@ while ($row = $result->fetch_assoc()) {
     ];
   }
 
-  // Add screen to movie screens if not already there
+  // Add screen label
   if (!in_array($screenLabel, $moviesMap[$movieId]["screens"])) {
     $moviesMap[$movieId]["screens"][] = $screenLabel;
   }
 
-  // --- Create booking detail once per BookingId ---
+  // Create booking detail once
   if (!isset($bookingMap[$bookingId])) {
     $bookingDetail = [
       "id" => "B" . str_pad($bookingId, 3, "0", STR_PAD_LEFT),
@@ -135,18 +128,17 @@ while ($row = $result->fetch_assoc()) {
     $moviesMap[$movieId]["bookingDetails"][] = $bookingDetail;
     $moviesMap[$movieId]["totalBookings"]++;
 
-    // store reference to the last inserted booking detail
     $lastIndex = count($moviesMap[$movieId]["bookingDetails"]) - 1;
     $bookingMap[$bookingId] = &$moviesMap[$movieId]["bookingDetails"][$lastIndex];
   }
 
-  // --- Push seats ---
+  // Push seats
   if (!empty($row["Seatnumber"])) {
     $bookingMap[$bookingId]["seats"][] = $row["Seatnumber"];
   }
 }
 
-// finalize totalSeats
+// Finalize totalSeats and unique seats
 foreach ($moviesMap as &$movie) {
   foreach ($movie["bookingDetails"] as &$bd) {
     $bd["seats"] = array_values(array_unique($bd["seats"]));
