@@ -17,8 +17,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$uploadedAbsPath = ""; // for cleanup if rollback happens
-
 try {
     $conn->begin_transaction();
 
@@ -55,7 +53,7 @@ try {
         $description === "" ||
         $releaseDate === "" ||
         $basePrice <= 0 ||
-        $trailerUrl === "" // required on ADD
+        $trailerUrl === ""
     ) {
         $conn->rollback();
         echo json_encode(["success" => false, "message" => "Missing required fields"]);
@@ -73,31 +71,32 @@ try {
         exit;
     }
 
-    // ------- handle poster upload ------
+    // ------- handle poster upload (NO RENAME) ------
     $posterPath = "";
 
     if (isset($_FILES["poster"]) && $_FILES["poster"]["error"] === UPLOAD_ERR_OK) {
 
-        // ✅ Save inside client/public so React can serve it
         $uploadDir = "C:/xampp/htdocs/mobook/Movie-Booking-System/MovieBookingSystem/client/public/assets/Movies/";
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0777, true);
         }
 
-        $ext = pathinfo($_FILES["poster"]["name"], PATHINFO_EXTENSION);
-        $safeName = uniqid("movie_", true) . "." . $ext;
+        // get original name
+        $originalName = basename($_FILES["poster"]["name"]);
+
+        // sanitize: keep letters, numbers, dot, dash, underscore
+        $safeName = preg_replace("/[^a-zA-Z0-9._-]/", "_", $originalName);
+
         $targetPath = $uploadDir . $safeName;
 
+        // move + overwrite if exists (no new copy name)
         if (!move_uploaded_file($_FILES["poster"]["tmp_name"], $targetPath)) {
             $conn->rollback();
             echo json_encode(["success" => false, "message" => "Poster upload failed"]);
             exit;
         }
 
-        // save absolute path for rollback cleanup
-        $uploadedAbsPath = $targetPath;
-
-        // ✅ store RELATIVE path in DB (NOT mobook_api URL)
+        // store RELATIVE path
         $posterPath = "/assets/Movies/" . $safeName;
     }
 
@@ -131,7 +130,6 @@ try {
     );
 
     if (!$stmt->execute()) {
-        if ($uploadedAbsPath && file_exists($uploadedAbsPath)) unlink($uploadedAbsPath);
         $conn->rollback();
         echo json_encode([
             "success" => false,
@@ -151,7 +149,6 @@ try {
         if ($gid > 0) {
             $mgStmt->bind_param("ii", $movieId, $gid);
             if (!$mgStmt->execute()) {
-                if ($uploadedAbsPath && file_exists($uploadedAbsPath)) unlink($uploadedAbsPath);
                 $conn->rollback();
                 echo json_encode(["success" => false, "message" => "Failed inserting genres"]);
                 exit;
@@ -167,7 +164,6 @@ try {
         if ($tid > 0) {
             $mtStmt->bind_param("ii", $movieId, $tid);
             if (!$mtStmt->execute()) {
-                if ($uploadedAbsPath && file_exists($uploadedAbsPath)) unlink($uploadedAbsPath);
                 $conn->rollback();
                 echo json_encode(["success" => false, "message" => "Failed inserting theaters"]);
                 exit;
@@ -176,12 +172,30 @@ try {
     }
     $mtStmt->close();
 
-    // ------- insert showtimes -------
+    // ------- prepared statements for showtimes -------
     $screenLookup = $conn->prepare("
         SELECT ScreenID
         FROM screen
         WHERE TheaterId = ?
           AND ScreenNumber = ?
+        LIMIT 1
+    ");
+
+    $theaterLookup = $conn->prepare("
+        SELECT Name, Location
+        FROM theater
+        WHERE TheaterId = ?
+        LIMIT 1
+    ");
+
+    // 30-min gap rule on same Screen + ShowDate
+    $conflictCheck = $conn->prepare("
+        SELECT 1
+        FROM showtime
+        WHERE ScreenId = ?
+          AND ShowDate = ?
+          AND StartTime < ADDTIME(?, '00:30:00')
+          AND EndTime   > SUBTIME(?, '00:30:00')
         LIMIT 1
     ");
 
@@ -220,10 +234,38 @@ try {
                 $endTime   = $endObj->format("H:i:s");
                 $showDate  = $releaseDate;
 
-                $showStmt->bind_param("iisss", $movieId, $screenId, $showDate, $startTime, $endTime);
+                // conflict check
+                $conflictCheck->bind_param("isss", $screenId, $showDate, $endTime, $startTime);
+                $conflictCheck->execute();
+                $conflictRes = $conflictCheck->get_result();
 
+                if ($conflictRes->fetch_assoc()) {
+                    $theaterName = "Theater {$tid}";
+                    $theaterLoc  = "";
+
+                    $theaterLookup->bind_param("i", $tid);
+                    $theaterLookup->execute();
+                    $tRes = $theaterLookup->get_result();
+                    if ($tRow = $tRes->fetch_assoc()) {
+                        $theaterName = $tRow["Name"];
+                        $theaterLoc  = $tRow["Location"];
+                    }
+
+                    $conn->rollback();
+
+                    $prettyLoc = $theaterLoc ? ", {$theaterLoc}" : "";
+
+                    echo json_encode([
+                        "success" => false,
+                        "message" =>
+                            "⚠️ Schedule Conflict: Less than 30-minute gap between Screen {$sn} events at {$theaterName}{$prettyLoc}.",
+                    ]);
+                    exit;
+                }
+
+                // insert
+                $showStmt->bind_param("iisss", $movieId, $screenId, $showDate, $startTime, $endTime);
                 if (!$showStmt->execute()) {
-                    if ($uploadedAbsPath && file_exists($uploadedAbsPath)) unlink($uploadedAbsPath);
                     $conn->rollback();
                     echo json_encode(["success" => false, "message" => "Failed inserting showtimes"]);
                     exit;
@@ -233,6 +275,8 @@ try {
     }
 
     $screenLookup->close();
+    $theaterLookup->close();
+    $conflictCheck->close();
     $showStmt->close();
 
     $conn->commit();
@@ -244,7 +288,6 @@ try {
     ]);
 
 } catch (Exception $e) {
-    if ($uploadedAbsPath && file_exists($uploadedAbsPath)) unlink($uploadedAbsPath);
     if ($conn) $conn->rollback();
     echo json_encode([
         "success" => false,
