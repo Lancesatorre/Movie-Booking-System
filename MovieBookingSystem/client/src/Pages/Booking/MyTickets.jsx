@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Search, Filter, X } from 'lucide-react';
+import { MapPin, Search, Filter, X, Ticket as TicketIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import LoadingState from '../../Components/LoadingState';
 
@@ -132,6 +132,33 @@ const MyTickets = () => {
     return hoursDifference > 24;
   };
 
+  // Handle Show Ticket button click
+  const handleShowTicket = (ticket) => {
+    // Prepare booking data for the Ticket component
+    const bookingData = {
+      movie: {
+        title: ticket.movieTitle,
+        image: ticket.movieImage,
+        duration: "N/A", // You can add this to your API if available
+        rating: ticket.movieRating,
+        genre: "N/A", // You can add this to your API if available
+      },
+      booking: {
+        bookingId: ticket.bookingReference || `TKT${ticket.id.toString().padStart(6, '0')}`,
+        mall: ticket.theatherLocation,
+        screen: `Screen ${ticket.screenNumber}`,
+        date: formatDateTime(ticket.showDateTime).date,
+        time: formatDateTime(ticket.showDateTime).time,
+        seats: ticket.seats,
+        totalAmount: ticket.totalPrice,
+        paymentMethod: ticket.paymentMethod || "Credit Card",
+      }
+    };
+    
+    // Navigate to Ticket page with booking data
+    navigate('/ticket', { state: { bookingData } });
+  };
+
   // Handle cancel button click
   const handleCancelClick = (ticket) => {
     setSelectedTicket(ticket);
@@ -244,7 +271,8 @@ const MyTickets = () => {
     <div className="min-h-[85vh] bg-transparent text-white py-12">
       {/* Show Loading State when loading */}
       {loading && <LoadingState message="Loading Your Tickets..." />}
-    {canceling && <LoadingState message="Canceling Your Ticket..." />}
+      {canceling && <LoadingState message="Canceling Your Ticket..." />}
+      
       <div className="container mx-auto px-4 max-w-7xl">
         {/* Header */}
         <div className="text-center mb-12 animate-fade-in">
@@ -432,31 +460,37 @@ const MyTickets = () => {
                       </div>
                     </div>
 
-                    {/* Cancel Button - Show for Now Showing and Coming Soon tickets */}
-                    {eligibility.showCancelButton ? (
-                      eligibility.canCancel ? (
-                        <button
-                          onClick={() => handleCancelClick(ticket)}
-                          className="cursor-pointer w-full mt-4 px-4 py-3 bg-gradient-to-r from-red-700 to-orange-600/20 rounded-xl hover:from-red-500 hover:to-red-600 transition-all duration-300 font-bold shadow-lg hover:shadow-red-500/50 hover:scale-105 transform"
-                        >
-                          Cancel Booking
-                        </button>
-                      ) : (
-                        <div className="w-full mt-4 px-4 py-3 bg-gray-700/50 rounded-xl text-center border border-gray-600/50">
-                          <p className="text-sm text-gray-400 font-semibold">Cannot cancel</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {status.label === 'Now Showing' 
-                              ? 'Showtime is within 24 hours' 
-                              : 'Showtime is within 24 hours'}
-                          </p>
+                    {/* Action Buttons Container */}
+                    <div className="flex gap-2 mt-4">
+                      {/* Show Ticket Button - Always visible */}
+                      <button
+                        onClick={() => handleShowTicket(ticket)}
+                        className="flex-1 px-4 py-3 bg-gradient-to-r from-red-700 to-orange-600/20 rounded-xl hover:from-red-500 hover:to-red-600 transition-all duration-300 font-bold shadow-lg hover:shadow-red-500/50 hover:scale-105 transform flex items-center justify-center gap-2"
+                      >
+                        <TicketIcon size={18} />
+                        View Ticket
+                      </button>
+
+                      {/* Cancel Button - Show for Now Showing and Coming Soon tickets */}
+                      {eligibility.showCancelButton ? (
+                        eligibility.canCancel ? (
+                          <button
+                            onClick={() => handleCancelClick(ticket)}
+                            className="flex-1 px-4 py-3 bg-transparent border border-red-900 rounded-xl hover:from-red-500 hover:to-red-600 transition-all duration-300 font-bold shadow-lg hover:shadow-red-500/50 hover:scale-105 transform"
+                          >
+                            Cancel Booking
+                          </button>
+                        ) : (
+                          <div className="flex-1 px-4 py-3 bg-gray-700/50 rounded-xl text-center border border-gray-600/50">
+                            <p className="text-xs text-gray-400">Cannot cancel</p>
+                          </div>
+                        )
+                      ) : status.label === 'Past' ? (
+                        <div className="flex-1 px-4 py-3 bg-gray-700/50 rounded-xl text-center border border-gray-600/50">
+                          <p className="text-xs text-gray-400">Show Completed</p>
                         </div>
-                      )
-                    ) : status.label === 'Past' ? (
-                      <div className="w-full mt-4 px-4 py-3 bg-gray-700/50 rounded-xl text-center border border-gray-600/50">
-                        <p className="text-sm text-gray-400 font-semibold">Show Completed</p>
-                        <p className="text-xs text-gray-500 mt-1">This show has already passed</p>
-                      </div>
-                    ) : null}
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               );
@@ -550,13 +584,13 @@ const MyTickets = () => {
               </div>
 
               {/* Action Buttons */}
-                           <div className="flex gap-4">
+              <div className="flex gap-4">
                 <button
                   onClick={closeModal}
                   disabled={canceling}
                   className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl transition-all duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Keep Booking
+                  Cancel
                 </button>
                 <button
                   onClick={confirmCancellation}
@@ -569,7 +603,7 @@ const MyTickets = () => {
                       Canceling...
                     </>
                   ) : (
-                    'Cancel Booking'
+                    'Confirm'
                   )}
                 </button>
               </div>

@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Calendar, Clock, CreditCard, Smartphone, ArrowLeft, Check, MapPin } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Calendar, Clock, CreditCard, Smartphone, ArrowLeft, Check, MapPin, Download, Home, Users, Film } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ConfirmationModal from '../../Modal/ConfimationModal';
 import LoadingState from '../../Components/LoadingState';
+import icon from "/assets/logo.png";
+import html2canvas from 'html2canvas';
 
-const API_BASE = "http://localhost/mobook_api"; // ✅ CHANGE THIS to your PHP API folder
+const API_BASE = "http://localhost/mobook_api";
 
 const toYMD = (dateObj) => {
   const y = dateObj.getFullYear();
@@ -13,10 +15,10 @@ const toYMD = (dateObj) => {
   return `${y}-${m}-${d}`;
 };
 
-
 const Checkout = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const ticketRef = useRef(null);
 
   // Get movie data from navigation state or use default
   const movie = location.state?.movie || {
@@ -35,9 +37,9 @@ const Checkout = () => {
 
   // --------- DB-driven data ----------
   const [screens, setScreens] = useState([]);
-  const [malls, setMalls] = useState([]); // theaters/malls
-  const [showDates, setShowDates] = useState([]); // [{date:"YYYY-MM-DD"}]
-  const [times, setTimes] = useState([]); // [{id,time,available}]
+  const [malls, setMalls] = useState([]);
+  const [showDates, setShowDates] = useState([]);
+  const [times, setTimes] = useState([]);
   const [unavailableSeats, setUnavailableSeats] = useState([]);
 
   const [loading, setLoading] = useState({
@@ -46,7 +48,7 @@ const Checkout = () => {
     dates: false,
     times: false,
     seats: false,
-    booking: false, // Added booking loading state
+    booking: false,
   });
   const [error, setError] = useState(null);
 
@@ -60,7 +62,11 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState(null);
   const [bookingInProgress, setBookingInProgress] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  
+  // New state for booking confirmation
   const [bookingCompleted, setBookingCompleted] = useState(false);
+  const [bookingData, setBookingData] = useState(null);
+  const [downloading, setDownloading] = useState(false);
 
   // --------- fallback generated dates ----------
   const generatedDates = useMemo(() => {
@@ -160,7 +166,6 @@ const Checkout = () => {
         if (!json.success) throw new Error(json.message || "Failed to load show dates");
         setShowDates(json.dates || []);
       } catch (e) {
-        // fallback to generated dates if endpoint fails
         setShowDates([]);
       } finally {
         setLoading(l => ({ ...l, dates: false }));
@@ -178,67 +183,59 @@ const Checkout = () => {
   }, [selectedMall?.id, selectedScreen?.id, movie.id]);
 
   // --------- Load Showtimes when date changes ----------
-useEffect(() => {
-  if (!selectedMall || !selectedScreen || !selectedDate) return;
+  useEffect(() => {
+    if (!selectedMall || !selectedScreen || !selectedDate) return;
 
-  const loadTimes = async () => {
-    setLoading(l => ({ ...l, times: true }));
-    setError(null);
-    try {
-      const dateStr = toYMD(selectedDate.full);
-      const res = await fetch(
-        `${API_BASE}/get_showtimes.php?movieId=${movie.id}&screenId=${selectedScreen.id}&theaterId=${selectedMall.id}&date=${dateStr}`
-      );
-      const json = await res.json();
-      if (!json.success) throw new Error(json.message || "Failed to load showtimes");
-      
-      // Check if selected date is TODAY
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const selectedDateOnly = new Date(selectedDate.full.getFullYear(), selectedDate.full.getMonth(), selectedDate.full.getDate());
-      
-      const isToday = selectedDateOnly.getTime() === today.getTime();
-      
-      // Filter out times that are within 3 hours from now ONLY if it's today
-      const filteredTimes = (json.times || []).map(time => {
-        // If not today, just return original availability
-        if (!isToday) {
-          return time;
-        }
+    const loadTimes = async () => {
+      setLoading(l => ({ ...l, times: true }));
+      setError(null);
+      try {
+        const dateStr = toYMD(selectedDate.full);
+        const res = await fetch(
+          `${API_BASE}/get_showtimes.php?movieId=${movie.id}&screenId=${selectedScreen.id}&theaterId=${selectedMall.id}&date=${dateStr}`
+        );
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message || "Failed to load showtimes");
         
-        // Parse the showtime
-        const [hours, minutes] = time.time.split(':').map(Number);
-        const showDateTime = new Date(selectedDate.full);
-        showDateTime.setHours(hours, minutes, 0, 0);
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const selectedDateOnly = new Date(selectedDate.full.getFullYear(), selectedDate.full.getMonth(), selectedDate.full.getDate());
         
-        // Calculate time difference in hours
-        const timeDiffHours = (showDateTime - now) / (1000 * 60 * 60);
+        const isToday = selectedDateOnly.getTime() === today.getTime();
         
-        // Mark as unavailable if within 3 hours (ONLY for today)
-        return {
-          ...time,
-          // Keep original available status AND check if within cutoff
-          available: time.available && timeDiffHours > 3
-        };
-      });
-      
-      setTimes(filteredTimes);
-      setSelectedTime(null);
-    } catch (e) {
-      setError(e.message);
-      setTimes([]);
-    } finally {
-      setLoading(l => ({ ...l, times: false }));
-    }
-  };
+        const filteredTimes = (json.times || []).map(time => {
+          if (!isToday) {
+            return time;
+          }
+          
+          const [hours, minutes] = time.time.split(':').map(Number);
+          const showDateTime = new Date(selectedDate.full);
+          showDateTime.setHours(hours, minutes, 0, 0);
+          
+          const timeDiffHours = (showDateTime - now) / (1000 * 60 * 60);
+          
+          return {
+            ...time,
+            available: time.available && timeDiffHours > 3
+          };
+        });
+        
+        setTimes(filteredTimes);
+        setSelectedTime(null);
+      } catch (e) {
+        setError(e.message);
+        setTimes([]);
+      } finally {
+        setLoading(l => ({ ...l, times: false }));
+      }
+    };
 
-  // reset downstream
-  setSelectedTime(null);
-  setSelectedSeats([]);
-  setUnavailableSeats([]);
+    setSelectedTime(null);
+    setSelectedSeats([]);
+    setUnavailableSeats([]);
 
-  loadTimes();
-}, [selectedDate?.date, selectedMall?.id, selectedScreen?.id, movie.id]);
+    loadTimes();
+  }, [selectedDate?.date, selectedMall?.id, selectedScreen?.id, movie.id]);
 
   // --------- Load Unavailable Seats when time changes ----------
   useEffect(() => {
@@ -342,74 +339,592 @@ useEffect(() => {
     if (step > 1) setStep(step - 1);
   };
 
-  // --------- CONFIRM BOOKING (DB SAVE) ---------- 
-// Update the handleConfirm function
-const handleConfirm = async () => {
-  if (!canProceed()) return;
-
-  if (!customerId) {
-    alert("You must be logged in to book.");
-    return;
-  }
-
-  const payload = {
-    customerId,
-    showtimeId: selectedTime.id,
-    seatNumbers: selectedSeats,
-    paymentMethod,
-    paymentStatus: "PAID",
+  // Generate booking ID
+  const generateBookingId = () => {
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `MBK${timestamp}${random}`;
   };
 
-  // Start booking loading
-  setLoading(l => ({ ...l, booking: true }));
-  setBookingCompleted(false); // Reset completed state
+  // --------- CONFIRM BOOKING (DB SAVE) ----------
+  const handleConfirm = async () => {
+    if (!canProceed()) return;
 
-  try {
-    const res = await fetch(`${API_BASE}/create_booking.php`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const json = await res.json();
-
-    if (!json.success) {
-      alert(json.message || "Booking failed.");
-      setLoading(l => ({ ...l, booking: false }));
+    if (!customerId) {
+      alert("You must be logged in to book.");
       return;
     }
 
-    // Show success state first
-    setTimeout(() => {
-      setBookingCompleted(true);
-      
-      // Then navigate after showing success message
-      setTimeout(() => {
-        localStorage.removeItem("bookingInProgress");
+    const payload = {
+      customerId,
+      showtimeId: selectedTime.id,
+      seatNumbers: selectedSeats,
+      paymentMethod,
+      paymentStatus: "PAID",
+    };
 
-        // reset selections
-        setSelectedSeats([]);
-        setPaymentMethod(null);
-        setStep(1);
+    // Start booking loading
+    setLoading(l => ({ ...l, booking: true }));
+    setBookingCompleted(false);
 
-        // refresh seats for same time if user stays
-        setUnavailableSeats(prev => [...prev, ...selectedSeats]);
+    try {
+      const res = await fetch(`${API_BASE}/create_booking.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-        // Stop loading
+      const json = await res.json();
+
+      if (!json.success) {
+        alert(json.message || "Booking failed.");
         setLoading(l => ({ ...l, booking: false }));
-        setBookingCompleted(false);
+        return;
+      }
 
-        // ✅ go back to Home after confirmed booking
-        navigate("/Home");
-      }, 1500); // Show success message for 1.5 seconds
-    }, 1500); // Show loading for 1.5 seconds
+      // Create booking data for ticket
+      const bookingData = {
+        movie: {
+          title: movie.title,
+          image: movie.image,
+          duration: movie.duration,
+          rating: movie.rating,
+          genre: movie.genre,
+        },
+        booking: {
+          bookingId: generateBookingId(),
+          mall: selectedMall.name,
+          screen: selectedScreen.name,
+          date: `${selectedDate.month} ${selectedDate.date}`,
+          time: selectedTime.time,
+          seats: selectedSeats,
+          totalAmount: totalAmount,
+          paymentMethod: paymentMethod,
+          bookingTime: new Date().toLocaleString(),
+        }
+      };
 
-  } catch (err) {
-    console.error(err);
-    alert("Server error. Please try again.");
-    setLoading(l => ({ ...l, booking: false }));
+      // Save booking data
+      setBookingData(bookingData);
+      
+      // Show success state and then show ticket
+      setTimeout(() => {
+        setBookingCompleted(true);
+        setLoading(l => ({ ...l, booking: false }));
+      }, 1500);
+
+    } catch (err) {
+      console.error(err);
+      alert("Server error. Please try again.");
+      setLoading(l => ({ ...l, booking: false }));
+    }
+  };
+
+  // Download ticket function
+  // Replace the existing handleDownloadTicket function with this:
+
+// Replace the handleDownloadTicket function with this:
+
+const handleDownloadTicket = () => {
+  setDownloading(true);
+  
+  try {
+    // Create clean HTML ticket with only details
+    const ticketHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>MoBook Ticket - ${bookingData.booking.bookingId}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+          
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+          }
+          
+          .ticket-container {
+            width: 100%;
+            max-width: 700px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 24px;
+            overflow: hidden;
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+          }
+          
+          .ticket-header {
+            background: linear-gradient(to left, rgba(220, 38, 38, 0.5) 0%, rgba(0, 0, 0, 0.5) 100%);
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            border-bottom: 1px solid rgba(220, 38, 38, 0.9);
+          }
+          
+          .ticket-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+              45deg,
+              transparent,
+              transparent 10px,
+              rgba(255, 255, 255, 0.1) 10px,
+              rgba(255, 255, 255, 0.1) 20px
+            );
+            opacity: 0.2;
+          }
+          
+          .header-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+          
+          .logo-section {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+          }
+          
+          .cinema-name {
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(to right, #dc2626 0%, rgba(234, 88, 12, 0.2) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+          }
+          
+          .booking-id {
+            text-align: right;
+          }
+          
+          .booking-id div:first-child {
+            font-size: 14px;
+            color: #ffffff;
+            margin-bottom: 4px;
+            opacity: 0.9;
+          }
+          
+          .booking-id .id-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            opacity: 1;
+          }
+          
+          .ticket-body {
+            padding: 32px;
+          }
+          
+          .movie-title-section {
+            text-align: center;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid rgba(150, 0, 0, 1);
+          }
+          
+          .movie-title {
+            font-size: 40px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 12px;
+            line-height: 1.2;
+          }
+          
+          .movie-tags {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+          }
+          
+          .tag {
+            padding: 8px 20px;
+            border-radius: 9999px;
+            font-size: 14px;
+            font-weight: 600;
+          }
+          
+          .tag-rating {
+            background: rgba(220, 38, 38, 0.2);
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            color: #f87171;
+          }
+          
+          .tag-duration {
+            background: rgba(75, 85, 99, 0.5);
+            border: 1px solid rgba(75, 85, 99, 0.7);
+            color: #d1d5db;
+          }
+          
+          .movie-genre {
+            font-size: 16px;
+            color: #9ca3af;
+          }
+          
+          .details-section {
+            margin-bottom: 32px;
+          }
+          
+          .details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+          }
+          
+          .detail-card {
+            background: rgba(55, 65, 81, 0.5);
+            border: 1px solid rgba(75, 85, 99, 0.5);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: left;
+            transition: transform 0.2s ease;
+          }
+          
+          .detail-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(220, 38, 38, 0.5);
+          }
+          
+          .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+          }
+          
+          .detail-header span {
+            font-size: 14px;
+            color: #9ca3af;
+          }
+          
+          .detail-content {
+            font-weight: 600;
+            font-size: 20px;
+            color: #ffffff;
+            line-height: 1.3;
+          }
+          
+          .detail-subtext {
+            font-size: 14px;
+            color: #9ca3af;
+            margin-top: 4px;
+          }
+          
+          .perforated-line {
+            position: relative;
+            height: 1px;
+            margin: 40px 0;
+          }
+          
+          .perforated-line::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -36px;
+            right: -36px;
+            height: 100%;
+            border-top: 2px dashed rgba(220, 38, 38, 0.6);
+          }
+          
+          .perforated-line::after {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: 1000;
+            width: 30px;
+            height: 30px;
+            background: #0a0a0a;
+            border-radius: 50%;
+            border: 2px solid rgba(220, 38, 38, 0.7);
+            transform: translateX(-50%);
+          }
+          
+          .perforated-line::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            right: 0;
+            width: 30px;
+            height: 30px;
+            background: #0a0a0a;
+            border-radius: 50%;
+            border: 2px solid rgba(220, 38, 38, 0.7);
+            transform: translateX(50%);
+          }
+          
+          .payment-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 24px;
+            padding: 24px;
+            background: rgba(30, 41, 59, 0.3);
+            border-radius: 12px;
+            border: 1px solid rgba(75, 85, 99, 0.5);
+          }
+          
+          .payment-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+          }
+          
+          .payment-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+          }
+          
+          .payment-details h3 {
+            font-size: 14px;
+            color: #9ca3af;
+            margin-bottom: 4px;
+          }
+          
+          .payment-details p {
+            font-size: 20px;
+            font-weight: 600;
+            color: #ffffff;
+          }
+          
+          .total-amount {
+            text-align: right;
+          }
+          
+          .total-amount h3 {
+            font-size: 14px;
+            color: #9ca3af;
+            margin-bottom: 4px;
+          }
+          
+          .total-amount p {
+            font-size: 36px;
+            font-weight: 800;
+            color: #ef4444;
+          }
+          
+          .ticket-footer {
+            background: rgba(17, 24, 39, 0.5);
+            padding: 20px 32px;
+            border-top: 1px solid rgba(75, 85, 99, 0.5);
+            text-align: center;
+            font-size: 14px;
+            color: #6b7280;
+            line-height: 1.5;
+          }
+          
+          @media (max-width: 640px) {
+            .details-grid {
+              grid-template-columns: 1fr;
+            }
+            
+            .movie-title {
+              font-size: 32px;
+            }
+            
+            .total-amount p {
+              font-size: 28px;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="ticket-container">
+          <!-- Header -->
+          <div class="ticket-header">
+            <div class="header-content">
+              <div class="logo-section">
+                <h1 class="cinema-name">MoBook</h1>
+              </div>
+              <div class="booking-id">
+                <div>Booking ID</div>
+                <div class="id-number">${bookingData.booking.bookingId}</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Body -->
+          <div class="ticket-body">
+            <!-- Movie Title Section -->
+            <div class="movie-title-section">
+              <h2 class="movie-title">${bookingData.movie.title}</h2>
+              <div class="movie-tags">
+                <div class="tag tag-rating">${bookingData.movie.rating}</div>
+                <div class="tag tag-duration">${bookingData.movie.duration}</div>
+              </div>
+              <div class="movie-genre">${bookingData.movie.genre}</div>
+            </div>
+            
+            <!-- Details Grid -->
+            <div class="details-section">
+              <div class="details-grid">
+                <div class="detail-card">
+                  <div class="detail-header">
+                    <span>📍 Location</span>
+                  </div>
+                  <div class="detail-content">${bookingData.booking.mall}</div>
+                  <div class="detail-subtext">${bookingData.booking.screen}</div>
+                </div>
+                
+                <div class="detail-card">
+                  <div class="detail-header">
+                    <span>📅 Date</span>
+                  </div>
+                  <div class="detail-content">${bookingData.booking.date}</div>
+                </div>
+                
+                <div class="detail-card">
+                  <div class="detail-header">
+                    <span>⏰ Show Time</span>
+                  </div>
+                  <div class="detail-content">${bookingData.booking.time}</div>
+                </div>
+                
+                <div class="detail-card">
+                  <div class="detail-header">
+                    <span>🎟️ Seats</span>
+                  </div>
+                  <div class="detail-content">${bookingData.booking.seats.join(', ')}</div>
+                  <div class="detail-subtext">${bookingData.booking.seats.length} ticket${bookingData.booking.seats.length > 1 ? 's' : ''}</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Perforated Line -->
+  
+            
+            <!-- Payment Info -->
+            <div class="payment-section">
+              <div class="payment-info">
+                <div class="payment-icon">💳</div>
+                <div class="payment-details">
+                  <h3>Payment Method</h3>
+                  <p>${bookingData.booking.paymentMethod.toUpperCase()}</p>
+                </div>
+              </div>
+              
+              <div class="total-amount">
+                <h3>Total Amount</h3>
+                <p>₱${bookingData.booking.totalAmount.toLocaleString()}</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Footer -->
+          <div class="ticket-footer">
+            Please arrive 15 minutes before showtime • Present this ticket at the cinema entrance
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    // Create blob and download
+    const blob = new Blob([ticketHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    link.href = url;
+    link.download = `MoBook-Ticket-${bookingData.booking.bookingId}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+    
+  } catch (error) {
+    console.error('Error downloading ticket:', error);
+    
+    // Fallback: Create a clean text version
+    const simpleTicket = `
+══════════════════════════════════════════════════════
+                MoBook Cinema - E-Ticket              
+══════════════════════════════════════════════════════
+
+Booking ID: ${bookingData.booking.bookingId}
+
+──────────────────────────────────────────────────────
+
+🎬 MOVIE: ${bookingData.movie.title}
+   Rating: ${bookingData.movie.rating} | Duration: ${bookingData.movie.duration}
+   Genre: ${bookingData.movie.genre}
+
+──────────────────────────────────────────────────────
+
+📍 LOCATION: ${bookingData.booking.mall}
+   Screen: ${bookingData.booking.screen}
+
+📅 DATE: ${bookingData.booking.date}
+⏰ TIME: ${bookingData.booking.time}
+🎟️ SEATS: ${bookingData.booking.seats.join(', ')}
+
+──────────────────────────────────────────────────────
+
+💳 PAYMENT: ${bookingData.booking.paymentMethod.toUpperCase()}
+💰 TOTAL: ₱${bookingData.booking.totalAmount.toLocaleString()}
+
+──────────────────────────────────────────────────────
+
+⚠️ IMPORTANT:
+• Please arrive 15 minutes before showtime
+• Present this ticket at the cinema entrance
+• Outside food and beverages are not allowed
+
+══════════════════════════════════════════════════════
+`;
+    
+    const blob = new Blob([simpleTicket], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    link.href = url;
+    link.download = `MoBook-Ticket-${bookingData.booking.bookingId}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+    
+  } finally {
+    setDownloading(false);
   }
 };
+
+  const handleBackToHome = () => {
+    localStorage.removeItem("bookingInProgress");
+    setBookingCompleted(false);
+    setBookingData(null);
+    setSelectedSeats([]);
+    setPaymentMethod(null);
+    setStep(1);
+    navigate("/Home");
+  };
 
   const paymentMethods = [
     { id: 'card', name: 'Credit/Debit Card', icon: CreditCard, color: 'from-blue-600 to-blue-700' },
@@ -418,10 +933,229 @@ const handleConfirm = async () => {
     { id: 'paymaya', name: 'PayMaya', icon: Smartphone, color: 'from-green-600 to-emerald-700' }
   ];
 
+  // If booking is completed, show ticket
+  if (bookingCompleted && bookingData) {
+    return (
+      <div className="min-h-screen bg-transparent text-white py-12 px-4">
+        <div className="container mx-auto max-w-4xl">
+          
+          {/* Success Message */}
+          <div className="text-center mb-3 animate-fade-in">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-red-600 to-orange-600 flex items-center justify-center shadow-lg shadow-red-500/50">
+              <Check size={40} className="text-white" />
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-red-700 to-orange-600 bg-clip-text text-transparent pb-2 mb-1">
+              Booking Successful!
+            </h1>
+            <p className="text-gray-400 text-lg">Your ticket is ready. See you at the movies!</p>
+          </div>
+
+          {/* Ticket */}
+          <div className="mb-8 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            <div 
+              ref={ticketRef}
+              className="bg-black/70 rounded-3xl overflow-hidden shadow-2xl "
+            >
+              {/* Ticket Header */}
+              <div className=" bg-gradient-to-l from-red-700/50 to-black/50   border border-red-900 p-6 relative overflow-hidden ">
+                <div className="absolute inset-0 opacity-20 ">
+                  <div className="absolute inset-0 " style={{
+                    backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)'
+                  }} />
+                </div>
+                <div className="relative text-left flex items-center justify-between">
+                  <div className='flex flex-col gap-2'>
+                    <div className='flex gap-3 items-center justify-center'>
+                       <img src={icon} alt="MoBook Logo" className="w-[4vh] h-[3vh]" />
+                    <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent">MoBook</h2>
+                  
+                    </div>
+                
+                  </div>
+                  <div className="text-right">
+                    <div className="text-white text-sm mb-1">Booking ID</div>
+                    <div className="text-sm md:text-2xl font-bold text-white">{bookingData.booking.bookingId}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Main Ticket Content */}
+              <div className="p-8">
+                <div className="grid md:grid-cols-3 gap-8 mb-8">
+                  {/* Movie Poster */}
+                  <div className="md:col-span-1">
+                    <div className="aspect-[2/3] rounded-xl overflow-hidden shadow-lg shadow-black/50">
+                      <img 
+                        src={bookingData.movie.image} 
+                        alt={bookingData.movie.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Movie & Booking Details */}
+                  <div className="md:col-span-2 space-y-6">
+                    {/* Movie Title */}
+                    <div>
+                      <h3 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-white to-red-900/90 bg-clip-text text-transparent mb-2 text-left">{bookingData.movie.title}</h3>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="px-3 py-1 bg-red-600/20 border border-red-500/30 rounded-full text-sm text-red-400">
+                          {bookingData.movie.rating}
+                        </span>
+                        <span className="px-3 py-1 bg-gray-700/50 rounded-full text-sm text-gray-300">
+                          {bookingData.movie.duration}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Booking Details Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+                      <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+                        <div className="flex items-center gap-3 mb-2">
+                          <MapPin size={20} className="text-red-500" />
+                          <span className="text-gray-400 text-sm">Location</span>
+                        </div>
+                        <p className="text-white font-semibold text-xl">{bookingData.booking.mall}</p>
+                        <p className="text-gray-400 text-sm">{bookingData.booking.screen}</p>
+                      </div>
+
+                      <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Calendar size={20} className="text-red-500" />
+                          <span className="text-gray-400 text-sm">Date</span>
+                        </div>
+                        <p className="text-white font-semibold text-xl">{bookingData.booking.date}</p>
+                      </div>
+
+                      <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Clock size={20} className="text-red-500" />
+                          <span className="text-gray-400 text-sm">Show Time</span>
+                        </div>
+                        <p className="text-white font-semibold text-xl">{bookingData.booking.time}</p>
+                      </div>
+
+                      <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Users size={20} className="text-red-500" />
+                          <span className="text-gray-400 text-sm">Seats</span>
+                        </div>
+                        <p className="text-white font-semibold text-xl">{bookingData.booking.seats.join(', ')}</p>
+                        <p className="text-gray-400 text-sm">{bookingData.booking.seats.length} ticket{bookingData.booking.seats.length > 1 ? 's' : ''}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Divider with perforated effect */}
+                <div className="relative my-8">
+                  <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-full border-t border-dashed border-red-900 mb-2"></div>
+                  </div>
+                  <div className="absolute -left-10.5 w-10 h-20 bg-red-950/50 rounded-full -ml-3 border-2 border-red-900"></div>
+                  <div className="absolute -right-10.5 w-10 h-20 bg-red-950/50 rounded-full -mr-3 border-2 border-red-900"></div>
+                </div>
+
+                {/* Payment Details */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center  flex-col">
+                   
+                    <div className='flex gap-2'>
+                       <CreditCard size={24} className="text-red-500" />
+                      <p className="text-gray-400 text-sm">Payment Method:</p>
+                      
+                    </div>
+                    <p className="text-white font-semibold">{bookingData.booking.paymentMethod.toUpperCase()}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-gray-400 text-sm mb-1 mt-1">Total Amount</p>
+                    <p className="text-3xl font-bold text-red-500">₱{bookingData.booking.totalAmount.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ticket Footer */}
+              <div className="bg-gray-900/50 px-8 py-4 border-t border-gray-800">
+                <p className="text-center text-gray-500 text-sm">
+                  Please arrive 15 minutes before showtime • Present this ticket at the entrance
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <button
+              onClick={handleDownloadTicket}
+              disabled={downloading}
+              className={`flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 ${
+                downloading
+                  ? 'bg-gray-700 cursor-not-allowed opacity-50'
+                  : 'bg-gradient-to-r from-red-700 to-orange-600 hover:from-red-600 hover:to-orange-500 shadow-lg shadow-red-500/20 hover:shadow-red-500/40 hover:scale-[1.02]'
+              }`}
+            >
+              <Download size={24} />
+              {downloading ? 'Downloading...' : 'Download Ticket'}
+            </button>
+
+            <button
+              onClick={handleBackToHome}
+              className="flex items-center justify-center gap-3 px-8 py-4 border-2 border-red-500/50 rounded-xl hover:border-red-500 hover:bg-red-900/20 transition-all duration-300 font-semibold text-lg hover:scale-[1.02]"
+            >
+              <Home size={24} />
+              Back to Home
+            </button>
+          </div>
+
+          {/* Additional Info */}
+          <div className="mt-8 p-6 bg-gradient-to-r from-red-900/20 to-orange-900/20 border border-red-500/30 rounded-xl animate-fade-in" style={{ animationDelay: '0.6s' }}>
+            <div className='flex flex-row justify-center gap-2 '>
+               <Film size={20} className="text-red-500" />
+              <h4 className="font-semibold text-white mb-3  gap-2">
+             
+              Important Reminders
+            </h4>
+            </div>
+           
+            <ul className="space-y-2 text-gray-300 text-sm">
+              <li>• Please arrive at least 15 minutes before showtime</li>
+              <li>• Present this ticket (digital or printed) at the cinema entrance</li>
+              <li>• Outside food and beverages are not allowed inside the cinema</li>
+              <li>• Recording or photography during the movie is strictly prohibited</li>
+            </ul>
+          </div>
+        </div>
+
+        <style>{`
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          @keyframes slideUp {
+            from {
+              opacity: 0;
+              transform: translateY(30px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          .animate-fade-in {
+            animation: fadeIn 0.6s ease-out both;
+          }
+          .animate-slide-up {
+            animation: slideUp 0.8s ease-out both;
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-transparent text-white py-12 px-4">
       {/* Booking Loading State */}
-     {loading.booking && (
+      {loading.booking && (
         <LoadingState 
           message={bookingCompleted ? "Booking Completed!" : "Processing your booking..."}
         />

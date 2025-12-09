@@ -23,6 +23,7 @@ import UserProfile from './Pages/Booking/UserProfile.jsx';
 import ScrollToTop from './Components/ScrolltoUp.jsx';
 import AdminProfile from './Pages/Admin/AdminProfile.jsx';
 import MoviesLayout from './Components/MoviesLayout.jsx';
+import Ticket from './Pages/Booking/Ticket.jsx';
 
 import './App.css'
 
@@ -58,6 +59,7 @@ function App() {
             <Route element={<MoviesLayout />}>   
             <Route path="/movies" element={<BookingMovie />} />
           <Route path="/movies-checkout" element={<Checkout />} />
+             <Route path="/ticket" element={<Ticket />} />
            </Route>
         
           <Route path="/profile" element={<UserProfile />} />
@@ -73,7 +75,7 @@ function App() {
           </Route>
           <Route path="/admin/profile" element={<AdminProfile />} />
         </Route>
-
+       
         {/* Catch all - redirect to Home */}
         <Route path="*" element={<Navigate to="/Home" replace />} />
       </Routes>
