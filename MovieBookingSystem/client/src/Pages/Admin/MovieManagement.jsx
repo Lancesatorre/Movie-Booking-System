@@ -37,6 +37,36 @@ export default function MovieManagement() {
   const [loadingTheaters, setLoadingTheaters] = useState(true);
   const [loadingScreens, setLoadingScreens] = useState(true);
   const [error, setError] = useState("");
+  
+  // Field-specific error states for Add Modal
+  const [addErrors, setAddErrors] = useState({
+    title: '',
+    genre: '',
+    price: '',
+    duration: '',
+    trailer: '',
+    location: '',
+    screens: '',
+    description: '',
+    dateRelease: '',
+    showingDays: '',
+    times: '',
+    image: ''
+  });
+  
+  // Field-specific error states for Edit Modal
+  const [editErrors, setEditErrors] = useState({
+    title: '',
+    genre: '',
+    price: '',
+    duration: '',
+    location: '',
+    description: '',
+    dateRelease: '',
+    showingDays: '',
+    image: ''
+  });
+
   const [showGenreDropdown, setShowGenreDropdown] = useState(false);
   const [showEditGenreDropdown, setShowEditGenreDropdown] = useState(false);
 
@@ -63,10 +93,10 @@ export default function MovieManagement() {
   ];
 
   const statuses = [
-    { value: 'now-showing', label: 'Now Showing', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40', 
-      glow: 'shadow-emerald-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-emerald-500/50 text-emerald-300 border-emerald-500/40 shadow-emerald-500/60 shadow-lg animate-pulse-slow0', },
-    { value: 'coming-soon', label: 'Coming Soon',  color: 'bg-red-500/50 text-red-500 border-red-500/40',
-      glow: 'shadow-red-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-red-500/50 text-red-300 border-red-500/40 shadow-red-500/60 shadow-lg animate-pulse-slow0',},
+    { value: 'now-showing', label: 'Now Showing',  color: 'bg-red-500/50 text-red-100 border-red-500/40',
+      glow: 'shadow-red-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-red-500/50 text-red-300 border-red-500/40 shadow-red-500/60 shadow-lg animate-pulse-slow0'},
+    { value: 'coming-soon', label: 'Coming Soon',  color: 'bg-emerald-500/20 text-emerald-100 border-emerald-500/40', 
+      glow: 'shadow-emerald-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-emerald-500/50 text-emerald-300 border-emerald-500/40 shadow-emerald-500/60 shadow-lg animate-pulse-slow0'},
     { value: 'expired', label: 'Expired', color: 'bg-gray-600/20 text-gray-400 border-gray-600/40', glow: 'shadow-gray-600/30' },
     { value: 'not-published', label: 'Not Published', color: 'bg-orange-500/20 text-orange-300 border-orange-500/40', glow: 'shadow-orange-500/30' }
   ];
@@ -89,6 +119,25 @@ export default function MovieManagement() {
   };
 
   const isFutureDate = (dateString) => startOfDay(parseDate(dateString)) > startOfDay(new Date());
+
+    const formatTime12Hour = (time24) => {
+      if (!time24) return '';
+      const [hours, minutes] = time24.split(':').map(Number);
+      const period = hours >= 12 ? 'PM' : 'AM';
+      const hours12 = hours % 12 || 12;
+      return `${hours12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${period}`;
+    };
+
+    const formatTime24Hour = (time12) => {
+      if (!time12) return '';
+      const [time, period] = time12.split(' ');
+      let [hours, minutes] = time.split(':').map(Number);
+      
+      if (period === 'PM' && hours < 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    };
 
   const isExpiredByShowingDays = (movie) => {
     const today = startOfDay(new Date());
@@ -113,11 +162,11 @@ export default function MovieManagement() {
     published: false,
     duration: '',
     rating: 'PG',
-    location: [],
+    location: '',
     dateRelease: '',
     showingDays: '',
     description: '',
-    trailer: '',     // ✅ NEW
+    trailer: '',
     image: ''
   });
   const [editImagePreview, setEditImagePreview] = useState('');
@@ -135,7 +184,7 @@ export default function MovieManagement() {
     dateRelease: '',
     showingDays: '',
     description: '',
-    trailer: '',     // ✅ NEW (required)
+    trailer: '',
     image: '',
     times: []
   });
@@ -178,8 +227,8 @@ export default function MovieManagement() {
           location: m.location || "",
           dateRelease: m.releaseDateRaw || m.dateRelease || "",
           showingDays: Number(m.showingDays || 7),
-          description: m.description || "",   // ✅ NEW
-          trailer: m.trailer || "",           // ✅ NEW
+          description: m.description || "",
+          trailer: m.trailer || "",
           image: m.image || ""
         }));
         setMovies(normalized);
@@ -248,6 +297,182 @@ export default function MovieManagement() {
   }, []);
 
   // ---------------------------
+  // Validation functions
+  // ---------------------------
+  const validateAddForm = () => {
+    const errors = {};
+    let isValid = true;
+
+    // Title validation
+    if (!newMovie.title.trim()) {
+      errors.title = 'Title is required';
+      isValid = false;
+    }
+
+    // Genre validation
+    if (!newMovie.genre || newMovie.genre.length === 0) {
+      errors.genre = 'At least one genre is required';
+      isValid = false;
+    }
+
+    // Price validation
+    if (!newMovie.price) {
+      errors.price = 'Price is required';
+      isValid = false;
+    } else if (isNaN(newMovie.price) || Number(newMovie.price) <= 0) {
+      errors.price = 'Price must be a positive number';
+      isValid = false;
+    }
+
+    // Duration validation
+    if (!newMovie.duration.trim()) {
+      errors.duration = 'Duration is required';
+      isValid = false;
+    }
+
+    // Trailer validation
+    if (!newMovie.trailer.trim()) {
+      errors.trailer = 'Trailer link is required';
+      isValid = false;
+    } else if (!newMovie.trailer.includes('youtube.com') && !newMovie.trailer.includes('youtu.be')) {
+      errors.trailer = 'Please enter a valid YouTube link';
+      isValid = false;
+    }
+
+    // Location validation
+    if (!newMovie.location || newMovie.location.length === 0) {
+      errors.location = 'At least one location is required';
+      isValid = false;
+    }
+
+    // Screens validation
+    if (!newMovie.screens || newMovie.screens.length === 0) {
+      errors.screens = 'At least one screen is required';
+      isValid = false;
+    }
+
+    // Description validation
+    if (!newMovie.description.trim()) {
+      errors.description = 'Description is required';
+      isValid = false;
+    }
+
+    // Date Release validation
+    if (!newMovie.dateRelease) {
+      errors.dateRelease = 'Release date is required';
+      isValid = false;
+    } else {
+      const selectedDate = startOfDay(parseDate(newMovie.dateRelease));
+      const today = startOfDay(new Date());
+      if (selectedDate < today) {
+        errors.dateRelease = 'Release date cannot be in the past';
+        isValid = false;
+      }
+    }
+
+    // Showing Days validation
+    if (!newMovie.showingDays) {
+      errors.showingDays = 'Showing days is required';
+      isValid = false;
+    } else if (isNaN(newMovie.showingDays) || Number(newMovie.showingDays) < 1) {
+      errors.showingDays = 'Showing days must be at least 1';
+      isValid = false;
+    }
+
+    // Times validation
+    if (!newMovie.times || newMovie.times.length === 0) {
+      errors.times = 'At least one showtime is required';
+      isValid = false;
+    }
+
+    // Image validation
+    if (!newMovie.image && !newMovie.posterFile) {
+      errors.image = 'Movie poster/image is required';
+      isValid = false;
+    }
+
+    setAddErrors(errors);
+    return isValid;
+  };
+
+  const validateEditForm = () => {
+    const errors = {};
+    let isValid = true;
+
+    // Title validation
+    if (!formData.title.trim()) {
+      errors.title = 'Title is required';
+      isValid = false;
+    }
+
+    // Genre validation
+    if (!formData.genre || formData.genre.length === 0) {
+      errors.genre = 'At least one genre is required';
+      isValid = false;
+    }
+
+    // Price validation
+    if (!formData.price) {
+      errors.price = 'Price is required';
+      isValid = false;
+    } else if (isNaN(formData.price) || Number(formData.price) <= 0) {
+      errors.price = 'Price must be a positive number';
+      isValid = false;
+    }
+
+    // Duration validation
+    if (!formData.duration.trim()) {
+      errors.duration = 'Duration is required';
+      isValid = false;
+    }
+
+    // Location validation
+    if (!formData.location) {
+      errors.location = 'Location is required';
+      isValid = false;
+    }
+
+    // Description validation
+    if (!formData.description.trim()) {
+      errors.description = 'Description is required';
+      isValid = false;
+    }
+
+    // Date Release validation
+    if (!formData.dateRelease) {
+      errors.dateRelease = 'Release date is required';
+      isValid = false;
+    }
+
+    // Showing Days validation
+    if (!formData.showingDays) {
+      errors.showingDays = 'Showing days is required';
+      isValid = false;
+    } else if (isNaN(formData.showingDays) || Number(formData.showingDays) < 1) {
+      errors.showingDays = 'Showing days must be at least 1';
+      isValid = false;
+    }
+
+    // Image validation
+    if (!formData.image && !formData.posterFile) {
+      errors.image = 'Movie poster/image is required';
+      isValid = false;
+    }
+
+    setEditErrors(errors);
+    return isValid;
+  };
+
+  // Clear error for a specific field
+  const clearAddError = (field) => {
+    setAddErrors(prev => ({ ...prev, [field]: '' }));
+  };
+
+  const clearEditError = (field) => {
+    setEditErrors(prev => ({ ...prev, [field]: '' }));
+  };
+
+  // ---------------------------
   // Helpers for backend IDs
   // ---------------------------
   const getGenreId = (genreName) => {
@@ -296,13 +521,24 @@ export default function MovieManagement() {
       dateRelease: movie.dateRelease,
       showingDays: (movie.showingDays !== undefined && movie.showingDays !== null) ? movie.showingDays : 7,
       description: movie.description || "",
-      trailer: movie.trailer || "",     // ✅ NEW
+      trailer: movie.trailer || "",
       image: movie.image
     };
 
     setFormData(data);
     setOriginalData(data);
     setEditImagePreview(movie.image || '');
+    setEditErrors({
+      title: '',
+      genre: '',
+      price: '',
+      duration: '',
+      location: '',
+      description: '',
+      dateRelease: '',
+      showingDays: '',
+      image: ''
+    });
     setShowEditModal(true);
   };
 
@@ -312,6 +548,17 @@ export default function MovieManagement() {
     setOriginalData(null);
     setIsSaving(false);
     setEditImagePreview('');
+    setEditErrors({
+      title: '',
+      genre: '',
+      price: '',
+      duration: '',
+      location: '',
+      description: '',
+      dateRelease: '',
+      showingDays: '',
+      image: ''
+    });
   };
 
   const hasChanges = () => {
@@ -321,16 +568,7 @@ export default function MovieManagement() {
 
   // ✅ REAL EDIT SUBMIT (calls update_movie.php)
   const handleEditSubmit = async () => {
-    // trailer is NOT required on edit
-    const required = ['title', 'genre', 'price', 'duration', 'location', 'dateRelease', 'showingDays', 'description'];
-    for (const k of required) {
-      if (!String(formData[k] ?? '').trim()) {
-        alert('Please fill in all required fields');
-        return;
-      }
-    }
-    if (!formData.image) {
-      alert('Please add a movie poster/image');
+    if (!validateEditForm()) {
       return;
     }
 
@@ -346,7 +584,7 @@ export default function MovieManagement() {
       fd.append("duration", durationNum || 0);
 
       fd.append("rating", formData.rating);
-      fd.append("trailer", (formData.trailer || "").trim()); // ✅ blank allowed
+      fd.append("trailer", (formData.trailer || "").trim());
       fd.append("description", formData.description.trim());
       fd.append("releaseDate", formData.dateRelease);
       fd.append("showingDays", formData.showingDays);
@@ -419,6 +657,20 @@ export default function MovieManagement() {
     setLocOpen(false);
     setScreenOpen(false);
     setRatingOpen(false);
+    setAddErrors({
+      title: '',
+      genre: '',
+      price: '',
+      duration: '',
+      trailer: '',
+      location: '',
+      screens: '',
+      description: '',
+      dateRelease: '',
+      showingDays: '',
+      times: '',
+      image: ''
+    });
     setShowAddModal(true);
   };
 
@@ -428,62 +680,53 @@ export default function MovieManagement() {
     setLocOpen(false);
     setScreenOpen(false);
     setRatingOpen(false);
+    setAddErrors({
+      title: '',
+      genre: '',
+      price: '',
+      duration: '',
+      trailer: '',
+      location: '',
+      screens: '',
+      description: '',
+      dateRelease: '',
+      showingDays: '',
+      times: '',
+      image: ''
+    });
   };
 
   // ✅ Add submit requires trailer
   const handleAddSubmit = async () => {
-    const required = ['title', 'price', 'duration', 'dateRelease', 'showingDays', 'description', 'trailer'];
-    for (const k of required) {
-      if (!String(newMovie[k] ?? '').trim()) {
-        alert('Please fill in all required fields');
-        return;
-      }
-    }
-
-    if (newMovie.dateRelease) {
-    const selectedDate = startOfDay(parseDate(newMovie.dateRelease));
-    const today = startOfDay(new Date());
-    if (selectedDate < today) {
-      alert('Release date cannot be in the past. Please select today or a future date.');
+    if (!validateAddForm()) {
       return;
     }
 
-    if (selectedDate.getTime() === today.getTime() && newMovie.times && newMovie.times.length > 0) {
-      const now = new Date();
-      const threeHoursFromNow = new Date(now.getTime() + (3 * 60 * 60 * 1000));
-      const currentTimeInMinutes = threeHoursFromNow.getHours() * 60 + threeHoursFromNow.getMinutes();
+    // Additional time validation for today's date
+    if (newMovie.dateRelease) {
+      const selectedDate = startOfDay(parseDate(newMovie.dateRelease));
+      const today = startOfDay(new Date());
       
-      for (const time of newMovie.times) {
-        const [hours, minutes] = time.split(':').map(Number);
-        const timeInMinutes = hours * 60 + minutes;
-        
-        if (timeInMinutes < currentTimeInMinutes) {
-          alert(`Showtimes must be at least 3 hours from now. The earliest allowed time today is ${threeHoursFromNow.getHours().toString().padStart(2, '0')}:${threeHoursFromNow.getMinutes().toString().padStart(2, '0')}`);
-          return;
+      if (selectedDate.getTime() === today.getTime() && newMovie.times && newMovie.times.length > 0) {
+        const now = new Date();
+          const threeHoursFromNow = new Date(now.getTime() + (3 * 60 * 60 * 1000));
+          const currentTime24 = `${threeHoursFromNow.getHours().toString().padStart(2, '0')}:${threeHoursFromNow.getMinutes().toString().padStart(2, '0')}`;
+          const currentTime12 = formatTime12Hour(currentTime24);
+
+          for (const time of newMovie.times) {
+            const [hours, minutes] = time.split(':').map(Number);
+            const timeInMinutes = hours * 60 + minutes;
+            const currentTimeInMinutes = threeHoursFromNow.getHours() * 60 + threeHoursFromNow.getMinutes();
+            
+            if (timeInMinutes < currentTimeInMinutes) {
+              setAddErrors(prev => ({
+                ...prev,
+                times: `Showtimes must be at least 3 hours from now. The earliest allowed time today is ${currentTime12}`
+              }));
+              return;
+            }
         }
       }
-    }
-    }
-
-    if (!newMovie.genre || newMovie.genre.length === 0) {
-      alert("Please select at least one genre");
-      return;
-    }
-    if (!newMovie.location || newMovie.location.length === 0) {
-      alert('Please select at least one location');
-      return;
-    }
-    if (!newMovie.screens || newMovie.screens.length === 0) {
-      alert('Please select at least one screen');
-      return;
-    }
-    if (!newMovie.times || newMovie.times.length === 0) {
-      alert('Please add at least one showtime');
-      return;
-    }
-    if (!newMovie.posterFile && !newMovie.image) {
-      alert('Please add a movie poster/image');
-      return;
     }
 
     setIsSaving(true);
@@ -497,7 +740,7 @@ export default function MovieManagement() {
       fd.append("duration", durationNum || 0);
 
       fd.append("rating", newMovie.rating);
-      fd.append("trailer", newMovie.trailer.trim());  // ✅ NOW SENT
+      fd.append("trailer", newMovie.trailer.trim());
       fd.append("description", newMovie.description.trim());
       fd.append("releaseDate", newMovie.dateRelease);
       fd.append("showingDays", newMovie.showingDays);
@@ -590,6 +833,7 @@ export default function MovieManagement() {
     const previewUrl = URL.createObjectURL(file);
     setAddImagePreview(previewUrl);
     setNewMovie({ ...newMovie, image: previewUrl, posterFile: file });
+    clearAddError('image');
   };
 
   const onEditImageChange = (e) => {
@@ -598,6 +842,7 @@ export default function MovieManagement() {
     const previewUrl = URL.createObjectURL(file);
     setEditImagePreview(previewUrl);
     setFormData({ ...formData, image: previewUrl, posterFile: file });
+    clearEditError('image');
   };
 
   // Tag-style Location multi-select
@@ -609,6 +854,7 @@ export default function MovieManagement() {
         : [...prev.location, name];
       return { ...prev, location: next };
     });
+    clearAddError('location');
   };
 
   const removeLocation = (name) => {
@@ -626,6 +872,7 @@ export default function MovieManagement() {
         : [...prev.genre, g];
       return { ...prev, genre: next };
     });
+    clearAddError('genre');
   };
 
   const removeGenre = (g) => {
@@ -644,6 +891,7 @@ export default function MovieManagement() {
         : [...prev.screens, screenId];
       return { ...prev, screens: next };
     });
+    clearAddError('screens');
   };
 
   const removeScreen = (screenId) => {
@@ -661,15 +909,22 @@ export default function MovieManagement() {
 
   // Showtimes
   const addTime = () => {
-    const t = (timeInput || '').trim();
-    if (!t) return;
-    setNewMovie(prev => {
-      if (prev.times.includes(t)) return prev;
-      const next = [...prev.times, t].sort();
-      return { ...prev, times: next };
-    });
-    setTimeInput('');
-  };
+  const t = (timeInput || '').trim();
+  if (!t) return;
+  
+  // Convert 24-hour format to 12-hour for display
+  const time24 = t;
+  const time12 = formatTime12Hour(time24);
+  
+  // Store in 24-hour format internally, but display as 12-hour
+  setNewMovie(prev => {
+    if (prev.times.includes(time24)) return prev;
+    const next = [...prev.times, time24].sort();
+    return { ...prev, times: next };
+  });
+  setTimeInput('');
+  clearAddError('times');
+};
 
   const removeTime = (t) => {
     setNewMovie(prev => ({
@@ -706,6 +961,17 @@ export default function MovieManagement() {
     const d = parseDate(iso);
     if (Number.isNaN(d.getTime())) return iso;
     return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  };
+
+  // Input change handlers with error clearing
+  const handleAddInputChange = (field, value) => {
+    setNewMovie(prev => ({ ...prev, [field]: value }));
+    clearAddError(field);
+  };
+
+  const handleEditInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    clearEditError(field);
   };
 
   return (
@@ -993,6 +1259,11 @@ export default function MovieManagement() {
                   </span>
                   <input type="file" accept="image/*" onChange={onAddImageChange} className="hidden" />
                 </label>
+                {addErrors.image && (
+                  <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                    <span>⚠</span> {addErrors.image}
+                  </p>
+                )}
 
                 {addImagePreview && (
                   <div className="mt-4 rounded-2xl overflow-hidden border border-gray-800/60">
@@ -1010,10 +1281,15 @@ export default function MovieManagement() {
                   <input
                     type="text"
                     value={newMovie.title}
-                    onChange={(e) => setNewMovie({ ...newMovie, title: e.target.value })}
-                    className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80"
+                    onChange={(e) => handleAddInputChange('title', e.target.value)}
+                    className={`w-full bg-black/60 border-2 ${addErrors.title ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80`}
                     placeholder="Movie title"
                   />
+                  {addErrors.title && (
+                    <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                      <span>⚠</span> {addErrors.title}
+                    </p>
+                  )}
                 </div>
 
                 {/* Genre multi-select tag-style */}
@@ -1024,7 +1300,7 @@ export default function MovieManagement() {
 
                   <div
                     onClick={() => setShowGenreDropdown(v => !v)}
-                    className="w-full bg-black/60 border-2 border-gray-800/50 focus-within:border-red-500/50 rounded-xl px-3 py-2.5 text-white transition-all duration-300 hover:bg-black/80 cursor-pointer min-h-[48px] flex items-center flex-wrap gap-2"
+                    className={`w-full bg-black/60 border-2 ${addErrors.genre ? 'border-red-500/50' : 'border-gray-800/50 focus-within:border-red-500/50'} rounded-xl px-3 py-2.5 text-white transition-all duration-300 hover:bg-black/80 cursor-pointer min-h-[48px] flex items-center flex-wrap gap-2`}
                   >
                     {newMovie.genre.length === 0 && (
                       <span className="text-gray-500 text-sm px-1">Select genre(s)...</span>
@@ -1057,6 +1333,11 @@ export default function MovieManagement() {
                       />
                     </div>
                   </div>
+                  {addErrors.genre && (
+                    <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                      <span>⚠</span> {addErrors.genre}
+                    </p>
+                  )}
 
                   {showGenreDropdown && (
                     <div className="absolute z-50 mt-2 w-full bg-black/90 backdrop-blur-md border-2 border-gray-800/70 rounded-xl max-h-56 overflow-y-auto shadow-2xl">
@@ -1092,10 +1373,15 @@ export default function MovieManagement() {
                   <input
                     type="number"
                     value={newMovie.price}
-                    onChange={(e) => setNewMovie({ ...newMovie, price: e.target.value })}
-                    className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80"
+                    onChange={(e) => handleAddInputChange('price', e.target.value)}
+                    className={`w-full bg-black/60 border-2 ${addErrors.price ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80`}
                     placeholder="350"
                   />
+                  {addErrors.price && (
+                    <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                      <span>⚠</span> {addErrors.price}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -1105,10 +1391,15 @@ export default function MovieManagement() {
                   <input
                     type="text"
                     value={newMovie.duration}
-                    onChange={(e) => setNewMovie({ ...newMovie, duration: e.target.value })}
-                    className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80"
+                    onChange={(e) => handleAddInputChange('duration', e.target.value)}
+                    className={`w-full bg-black/60 border-2 ${addErrors.duration ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80`}
                     placeholder="120 min"
                   />
+                  {addErrors.duration && (
+                    <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                      <span>⚠</span> {addErrors.duration}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -1120,10 +1411,15 @@ export default function MovieManagement() {
                 <input
                   type="text"
                   value={newMovie.trailer}
-                  onChange={(e) => setNewMovie({ ...newMovie, trailer: e.target.value })}
-                  className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80"
+                  onChange={(e) => handleAddInputChange('trailer', e.target.value)}
+                  className={`w-full bg-black/60 border-2 ${addErrors.trailer ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80`}
                   placeholder="https://youtube.com/watch?v=..."
                 />
+                {addErrors.trailer && (
+                  <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                    <span>⚠</span> {addErrors.trailer}
+                  </p>
+                )}
               </div>
 
               {/* Rating + Location (tag-style) */}
@@ -1153,7 +1449,7 @@ export default function MovieManagement() {
                     </div>
                   </div>
 
-                  {ratingOpen && (
+                   {ratingOpen && (
                     <div className="absolute z-50 mt-2 w-full bg-black/90 backdrop-blur-md border-2 border-gray-800/70 rounded-xl max-h-56 overflow-y-auto shadow-2xl">
                       {ratings.map(r => {
                         const checked = newMovie.rating === r;
@@ -1188,7 +1484,7 @@ export default function MovieManagement() {
 
                   <div
                     onClick={() => !loadingTheaters && setLocOpen(v => !v)}
-                    className="w-full bg-black/60 border-2 border-gray-800/50 focus-within:border-red-500/50 rounded-xl px-3 py-2.5 text-white transition-all duration-300 hover:bg-black/80 cursor-pointer min-h-[48px] flex items-center flex-wrap gap-2"
+                    className={`w-full bg-black/60 border-2 ${addErrors.location ? 'border-red-500/50' : 'border-gray-800/50 focus-within:border-red-500/50'} rounded-xl px-3 py-2.5 text-white transition-all duration-300 hover:bg-black/80 cursor-pointer min-h-[48px] flex items-center flex-wrap gap-2`}
                   >
                     {newMovie.location.length === 0 && (
                       <span className="text-gray-500 text-sm px-1">Select location(s)...</span>
@@ -1218,6 +1514,11 @@ export default function MovieManagement() {
                       <ChevronDown size={16} className={`text-gray-500 transition-transform ${locOpen ? 'rotate-180' : ''}`} />
                     </div>
                   </div>
+                  {addErrors.location && (
+                    <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                      <span>⚠</span> {addErrors.location}
+                    </p>
+                  )}
 
                   {locOpen && (
                     <div className="absolute z-50 mt-2 w-full bg-black/90 backdrop-blur-md border-2 border-gray-800/70 rounded-xl max-h-56 overflow-y-auto shadow-2xl">
@@ -1260,7 +1561,7 @@ export default function MovieManagement() {
 
                 <div
                   onClick={() => setScreenOpen(v => !v)}
-                  className="w-full bg-black/60 border-2 border-gray-800/50 focus-within:border-red-500/50 rounded-xl px-3 py-2.5 text-white transition-all duration-300 hover:bg-black/80 cursor-pointer min-h-[48px] flex items-center flex-wrap gap-2"
+                  className={`w-full bg-black/60 border-2 ${addErrors.screens ? 'border-red-500/50' : 'border-gray-800/50 focus-within:border-red-500/50'} rounded-xl px-3 py-2.5 text-white transition-all duration-300 hover:bg-black/80 cursor-pointer min-h-[48px] flex items-center flex-wrap gap-2`}
                 >
                   {newMovie.screens.length === 0 && (
                     <span className="text-gray-500 text-sm px-1">Select screen(s)...</span>
@@ -1293,6 +1594,11 @@ export default function MovieManagement() {
                     <ChevronDown size={16} className={`text-gray-500 transition-transform ${screenOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </div>
+                {addErrors.screens && (
+                  <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                    <span>⚠</span> {addErrors.screens}
+                  </p>
+                )}
 
                 {screenOpen && (
                   <div className="absolute z-50 mt-2 w-full bg-black/90 backdrop-blur-md border-2 border-gray-800/70 rounded-xl max-h-56 overflow-y-auto shadow-2xl">
@@ -1334,10 +1640,15 @@ export default function MovieManagement() {
                 <textarea
                   rows="4"
                   value={newMovie.description}
-                  onChange={(e) => setNewMovie({ ...newMovie, description: e.target.value })}
-                  className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80 resize-none"
+                  onChange={(e) => handleAddInputChange('description', e.target.value)}
+                  className={`w-full bg-black/60 border-2 ${addErrors.description ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80 resize-none`}
                   placeholder="Write a short description of the movie..."
                 />
+                {addErrors.description && (
+                  <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                    <span>⚠</span> {addErrors.description}
+                  </p>
+                )}
               </div>
 
               {/* Release date + Showing days */}
@@ -1359,10 +1670,15 @@ export default function MovieManagement() {
                       ref={addDateRef}
                       type="date"
                       value={newMovie.dateRelease}
-                      onChange={(e) => setNewMovie({ ...newMovie, dateRelease: e.target.value })}
-                      className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl pl-11 pr-4 py-3 text-white focus:outline-none transition-all duration-300 hover:bg-black/80 cursor-pointer"
+                      onChange={(e) => handleAddInputChange('dateRelease', e.target.value)}
+                      className={`w-full bg-black/60 border-2 ${addErrors.dateRelease ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl pl-11 pr-4 py-3 text-white focus:outline-none transition-all duration-300 hover:bg-black/80 cursor-pointer`}
                     />
                   </div>
+                  {addErrors.dateRelease && (
+                    <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                      <span>⚠</span> {addErrors.dateRelease}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -1373,56 +1689,70 @@ export default function MovieManagement() {
                     type="number"
                     min="1"
                     value={newMovie.showingDays}
-                    onChange={(e) => setNewMovie({ ...newMovie, showingDays: e.target.value })}
-                    className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white focus:outline-none transition-all duration-300 hover:bg-black/80"
+                    onChange={(e) => handleAddInputChange('showingDays', e.target.value)}
+                    className={`w-full bg-black/60 border-2 ${addErrors.showingDays ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white focus:outline-none transition-all duration-300 hover:bg-black/80`}
                     placeholder="7"
                   />
+                  {addErrors.showingDays && (
+                    <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                      <span>⚠</span> {addErrors.showingDays}
+                    </p>
+                  )}
                 </div>
               </div>
 
               {/* Showtimes */}
-              <div>
-                <label className="block text-gray-300 text-sm font-bold mb-3">
-                  Showtime(s) <span className="text-red-400">*</span>
-                </label>
+             {/* Showtimes - Updated to show 12-hour format */}
+                <div>
+                  <label className="block text-gray-300 text-sm font-bold mb-3">
+                    Showtime(s) <span className="text-red-400">*</span>
+                  </label>
 
-                <div className="flex flex-col md:flex-row gap-3 md:items-center">
-                  <input
-                    type="time"
-                    value={timeInput}
-                    onChange={(e) => setTimeInput(e.target.value)}
-                    className="w-full md:flex-1 bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white focus:outline-none transition-all duration-300 hover:bg-black/80 cursor-pointer"
-                  />
-                  <button
-                    type="button"
-                    onClick={addTime}
-                    className="cursor-pointer md:w-auto w-full px-6 py-3 rounded-xl font-bold transition-all duration-300 border-2 bg-gradient-to-r from-red-600 to-pink-600 text-white border-red-500/50 hover:scale-105 hover:shadow-xl shadow-lg shadow-red-500/50"
-                  >
-                    Add Time
-                  </button>
-                </div>
-
-                {newMovie.times.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {newMovie.times.map(t => (
-                      <span
-                        key={t}
-                        className="flex items-center gap-2 bg-black/70 border border-red-900/50 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-md shadow-red-500/20"
-                      >
-                        {t}
-                        <button
-                          type="button"
-                          onClick={() => removeTime(t)}
-                          className="cursor-pointer text-gray-300 hover:text-white"
-                          title="Remove time"
-                        >
-                          <X size={12} />
-                        </button>
-                      </span>
-                    ))}
+                  <div className="flex flex-col md:flex-row gap-3 md:items-center">
+                    <input
+                      type="time"
+                      value={timeInput}
+                      onChange={(e) => setTimeInput(e.target.value)}
+                      className="w-full md:flex-1 bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white focus:outline-none transition-all duration-300 hover:bg-black/80 cursor-pointer"
+                    />
+                    <button
+                      type="button"
+                      onClick={addTime}
+                      className="cursor-pointer md:w-auto w-full px-6 py-3 rounded-xl font-bold transition-all duration-300 border-2 bg-gradient-to-r from-red-600 to-pink-600 text-white border-red-500/50 hover:scale-105 hover:shadow-xl shadow-lg shadow-red-500/50"
+                    >
+                      Add Time
+                    </button>
                   </div>
-                )}
-              </div>
+                  {addErrors.times && (
+                    <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                      <span>⚠</span> {addErrors.times}
+                    </p>
+                  )}
+
+                  {newMovie.times.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {newMovie.times.map(t => {
+                        const time12 = formatTime12Hour(t);
+                        return (
+                          <span
+                            key={t}
+                            className="flex items-center gap-2 bg-black/70 border border-red-900/50 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-md shadow-red-500/20"
+                          >
+                            {time12}
+                            <button
+                              type="button"
+                              onClick={() => removeTime(t)}
+                              className="cursor-pointer text-gray-300 hover:text-white"
+                              title="Remove time"
+                            >
+                              <X size={12} />
+                            </button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
 
               {/* Publish toggle */}
               <div>
@@ -1498,6 +1828,11 @@ export default function MovieManagement() {
                   </span>
                   <input type="file" accept="image/*" onChange={onEditImageChange} className="hidden" />
                 </label>
+                {editErrors.image && (
+                  <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                    <span>⚠</span> {editErrors.image}
+                  </p>
+                )}
 
                 {editImagePreview && (
                   <div className="mt-4 rounded-2xl overflow-hidden border border-gray-800/60">
@@ -1515,10 +1850,15 @@ export default function MovieManagement() {
                   <input
                     type="text"
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80"
+                    onChange={(e) => handleEditInputChange('title', e.target.value)}
+                    className={`w-full bg-black/60 border-2 ${editErrors.title ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80`}
                     placeholder="Movie title"
                   />
+                  {editErrors.title && (
+                    <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                      <span>⚠</span> {editErrors.title}
+                    </p>
+                  )}
                 </div>
 
                 {/* Genre multi-select tag-style for EDIT */}
@@ -1529,7 +1869,7 @@ export default function MovieManagement() {
 
                   <div
                     onClick={() => setShowEditGenreDropdown(v => !v)}
-                    className="w-full bg-black/60 border-2 border-gray-800/50 focus-within:border-red-500/50 rounded-xl px-3 py-2.5 text-white transition-all duration-300 hover:bg-black/80 cursor-pointer min-h-[48px] flex items-center flex-wrap gap-2"
+                    className={`w-full bg-black/60 border-2 ${editErrors.genre ? 'border-red-500/50' : 'border-gray-800/50 focus-within:border-red-500/50'} rounded-xl px-3 py-2.5 text-white transition-all duration-300 hover:bg-black/80 cursor-pointer min-h-[48px] flex items-center flex-wrap gap-2`}
                   >
                     {formData.genre.length === 0 && (
                       <span className="text-gray-500 text-sm px-1">Select genre(s)...</span>
@@ -1565,6 +1905,11 @@ export default function MovieManagement() {
                       />
                     </div>
                   </div>
+                  {editErrors.genre && (
+                    <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                      <span>⚠</span> {editErrors.genre}
+                    </p>
+                  )}
 
                   {showEditGenreDropdown && (
                     <div className="absolute z-50 mt-2 w-full bg-black/90 backdrop-blur-md border-2 border-gray-800/70 rounded-xl max-h-56 overflow-y-auto shadow-2xl">
@@ -1608,10 +1953,15 @@ export default function MovieManagement() {
                   <input
                     type="number"
                     value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80"
+                    onChange={(e) => handleEditInputChange('price', e.target.value)}
+                    className={`w-full bg-black/60 border-2 ${editErrors.price ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80`}
                     placeholder="350"
                   />
+                  {editErrors.price && (
+                    <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                      <span>⚠</span> {editErrors.price}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -1621,10 +1971,15 @@ export default function MovieManagement() {
                   <input
                     type="text"
                     value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                    className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80"
+                    onChange={(e) => handleEditInputChange('duration', e.target.value)}
+                    className={`w-full bg-black/60 border-2 ${editErrors.duration ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80`}
                     placeholder="120 min"
                   />
+                  {editErrors.duration && (
+                    <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                      <span>⚠</span> {editErrors.duration}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -1666,10 +2021,15 @@ export default function MovieManagement() {
                   <input
                     type="text"
                     value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80"
+                    onChange={(e) => handleEditInputChange('location', e.target.value)}
+                    className={`w-full bg-black/60 border-2 ${editErrors.location ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80`}
                     placeholder="e.g., SM City Cebu"
                   />
+                  {editErrors.location && (
+                    <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                      <span>⚠</span> {editErrors.location}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -1681,10 +2041,15 @@ export default function MovieManagement() {
                 <textarea
                   rows="4"
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80 resize-none"
+                  onChange={(e) => handleEditInputChange('description', e.target.value)}
+                  className={`w-full bg-black/60 border-2 ${editErrors.description ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80 resize-none`}
                   placeholder="Write a short description of the movie..."
                 />
+                {editErrors.description && (
+                  <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                    <span>⚠</span> {editErrors.description}
+                  </p>
+                )}
               </div>
 
               {/* Release date + Showing days */}
@@ -1706,10 +2071,15 @@ export default function MovieManagement() {
                       ref={editDateRef}
                       type="date"
                       value={formData.dateRelease}
-                      onChange={(e) => setFormData({ ...formData, dateRelease: e.target.value })}
-                      className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl pl-11 pr-4 py-3 text-white focus:outline-none transition-all duration-300 hover:bg-black/80 cursor-pointer"
+                      onChange={(e) => handleEditInputChange('dateRelease', e.target.value)}
+                      className={`w-full bg-black/60 border-2 ${editErrors.dateRelease ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl pl-11 pr-4 py-3 text-white focus:outline-none transition-all duration-300 hover:bg-black/80 cursor-pointer`}
                     />
                   </div>
+                  {editErrors.dateRelease && (
+                    <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                      <span>⚠</span> {editErrors.dateRelease}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -1720,12 +2090,39 @@ export default function MovieManagement() {
                     type="number"
                     min="1"
                     value={formData.showingDays}
-                    onChange={(e) => setFormData({ ...formData, showingDays: e.target.value })}
-                    className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white focus:outline-none transition-all duration-300 hover:bg-black/80"
+                    onChange={(e) => handleEditInputChange('showingDays', e.target.value)}
+                    className={`w-full bg-black/60 border-2 ${editErrors.showingDays ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white focus:outline-none transition-all duration-300 hover:bg-black/80`}
                     placeholder="7"
                   />
+                  {editErrors.showingDays && (
+                    <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                      <span>⚠</span> {editErrors.showingDays}
+                    </p>
+                  )}
                 </div>
               </div>
+
+              {/* Existing Showtimes Display in Edit Modal (if applicable) */}
+                {formData.times && formData.times.length > 0 && (
+                  <div>
+                    <label className="block text-gray-300 text-sm font-bold mb-3">
+                      Existing Showtimes
+                    </label>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {formData.times.map(t => {
+                        const time12 = formatTime12Hour(t);
+                        return (
+                          <span
+                            key={t}
+                            className="flex items-center gap-2 bg-black/70 border border-red-900/50 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-md shadow-red-500/20"
+                          >
+                            {time12}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
               {/* Publish toggle */}
               <div>

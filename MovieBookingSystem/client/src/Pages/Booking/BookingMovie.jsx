@@ -24,15 +24,15 @@ const BookingMovie = () => {
   const statusConfig = {
     nowShowing: {
       label: 'Now Showing',
-      color: 'bg-emerald-500/50 text-emerald-300 border-emerald-500/40',
-      glow: 'shadow-emerald-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-emerald-500/50 text-emerald-300 border-emerald-500/40 shadow-emerald-500/60 shadow-lg animate-pulse-slow0',
+     color: 'bg-red-500/50 text-red-100 border-red-500/40',
+     glow: 'shadow-red-500/6 px-2 py-1 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-red-500/50 text-red-300 border-red-500/40 shadow-red-500/60 shadow-lg animate-pulse-slow0',
       text: 'Now Showing'
     },
     comingSoon: {
       label: 'Coming Soon',
-      color: 'bg-red-500/50 text-red-500 border-red-500/40',
-     glow: 'shadow-red-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-red-500/50 text-red-300 border-red-500/40 shadow-red-500/60 shadow-lg animate-pulse-slow0',
-      text: 'Coming Soon'
+     color: 'bg-emerald-500/50 text-emerald-100 border-emerald-500/40',
+      glow: 'shadow-emerald-500/6 px-2 py-1 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-emerald-500/50 text-emerald-300 border-emerald-500/40 shadow-emerald-500/60 shadow-lg animate-pulse-slow0',
+     text: 'Coming Soon'
     }
   };
 
@@ -86,6 +86,8 @@ const BookingMovie = () => {
       try {
         const res = await fetch('http://localhost/mobook_api/get_movies.php');
         const data = await res.json();
+
+        console.log('get_movies.php response:', data); // this is for debugging delete later after finalization. Console browser
 
         if (data.success) {
           const rawMovies = data.movies || [];
@@ -340,8 +342,8 @@ const BookingMovie = () => {
 
                     return (
                       <div key={`${movie.id}-${index}`} className="absolute will-change-transform" style={getMoviePosition(index)}>
-                        <div className={`w-72 bg-gradient-to-b from-gray-800/80 to-gray-900/80 backdrop-blur-md rounded-2xl overflow-hidden text-left border shadow-2xl transition-all duration-300 ${
-                          isCenter ? 'border-red-500/50 shadow-red-500/20' : 'border-gray-700/50'
+                        <div className={`w-72 bg-gradient-to-b from-gray-800/80 to-gray-900/80 backdrop-blur-md rounded-2xl overflow-hidden text-left border-1 shadow-2xl transition-all duration-300 ${
+                          isCenter ? 'border-red-500/50 shadow-red-500/35' : 'border-gray-700/50'
                         }`}>
                           <div className="relative h-96 overflow-hidden group">
                             <img
@@ -351,11 +353,11 @@ const BookingMovie = () => {
                               draggable="false"
                             />
 
-                            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-60"></div>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/60 opacity-30 group-hover:opacity-100 transition-opacity duration-300"></div>
 
                             {/* Status Badge - Matching MyTickets design */}
-                            <div className="absolute top-4 left-4">
-                              <span className={`px-4 py-2 rounded-xl text-xs font-bold border-2 backdrop-blur-md ${statusInfo.color} ${statusInfo.glow} shadow-lg animate-pulse-slow`}>
+                            <div className="absolute top-4 left-3 ">
+                              <span className={`px-2 rounded-xl text-xs font-bold border-2 backdrop-blur-md ${statusInfo.color} ${statusInfo.glow} shadow-xl animate-pulse-slow`}>
                                 {statusInfo.text}
                               </span>
                             </div>
@@ -367,9 +369,9 @@ const BookingMovie = () => {
 
                           <div className="p-5">
                             <h3 className="text-xl font-bold mb-2 truncate">{movie.title}</h3>
-                            <div className="flex items-center gap-2 text-gray-400 text-sm mb-3">
+                            <div className="flex items-center gap-2 text-red-400 text-sm mb-3">
                               <span className="flex items-center gap-1">
-                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <svg className="w-4 h-4 text-red-900" fill="currentColor" viewBox="0 0 20 20">
                                   <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" />
                                 </svg>
                                 {movie.duration}
@@ -385,7 +387,7 @@ const BookingMovie = () => {
               </div>
 
               {/* Details */}
-              <div className="max-w-5xl mx-auto bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-xl rounded-2xl p-8 border border-gray-700/50 shadow-2xl">
+              <div className="max-w-5xl mx-auto bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-xl rounded-2xl p-8 border border-red-700/40 shadow-2xl shadow-black/65">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   <div className="md:col-span-1">
                     <div className="relative group">
@@ -395,15 +397,6 @@ const BookingMovie = () => {
                         className="w-full h-[400px] object-cover rounded-xl shadow-2xl transition-transform duration-500 group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-                      {/* Status Badge for Main Image */}
-                      <div className="absolute top-90 left-4">
-                        <span className={`px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md ${
-                          statusConfig[movies[currentIndex].status].color
-                        } ${statusConfig[movies[currentIndex].status].glow} shadow-lg animate-pulse-slow`}>
-                          {statusConfig[movies[currentIndex].status].text}
-                        </span>
-                      </div>
                     </div>
                   </div>
 

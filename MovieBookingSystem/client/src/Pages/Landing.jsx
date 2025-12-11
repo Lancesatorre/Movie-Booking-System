@@ -290,8 +290,8 @@ const Landing = () => {
                   className="w-full h-full object-cover"
                 />
                 {/* Gradient Overlays */}
-                <div className="absolute inset-0 bg-gradient-to-r from-red-950 via-black/80 to-transparent"></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-red-950 via-black/55 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
                 <div className="absolute inset-0 bg-black/40"></div>
               </div>
             ))}
