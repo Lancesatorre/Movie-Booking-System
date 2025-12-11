@@ -87,6 +87,8 @@ const BookingMovie = () => {
         const res = await fetch('http://localhost/mobook_api/get_movies.php');
         const data = await res.json();
 
+        console.log('get_movies.php response:', data); // this is for debugging delete later after finalization. Console browser
+
         if (data.success) {
           const rawMovies = data.movies || [];
 
