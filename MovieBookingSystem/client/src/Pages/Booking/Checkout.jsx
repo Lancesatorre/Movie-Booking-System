@@ -178,67 +178,79 @@ const Checkout = () => {
   }, [selectedMall?.id, selectedScreen?.id, movie.id]);
 
   // --------- Load Showtimes when date changes ----------
-useEffect(() => {
-  if (!selectedMall || !selectedScreen || !selectedDate) return;
+  useEffect(() => {
+    if (!selectedMall || !selectedScreen || !selectedDate) return;
 
-  const loadTimes = async () => {
-    setLoading(l => ({ ...l, times: true }));
-    setError(null);
-    try {
-      const dateStr = toYMD(selectedDate.full);
-      const res = await fetch(
-        `${API_BASE}/get_showtimes.php?movieId=${movie.id}&screenId=${selectedScreen.id}&theaterId=${selectedMall.id}&date=${dateStr}`
-      );
-      const json = await res.json();
-      if (!json.success) throw new Error(json.message || "Failed to load showtimes");
-      
-      // Check if selected date is TODAY
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const selectedDateOnly = new Date(selectedDate.full.getFullYear(), selectedDate.full.getMonth(), selectedDate.full.getDate());
-      
-      const isToday = selectedDateOnly.getTime() === today.getTime();
-      
-      // Filter out times that are within 3 hours from now ONLY if it's today
-      const filteredTimes = (json.times || []).map(time => {
-        // If not today, just return original availability
-        if (!isToday) {
-          return time;
-        }
-        
-        // Parse the showtime
-        const [hours, minutes] = time.time.split(':').map(Number);
-        const showDateTime = new Date(selectedDate.full);
-        showDateTime.setHours(hours, minutes, 0, 0);
-        
-        // Calculate time difference in hours
-        const timeDiffHours = (showDateTime - now) / (1000 * 60 * 60);
-        
-        // Mark as unavailable if within 3 hours (ONLY for today)
-        return {
-          ...time,
-          // Keep original available status AND check if within cutoff
-          available: time.available && timeDiffHours > 3
-        };
-      });
-      
-      setTimes(filteredTimes);
-      setSelectedTime(null);
-    } catch (e) {
-      setError(e.message);
-      setTimes([]);
-    } finally {
-      setLoading(l => ({ ...l, times: false }));
-    }
-  };
+    const loadTimes = async () => {
+      setLoading(l => ({ ...l, times: true }));
+      setError(null);
 
-  // reset downstream
-  setSelectedTime(null);
-  setSelectedSeats([]);
-  setUnavailableSeats([]);
+      try {
+        const dateStr = toYMD(selectedDate.full);
+        const res = await fetch(
+          `${API_BASE}/get_showtimes.php?movieId=${movie.id}&screenId=${selectedScreen.id}&theaterId=${selectedMall.id}&date=${dateStr}`
+        );
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message || "Failed to load showtimes");
 
-  loadTimes();
-}, [selectedDate?.date, selectedMall?.id, selectedScreen?.id, movie.id]);
+        const now = new Date();
+
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const selectedDateOnly = new Date(
+          selectedDate.full.getFullYear(),
+          selectedDate.full.getMonth(),
+          selectedDate.full.getDate()
+        );
+        const isToday = selectedDateOnly.getTime() === today.getTime();
+
+        const filteredTimes = (json.times || []).map((time) => {
+          const soldOut = !time.available;
+          let tooLate = false;
+
+          if (isToday) {
+            const [timePart, modifier] = time.time.split(' '); 
+            const [hStr, mStr] = timePart.split(':');         
+
+            let hours = parseInt(hStr, 10);
+            const minutes = parseInt(mStr, 10);
+
+            if (modifier === 'PM' && hours !== 12) hours += 12;
+            if (modifier === 'AM' && hours === 12) hours = 0;
+
+            const showDateTime = new Date(selectedDate.full);
+            showDateTime.setHours(hours, minutes, 0, 0);
+
+            const diffMs = showDateTime - now;
+            const timeDiffHours = diffMs / (1000 * 60 * 60);
+            tooLate = timeDiffHours < 3;
+          }
+
+          return {
+            ...time,
+            available: !soldOut && !tooLate,
+            soldOut,
+            tooLate,
+          };
+        });
+
+        setTimes(filteredTimes);
+        setSelectedTime(null);
+      } catch (e) {
+        console.error(e);
+        setError(e.message);
+        setTimes([]);
+      } finally {
+        setLoading(l => ({ ...l, times: false }));
+      }
+    };
+
+    // reset downstream when date changes
+    setSelectedTime(null);
+    setSelectedSeats([]);
+    setUnavailableSeats([]);
+
+    loadTimes();
+  }, [selectedDate?.date, selectedMall?.id, selectedScreen?.id, movie.id]);
 
   // --------- Load Unavailable Seats when time changes ----------
   useEffect(() => {
@@ -609,12 +621,15 @@ const handleConfirm = async () => {
                             ? 'bg-gray-800/30 text-gray-600 cursor-not-allowed'
                             : selectedTime?.id === t.id
                             ? 'bg-gradient-to-r from-red-700 to-orange-600/20 shadow-lg shadow-red-500/50 scale-105'
-                            : 'bg-gray-800/50 cursor-pointer  hover:bg-gray-700/50 hover:scale-105'
+                            : 'bg-gray-800/50 cursor-pointer hover:bg-gray-700/50 hover:scale-105'
                         }`}
                         style={{ animationDelay: `${idx * 0.05}s` }}
                       >
                         {t.time}
-                        {!t.available && <div className="text-xs mt-1">Sold Out</div>}
+                        {/* Only show Sold Out if it's really sold out, not just blocked by time */}
+                        {t.soldOut && !t.tooLate && (
+                          <div className="text-xs mt-1">Sold Out</div>
+                        )}
                       </button>
                     ))}
 
