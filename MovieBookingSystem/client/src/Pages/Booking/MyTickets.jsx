@@ -481,6 +481,7 @@ const MyTickets = () => {
                       alt={ticket.movieTitle}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
+                    
                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-60"></div>
                     
                     {/* Status Badge - Updated to match design */}
@@ -497,7 +498,7 @@ const MyTickets = () => {
                   </div>
 
                   {/* Ticket Details */}
-                  <div className="p-6">
+                  <div className={` ${eligibility.canCancel ?  'p-6' : 'px-6 pt-6 pb-1'}`}>
                     <h3 className="text-left text-2xl font-bold mb-3 truncate">{ticket.movieTitle}</h3>
 
                     <div className="space-y-2 mb-4">
@@ -559,9 +560,7 @@ const MyTickets = () => {
                             Cancel Booking
                           </button>
                         ) : (
-                          <div className="flex-1 px-4 py-3 bg-gray-700/50 rounded-xl text-center border border-gray-600/50">
-                            <p className="text-xs text-gray-400">Cannot cancel</p>
-                          </div>
+                          <></>
                         )
                       ) : status.label === 'Expired' ? (
                         <div className="flex-1 px-4 py-3 bg-gray-700/50 rounded-xl text-center border border-gray-600/50">
@@ -569,6 +568,9 @@ const MyTickets = () => {
                         </div>
                       ) : null}
                     </div>
+                     <p className={`px-4 mt-1 text-gray-500 text-[10px] font-semibold text-center ${eligibility.canCancel ?  'hidden' : 'flex justify-center'}`}>
+                        Cannot Cancel because Showtime is within 24 hr
+                      </p>
                   </div>
                 </div>
               );
