@@ -3,18 +3,15 @@ include "db_connect.php";
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 
-error_log("GET DATA: " . print_r($_GET, true));
-
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-date_default_timezone_set("Asia/Manila");
+date_default_timezone_set("Asia/Manila"); // ensure consistent time rules
 
-// from FE: screenId = ScreenNumber (NOT ScreenID)
 $movieId      = isset($_GET["movieId"]) ? (int)$_GET["movieId"] : 0;
-$screenNumber = isset($_GET["screenId"]) ? (int)$_GET["screenId"] : 0; // ScreenNumber
+$screenNumber = isset($_GET["screenId"]) ? (int)$_GET["screenId"] : 0; // screenId = ScreenNumber
 $theaterId    = isset($_GET["theaterId"]) ? (int)$_GET["theaterId"] : 0;
 $date         = isset($_GET["date"]) ? $_GET["date"] : "";
 
@@ -26,9 +23,9 @@ if ($movieId <= 0 || $screenNumber <= 0 || $theaterId <= 0 || !$date) {
     exit;
 }
 
-/**
- * 1) Get Capacity + real ScreenID using TheaterId + ScreenNumber
- */
+/*
+  1) Get capacity (and real ScreenID) for this theater+screenNumber
+*/
 $capSql = "
     SELECT Capacity, ScreenID
     FROM screen
@@ -49,50 +46,88 @@ if (!$capRow) {
     ]);
     exit;
 }
-
-$capacity     = (int)$capRow["Capacity"];
+$capacity = (int)$capRow["Capacity"];
 $realScreenId = (int)$capRow["ScreenID"];
 
-/**
- * 2) Get all showtimes for that movie + theater + real ScreenID + date
- *    (no time filtering here, FE will handle disabling)
- */
+/*
+  2) Get showtimes for:
+   - movie
+   - theater
+   - screen number
+   - date
+*/
 $sql = "
     SELECT st.ShowTimeId, st.StartTime, st.EndTime
     FROM showtime st
     INNER JOIN screen s ON st.ScreenId = s.ScreenID
-    WHERE st.MovieId  = ?
-      AND st.ScreenId = ?
+    WHERE st.MovieId = ?
+      AND s.ScreenNumber = ?
       AND s.TheaterId = ?
       AND st.ShowDate = ?
-      AND st.Status = 'active'
     ORDER BY st.StartTime ASC
 ";
+
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("iiis", $movieId, $realScreenId, $theaterId, $date);
+$stmt->bind_param("iiis", $movieId, $screenNumber, $theaterId, $date);
 $stmt->execute();
 $result = $stmt->get_result();
 
-/**
- * 3) Sold seats (confirmed only)
- */
+/*
+  3) Prepare sold-seat counter per showtime
+*/
 $soldSql = "
     SELECT COUNT(*) AS sold
     FROM booking b
     INNER JOIN ticketing tk ON tk.BookingId = b.BookingId
     WHERE b.ShowTimeId = ?
-      AND b.PaymentStatus = 'confirmed'
 ";
 $soldStmt = $conn->prepare($soldSql);
 
 $times = [];
 
+$todayYMD = date("Y-m-d");
+$now = new DateTime(); // server time Asia/Manila
+$nowPlus5 = (clone $now)->modify("+5 minutes");
+
+$requestedDateObj = DateTime::createFromFormat("Y-m-d", $date);
+if (!$requestedDateObj) {
+    echo json_encode([
+        "success" => false,
+        "message" => "Invalid date format. Use YYYY-MM-DD."
+    ]);
+    exit;
+}
+
+// If date is already past, no showtimes
+if ($date < $todayYMD) {
+    echo json_encode([
+        "success"   => true,
+        "times"     => [],
+        "capacity"  => $capacity,
+        "screenId"  => $realScreenId
+    ]);
+    exit;
+}
+
 while ($row = $result->fetch_assoc()) {
     $showtimeId = (int)$row["ShowTimeId"];
 
-    // build start datetime just to format time cleanly
+    // Build DateTime objects for comparisons
     $startDT = DateTime::createFromFormat("Y-m-d H:i:s", $date . " " . $row["StartTime"]);
-    if (!$startDT) continue;
+    $endDT   = DateTime::createFromFormat("Y-m-d H:i:s", $date . " " . $row["EndTime"]);
+    if (!$startDT || !$endDT) continue;
+
+    // ✅ CUSTOMER FILTERS:
+    if ($date === $todayYMD) {
+        // 1) hide finished showtimes today
+        if ($endDT <= $now) {
+            continue;
+        }
+        // 2) hide showtimes starting within 5 minutes
+        if ($startDT <= $nowPlus5) {
+            continue;
+        }
+    }
 
     // count sold seats
     $soldStmt->bind_param("i", $showtimeId);
@@ -101,11 +136,14 @@ while ($row = $result->fetch_assoc()) {
     $soldRow = $soldRes->fetch_assoc();
     $soldCount = (int)$soldRow["sold"];
 
-    $available = $soldCount < $capacity; // true = still has seats
+    $available = $soldCount < $capacity;
+
+    // format StartTime to "10:00 AM"
+    $displayTime = $startDT->format("g:i A");
 
     $times[] = [
         "id"        => $showtimeId,
-        "time"      => $startDT->format("g:i A"), // e.g. "11:00 AM"
+        "time"      => $displayTime,
         "available" => $available
     ];
 }

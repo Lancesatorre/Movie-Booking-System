@@ -2,8 +2,6 @@
 include "db_connect.php";
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: Content-Type");
-header("Access-Control-Allow-Methods: GET, OPTIONS");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -12,46 +10,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $movieId = isset($_GET["movieId"]) ? (int)$_GET["movieId"] : 0;
 
-/**
- * MODE A (Add Movie use):
- * If no movieId provided, return ALL distinct ScreenNumbers.
- */
 if ($movieId <= 0) {
-    $sql = "
-        SELECT DISTINCT ScreenNumber
-        FROM screen
-        ORDER BY ScreenNumber ASC
-    ";
-
-    $result = $conn->query($sql);
-    $screens = [];
-
-    while ($row = $result->fetch_assoc()) {
-        $num = (int)$row["ScreenNumber"];
-        $screens[] = [
-            "id" => $num,               // screen NUMBER
-            "name" => "Screen " . $num
-        ];
-    }
-
     echo json_encode([
-        "success" => true,
-        "screens" => $screens
+        "success" => false,
+        "message" => "movieId is required"
     ]);
     exit;
 }
 
 /**
- * MODE B (Booking use):
- * Screens available for a given movieId based on showtime table.
- * We group by ScreenNumber (not ScreenID),
- * because ScreenNumber repeats across theaters.
+ * We return distinct ScreenNumber values for this movie
+ * FE expects:
+ *  - id   = ScreenNumber (NOT ScreenID)
+ *  - name = label to show (e.g. "Screen 1")
  */
 $sql = "
     SELECT DISTINCT s.ScreenNumber
     FROM showtime st
     INNER JOIN screen s ON st.ScreenId = s.ScreenID
     WHERE st.MovieId = ?
+      AND st.Status = 'active'
     ORDER BY s.ScreenNumber ASC
 ";
 
@@ -62,10 +40,9 @@ $result = $stmt->get_result();
 
 $screens = [];
 while ($row = $result->fetch_assoc()) {
-    $num = (int)$row["ScreenNumber"];
     $screens[] = [
-        "id" => $num,
-        "name" => "Screen " . $num
+        "id"   => (int)$row["ScreenNumber"],              // <-- used as selectedScreen.id in React
+        "name" => "Screen " . (int)$row["ScreenNumber"],  // <-- shown in the UI
     ];
 }
 

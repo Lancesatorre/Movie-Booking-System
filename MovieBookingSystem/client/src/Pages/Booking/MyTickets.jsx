@@ -12,7 +12,7 @@ const MyTickets = () => {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [canceling, setCanceling] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'upcoming', 'past', 'cancellable'
+  const [filterStatus, setFilterStatus] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
 
   // Status labels configuration matching the design - UPDATED
@@ -30,8 +30,8 @@ const MyTickets = () => {
       glow: 'shadow-emerald-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-emerald-500/50 text-emerald-300 border-emerald-500/40 shadow-emerald-500/60 shadow-lg animate-pulse-slow0', 
     },
     { 
-      value: 'past', 
-      label: 'Past', 
+      value: 'expired', 
+      label: 'Expired', 
       color: 'bg-gray-600/20 text-gray-400 border-gray-600/40', 
       glow: 'shadow-gray-600/30' 
     }
@@ -41,37 +41,92 @@ const MyTickets = () => {
   useEffect(() => {
     const fetchTickets = async () => {
       try {
-        setLoading(true); // Start loading
-        const user = JSON.parse(localStorage.getItem("mobook_user")) 
-                  || JSON.parse(localStorage.getItem("user"));
-        const customerId = user?.CustomerId;
+        setLoading(true);
+
+        // 🔹 Be consistent with Checkout.jsx
+        const storedUser =
+          JSON.parse(localStorage.getItem("user")) ||
+          JSON.parse(localStorage.getItem("mobook_user"));
+
+        const customerId = storedUser?.CustomerId || storedUser?.customerId;
 
         if (!customerId) {
           alert("You must be logged in to view tickets.");
           navigate("/login");
           return;
         }
-        
+
         const res = await fetch(
           `http://localhost/mobook_api/get_booking_details.php?customerId=${customerId}`
         );
         const data = await res.json();
 
         if (data.success) {
-          setTickets(data.tickets || []);
-          setFilteredTickets(data.tickets || []);
+          const rawTickets = data.tickets || [];
+
+          // 🔹 Normalize ticket shape so the rest of the code is safe
+          const normalized = rawTickets.map((t, idx) => {
+            // seats: ensure array
+            let seats = t.seats;
+            if (!Array.isArray(seats)) {
+              if (typeof seats === "string") {
+                seats = seats
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean);
+              } else {
+                seats = [];
+              }
+            }
+
+            // showDateTime: combine if needed
+            const showDateTime =
+              t.showDateTime ||
+              (t.showDate && t.showTime
+                ? `${t.showDate} ${t.showTime}`
+                : null);
+
+            // theater location key (typo-safe)
+            const theaterLocation =
+              t.theatherLocation || t.theaterLocation || t.theaterName || "";
+
+            return {
+              // keep all original fields
+              ...t,
+              // normalized / fallback fields
+              id: t.id || t.bookingId || idx + 1,
+              bookingReference:
+                t.bookingReference || t.bookingId || null,
+              seats,
+              showDateTime,
+              theatherLocation: theaterLocation, // keep old key for compatibility
+              theaterLocation,                   // nice clean key
+              movieTitle: t.movieTitle || t.title || "",
+              movieImage: t.movieImage || t.image || "",
+              movieRating: t.movieRating || t.rating || "",
+              screenNumber:
+                t.screenNumber || t.screen || t.ScreenNumber || 1,
+              totalPrice:
+                typeof t.totalPrice === "number"
+                  ? t.totalPrice
+                  : Number(t.totalPrice) || 0,
+              paymentMethod: t.paymentMethod || "Credit Card",
+            };
+          });
+
+          setTickets(normalized);
+          setFilteredTickets(normalized);
         } else {
+          console.error(data.message);
           setTickets([]);
           setFilteredTickets([]);
-          console.error(data.message);
         }
-
       } catch (err) {
         console.error("Error fetching tickets:", err);
         setTickets([]);
         setFilteredTickets([]);
       } finally {
-        setLoading(false); // Stop loading
+        setLoading(false);
       }
     };
 
@@ -85,11 +140,14 @@ const MyTickets = () => {
     // Apply search filter
     if (searchTerm.trim() !== '') {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(ticket =>
-        ticket.movieTitle.toLowerCase().includes(term) ||
-        ticket.theatherLocation.toLowerCase().includes(term) ||
-        ticket.seats.some(seat => seat.toLowerCase().includes(term))
-      );
+      filtered = filtered.filter(ticket => {
+        const theater = ticket.theaterLocation || ticket.theatherLocation || "";
+        return (
+          ticket.movieTitle.toLowerCase().includes(term) ||
+          theater.toLowerCase().includes(term) ||
+          ticket.seats.some((seat) => seat.toLowerCase().includes(term))
+        );
+      });
     }
 
     // Apply status filter - UPDATED WITH NEW OPTIONS
@@ -106,10 +164,10 @@ const MyTickets = () => {
           return status.label === 'Coming Soon';
         });
         break;
-      case 'past':
+      case 'expired':
         filtered = filtered.filter(ticket => {
           const status = getStatusInfo(ticket.showDateTime);
-          return status.label === 'Past';
+          return status.label === 'Expired';
         });
         break;
       case 'cancellable':
@@ -132,31 +190,48 @@ const MyTickets = () => {
     return hoursDifference > 24;
   };
 
+  const formatPaymentMethod = (raw) => {
+    if (!raw) return "UNKNOWN";
+
+    const key = raw.toString().toLowerCase().trim();
+
+    if (key === "gcash") return "GCash";
+    if (key === "card" || key === "credit" || key === "credit card") return "Credit/Debit Card";
+    if (key === "paypal") return "PayPal";
+    if (key === "paymaya") return "PayMaya";
+
+    // Fallback – show whatever backend sends
+    return raw;
+  };
+
   // Handle Show Ticket button click
   const handleShowTicket = (ticket) => {
-    // Prepare booking data for the Ticket component
+    const { date, time } = formatDateTime(ticket.showDateTime);
+
     const bookingData = {
       movie: {
         title: ticket.movieTitle,
         image: ticket.movieImage,
-        duration: "N/A", // You can add this to your API if available
+        duration: "N/A", // add to API later if you want
         rating: ticket.movieRating,
-        genre: "N/A", // You can add this to your API if available
+        genre: "N/A",
       },
       booking: {
-        bookingId: ticket.bookingReference || `TKT${ticket.id.toString().padStart(6, '0')}`,
-        mall: ticket.theatherLocation,
+        bookingId:
+          ticket.bookingReference ||
+          ticket.bookingId ||
+          `TKT${ticket.id.toString().padStart(6, "0")}`,
+        mall: ticket.theaterLocation || ticket.theatherLocation || "",
         screen: `Screen ${ticket.screenNumber}`,
-        date: formatDateTime(ticket.showDateTime).date,
-        time: formatDateTime(ticket.showDateTime).time,
+        date,
+        time,
         seats: ticket.seats,
         totalAmount: ticket.totalPrice,
-        paymentMethod: ticket.paymentMethod || "Credit Card",
-      }
+        paymentMethod: formatPaymentMethod(ticket.paymentMethod),
+      },
     };
-    
-    // Navigate to Ticket page with booking data
-    navigate('/ticket', { state: { bookingData } });
+
+    navigate("/ticket", { state: { bookingData } });
   };
 
   // Handle cancel button click
@@ -173,8 +248,12 @@ const MyTickets = () => {
       const res = await fetch('http://localhost/mobook_api/cancel_ticket.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticketId: selectedTicket.id }),
+        body: JSON.stringify({
+          ticketId: selectedTicket.id,
+          bookingId: selectedTicket.bookingId || selectedTicket.bookingReference || null,
+        }),
       });
+
 
       const data = await res.json();
 
@@ -242,7 +321,7 @@ const MyTickets = () => {
     showDayStart.setHours(0, 0, 0, 0);
     
     if (showDayStart < todayStart) {
-      return statuses[2]; // Past (yesterday or earlier)
+      return statuses[2]; // Epired (yesterday or earlier)
     } else if (showDayStart.getTime() === todayStart.getTime()) {
       return statuses[0]; // Now Showing (today)
     } else {
@@ -329,7 +408,7 @@ const MyTickets = () => {
                         { id: 'all', label: 'All Tickets' },
                         { id: 'now-showing', label: 'Now Showing' },
                         { id: 'coming-soon', label: 'Coming Soon' },
-                        { id: 'past', label: 'Past Shows' },
+                        { id: 'expired', label: 'Expired Shows' },
                         { id: 'cancellable', label: 'Cancellable Only' }
                       ].map((filter) => (
                         <button
@@ -359,7 +438,7 @@ const MyTickets = () => {
                 <span className="text-sm text-red-300">
                   {filterStatus === 'now-showing' && 'Showing: Now Showing'}
                   {filterStatus === 'coming-soon' && 'Showing: Coming Soon'}
-                  {filterStatus === 'past' && 'Showing: Past Shows'}
+                  {filterStatus === 'expired' && 'Showing: Expired Shows'}
                   {filterStatus === 'cancellable' && 'Showing: Cancellable'}
                 </span>
                 <button
@@ -452,9 +531,8 @@ const MyTickets = () => {
 
                       <div className="flex items-center gap-2 text-gray-400">
                         <MapPin className="text-red-500" size={20} />
-                        <span className="text-sm">{ticket.theatherLocation}</span>
+                        <span className="text-sm"> {ticket.theaterLocation || ticket.theatherLocation} </span>
                       </div>
-
                       <div className="flex items-center gap-2 text-green-400 font-semibold">
                         <span className="text-sm">₱ {ticket.totalPrice}.00</span>
                       </div>
@@ -485,7 +563,7 @@ const MyTickets = () => {
                             <p className="text-xs text-gray-400">Cannot cancel</p>
                           </div>
                         )
-                      ) : status.label === 'Past' ? (
+                      ) : status.label === 'Expired' ? (
                         <div className="flex-1 px-4 py-3 bg-gray-700/50 rounded-xl text-center border border-gray-600/50">
                           <p className="text-xs text-gray-400">Show Completed</p>
                         </div>

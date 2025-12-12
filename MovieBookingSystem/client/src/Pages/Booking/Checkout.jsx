@@ -383,7 +383,6 @@ const Checkout = () => {
       paymentStatus: "PAID",
     };
 
-    // Start booking loading
     setLoading(l => ({ ...l, booking: true }));
     setBookingCompleted(false);
 
@@ -402,8 +401,20 @@ const Checkout = () => {
         return;
       }
 
-      // Create booking data for ticket
-      const bookingData = {
+      // 1. Get bookingId from backend (or fallback)
+      const bookingId = json.bookingId || json.booking_id || generateBookingId();
+      const totalFromBackend = json.totalAmount ?? totalAmount;
+
+      // 2. Build human-readable date like "Dec 15, 2025"
+      const bookedDate = selectedDate.full;
+      const dateDisplay = bookedDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+
+      // 3. Build booking data object
+      const newBookingData = {
         movie: {
           title: movie.title,
           image: movie.image,
@@ -412,26 +423,28 @@ const Checkout = () => {
           genre: movie.genre,
         },
         booking: {
-          bookingId: generateBookingId(),
+          bookingId,
           mall: selectedMall.name,
-          screen: selectedScreen.name,
-          date: `${selectedDate.month} ${selectedDate.date}`,
+          screen: selectedScreen.name ?? selectedScreen.label ?? "Cinema",
+          date: dateDisplay,
           time: selectedTime.time,
           seats: selectedSeats,
-          totalAmount: totalAmount,
-          paymentMethod: paymentMethod,
-          bookingTime: new Date().toLocaleString(),
-        }
+          totalAmount: totalFromBackend,
+          paymentMethod,
+        },
       };
 
-      // Save booking data
-      setBookingData(bookingData);
-      
-      // Show success state and then show ticket
-      setTimeout(() => {
-        setBookingCompleted(true);
-        setLoading(l => ({ ...l, booking: false }));
-      }, 1500);
+      // 4. Save into state (so your ticket UI can use it)
+      setBookingData(newBookingData);
+      setBookingCompleted(true);
+
+      // 5. Clear progress + reset form-ish stuff
+      localStorage.removeItem("bookingInProgress");
+      setSelectedSeats([]);
+      setPaymentMethod(null);
+      setStep(1);
+
+      setLoading(l => ({ ...l, booking: false }));
 
     } catch (err) {
       console.error(err);
@@ -439,11 +452,6 @@ const Checkout = () => {
       setLoading(l => ({ ...l, booking: false }));
     }
   };
-
-  // Download ticket function
-  // Replace the existing handleDownloadTicket function with this:
-
-// Replace the handleDownloadTicket function with this:
 
 const handleDownloadTicket = () => {
   setDownloading(true);

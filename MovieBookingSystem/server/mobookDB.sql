@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 08, 2025 at 04:00 AM
+-- Generation Time: Dec 12, 2025 at 06:38 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `mobookv2`
+-- Database: `mobook`
 --
 
 -- --------------------------------------------------------
@@ -56,7 +56,7 @@ CREATE TABLE `booking` (
   `CustomerId` int(11) NOT NULL,
   `ShowTimeId` int(11) NOT NULL,
   `BookingDate` date NOT NULL,
-  `PaymentStatus` varchar(50) NOT NULL,
+  `PaymentStatus` enum('confirmed','cancelled','pending') NOT NULL DEFAULT 'confirmed',
   `TotalAmount` decimal(10,2) NOT NULL DEFAULT 0.00,
   `PaymentMethod` varchar(50) DEFAULT NULL,
   `CreatedAt` datetime NOT NULL DEFAULT current_timestamp()
@@ -1962,7 +1962,8 @@ CREATE TABLE `showtime` (
   `ScreenId` int(11) NOT NULL,
   `ShowDate` date NOT NULL,
   `StartTime` time NOT NULL,
-  `EndTime` time NOT NULL
+  `EndTime` time NOT NULL,
+  `Status` enum('active','expired') NOT NULL DEFAULT 'active'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -2074,8 +2075,8 @@ ALTER TABLE `seat`
 --
 ALTER TABLE `showtime`
   ADD PRIMARY KEY (`ShowTimeId`),
-  ADD UNIQUE KEY `uq_screen_slot` (`ScreenId`,`ShowDate`,`StartTime`),
-  ADD KEY `fk_showtime_movie` (`MovieId`);
+  ADD KEY `fk_showtime_movie` (`MovieId`),
+  ADD KEY `idx_showtime_screen` (`ScreenId`);
 
 --
 -- Indexes for table `theater`

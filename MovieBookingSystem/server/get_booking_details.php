@@ -1,5 +1,6 @@
 <?php
 include "db_connect.php";
+
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
@@ -35,6 +36,13 @@ if (!$customerId || $customerId <= 0) {
     exit;
 }
 
+/*
+    Returns all booking details for a user, including:
+    - movie info, seat list
+    - total price
+    - paymentMethod (NEW)
+    - isExpired flag
+*/
 $sql = "
     SELECT 
         b.BookingId,
@@ -46,7 +54,16 @@ $sql = "
         th.Name AS theaterName,
         th.Location AS theaterLocation,
         GROUP_CONCAT(se.Seatnumber ORDER BY se.Seatnumber SEPARATOR ',') AS seats,
-        b.TotalAmount AS totalPrice
+        b.TotalAmount AS totalPrice,
+        b.PaymentMethod AS paymentMethod,
+
+        CASE
+          WHEN st.ShowDate < CURDATE()
+               OR (st.ShowDate = CURDATE() AND st.EndTime < CURTIME())
+            THEN 1
+          ELSE 0
+        END AS isExpired
+
     FROM booking b
     INNER JOIN showtime st ON b.ShowTimeId = st.ShowTimeId
     INNER JOIN movie m ON st.MovieId = m.MovieId
@@ -55,8 +72,6 @@ $sql = "
     LEFT JOIN ticketing t ON b.BookingId = t.BookingId
     LEFT JOIN seat se ON t.SeatId = se.SeatId
     WHERE b.CustomerId = ?
-      -- AUTO-HIDE PAST BOOKINGS
-      AND TIMESTAMP(st.ShowDate, st.StartTime) >= NOW()
     GROUP BY b.BookingId
     ORDER BY st.ShowDate ASC, st.StartTime ASC
 ";
@@ -69,6 +84,7 @@ $result = $stmt->get_result();
 $tickets = [];
 
 while ($row = $result->fetch_assoc()) {
+    // Convert seat CSV -> array
     $seatArray = [];
     if (!empty($row["seats"])) {
         $seatArray = explode(",", $row["seats"]);
@@ -76,15 +92,18 @@ while ($row = $result->fetch_assoc()) {
     }
 
     $tickets[] = [
-        "id" => (int)$row["BookingId"],
-        "movieTitle" => $row["movieTitle"],
-        "movieImage" => $row["movieImage"],
-        "movieRating" => $row["movieRating"],
-        "showDateTime" => $row["showDateTime"],
-        "screenNumber" => (int)$row["screenNumber"],
+        "id"               => (int)$row["BookingId"],
+        "movieTitle"       => $row["movieTitle"],
+        "movieImage"       => $row["movieImage"],
+        "movieRating"      => $row["movieRating"],
+        "showDateTime"     => $row["showDateTime"],
+        "screenNumber"     => (int)$row["screenNumber"],
+        // keep key name consistent with existing frontend (typo included)
         "theatherLocation" => $row["theaterName"] . ", " . $row["theaterLocation"],
-        "seats" => $seatArray,
-        "totalPrice" => (float)$row["totalPrice"]
+        "seats"            => $seatArray,
+        "totalPrice"       => (float)$row["totalPrice"],
+        "paymentMethod"    => $row["paymentMethod"], // 👈 NEW
+        "isExpired"        => (int)$row["isExpired"]
     ];
 }
 

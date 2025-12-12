@@ -1,61 +1,72 @@
 <?php
 include "db_connect.php";
+
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Content-Type: application/json");
 
-// Preflight
+// ✅ Handle preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// helper for safe number output
-function num($v) { return $v !== null ? (float)$v : 0; }
+// small helper to avoid null warnings
+function num($v) {
+    return $v !== null ? (float)$v : 0;
+}
 
 /**
- * TOTAL MOVIES (admin sees all)
+ * 1) TOTAL MOVIES  (admin sees all published movies)
  */
 $qMovies = "SELECT COUNT(*) AS totalMovies FROM movie";
-$totalMovies = $conn->query($qMovies)->fetch_assoc()["totalMovies"] ?? 0;
+$totalMoviesRow = $conn->query($qMovies);
+$totalMovies = $totalMoviesRow ? ($totalMoviesRow->fetch_assoc()["totalMovies"] ?? 0) : 0;
 
 /**
- * TOTAL BOOKINGS TODAY
+ * 2) TOTAL BOOKINGS TODAY  (only confirmed bookings)
+ *    We treat 'confirmed' as PAID.
  */
 $qBookingsToday = "
     SELECT COUNT(*) AS bookingsToday
     FROM booking
     WHERE BookingDate = CURDATE()
+      AND LOWER(TRIM(PaymentStatus)) = 'confirmed'
 ";
-$bookingsToday = $conn->query($qBookingsToday)->fetch_assoc()["bookingsToday"] ?? 0;
+$bookingsTodayRow = $conn->query($qBookingsToday);
+$bookingsToday = $bookingsTodayRow ? ($bookingsTodayRow->fetch_assoc()["bookingsToday"] ?? 0) : 0;
 
 /**
- * TOTAL USERS
+ * 3) TOTAL USERS
  */
 $qUsers = "SELECT COUNT(*) AS totalUsers FROM customer";
-$totalUsers = $conn->query($qUsers)->fetch_assoc()["totalUsers"] ?? 0;
+$totalUsersRow = $conn->query($qUsers);
+$totalUsers = $totalUsersRow ? ($totalUsersRow->fetch_assoc()["totalUsers"] ?? 0) : 0;
 
 /**
- * TOTAL REVENUE (paid only)
+ * 4) TOTAL REVENUE  (only confirmed bookings)
+ *    Again: 'confirmed' = paid
  */
 $qRevenue = "
     SELECT COALESCE(SUM(TotalAmount),0) AS totalRevenue
     FROM booking
-    WHERE UPPER(TRIM(PaymentStatus)) = 'PAID'
+    WHERE LOWER(TRIM(PaymentStatus)) = 'confirmed'
 ";
-$totalRevenue = num($conn->query($qRevenue)->fetch_assoc()["totalRevenue"] ?? 0);
+$totalRevenueRow = $conn->query($qRevenue);
+$totalRevenue = num($totalRevenueRow ? ($totalRevenueRow->fetch_assoc()["totalRevenue"] ?? 0) : 0);
 
 /**
- * CURRENT MOVIES LIST
- * ✅ genres joined separately (no revenue multiplication)
- * ✅ showings/bookings/revenue computed in subquery
- * ✅ only published + not expired
+ * 5) CURRENT MOVIES LIST
+ *    - genre via GROUP_CONCAT
+ *    - showings / bookings / revenue from subquery x
+ *    - bookings + revenue only count 'confirmed'
+ *    - only movies that actually have showtimes
  */
 $qCurrentMovies = "
 SELECT
   m.MovieId AS id,
-  m.Title AS title,
+  m.Title   AS title,
   GROUP_CONCAT(DISTINCT g.Name ORDER BY g.Name SEPARATOR ', ') AS genre,
 
   COALESCE(x.showings, 0) AS showings,
@@ -64,27 +75,32 @@ SELECT
 
 FROM movie m
 LEFT JOIN movie_genre mg ON m.MovieId = mg.MovieId
-LEFT JOIN genre g ON mg.GenreId = g.GenreId
+LEFT JOIN genre g        ON mg.GenreId = g.GenreId
 
 LEFT JOIN (
-  SELECT
-    st.MovieId,
-    COUNT(DISTINCT st.ShowTimeId) AS showings,
-    COUNT(DISTINCT b.BookingId) AS bookings,
-    SUM(
-      CASE 
-        WHEN UPPER(TRIM(b.PaymentStatus))='PAID'
-        THEN b.TotalAmount 
-        ELSE 0 
-      END
-    ) AS revenue
-  FROM showtime st
-  LEFT JOIN booking b ON b.ShowTimeId = st.ShowTimeId
-  GROUP BY st.MovieId
+    SELECT
+      st.MovieId,
+      COUNT(DISTINCT st.ShowTimeId) AS showings,
+      COUNT(DISTINCT CASE 
+                       WHEN LOWER(TRIM(b.PaymentStatus)) = 'confirmed' 
+                       THEN b.BookingId 
+                     END) AS bookings,
+      SUM(
+        CASE 
+          WHEN LOWER(TRIM(b.PaymentStatus)) = 'confirmed'
+          THEN b.TotalAmount 
+          ELSE 0 
+        END
+      ) AS revenue
+    FROM showtime st
+    LEFT JOIN booking b ON b.ShowTimeId = st.ShowTimeId
+    GROUP BY st.MovieId
 ) x ON x.MovieId = m.MovieId
 
-WHERE m.Published = 1
-  AND CURDATE() <= DATE_ADD(m.ReleaseDate, INTERVAL m.ShowingDays DAY)
+-- ✅ Only show movies that actually have showtimes
+WHERE EXISTS (
+    SELECT 1 FROM showtime st2 WHERE st2.MovieId = m.MovieId
+)
 
 GROUP BY m.MovieId
 ORDER BY showings DESC, bookings DESC
@@ -97,12 +113,12 @@ $currentMovies = [];
 if ($currentMoviesRes) {
     while ($row = $currentMoviesRes->fetch_assoc()) {
         $currentMovies[] = [
-            "id" => (int)$row["id"],
-            "title" => $row["title"],
-            "genre" => $row["genre"] ?? "",
+            "id"       => (int)$row["id"],
+            "title"    => $row["title"],
+            "genre"    => $row["genre"] ?? "",
             "showings" => (int)$row["showings"],
             "bookings" => (int)$row["bookings"],
-            "revenue" => (float)$row["revenue"]
+            "revenue"  => (float)$row["revenue"],
         ];
     }
 }
@@ -110,15 +126,15 @@ if ($currentMoviesRes) {
 $conn->close();
 
 /**
- * OUTPUT JSON
+ * OUTPUT JSON — matches what Dashboard.jsx expects
  */
 echo json_encode([
-  "success" => true,
-  "stats" => [
-    "totalMovies" => (int)$totalMovies,
-    "bookingsToday" => (int)$bookingsToday,
-    "totalUsers" => (int)$totalUsers,
-    "totalRevenue" => (float)$totalRevenue
-  ],
-  "currentMovies" => $currentMovies
+    "success" => true,
+    "stats" => [
+        "totalMovies"   => (int)$totalMovies,
+        "bookingsToday" => (int)$bookingsToday,
+        "totalUsers"    => (int)$totalUsers,
+        "totalRevenue"  => (float)$totalRevenue,
+    ],
+    "currentMovies" => $currentMovies,
 ]);
