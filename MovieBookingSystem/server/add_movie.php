@@ -71,6 +71,8 @@ try {
         exit;
     }
 
+    if ($showingDays < 1) $showingDays = 1;
+
     // ------- handle poster upload (NO RENAME) ------
     $posterPath = "";
 
@@ -190,12 +192,18 @@ try {
 
     // 30-min gap rule on same Screen + ShowDate
     $conflictCheck = $conn->prepare("
-        SELECT 1
-        FROM showtime
-        WHERE ScreenId = ?
-          AND ShowDate = ?
-          AND StartTime < ADDTIME(?, '00:30:00')
-          AND EndTime   > SUBTIME(?, '00:30:00')
+        SELECT
+            m.Title      AS conflictMovieTitle,
+            s.StartTime  AS conflictStart,
+            s.EndTime    AS conflictEnd
+        FROM showtime s
+        JOIN movie m ON m.MovieId = s.MovieId
+        WHERE s.ScreenId = ?
+        AND s.ShowDate = ?
+        AND (
+            TIMESTAMP(s.ShowDate, s.StartTime) < DATE_ADD(TIMESTAMP(?, ?), INTERVAL 30 MINUTE)
+            AND TIMESTAMP(s.ShowDate, s.EndTime) > DATE_SUB(TIMESTAMP(?, ?), INTERVAL 30 MINUTE)
+        )
         LIMIT 1
     ");
 
@@ -203,6 +211,14 @@ try {
         INSERT INTO showtime (MovieId, ScreenId, ShowDate, StartTime, EndTime)
         VALUES (?, ?, ?, ?, ?)
     ");
+
+    // ✅ build release DateTime once
+    $releaseObj = DateTime::createFromFormat("Y-m-d", $releaseDate);
+    if (!$releaseObj) {
+        $conn->rollback();
+        echo json_encode(["success" => false, "message" => "Invalid release date"]);
+        exit;
+    }
 
     foreach ($theaters as $theaterId) {
         $tid = (int)$theaterId;
@@ -232,43 +248,81 @@ try {
 
                 $startTime = $startObj->format("H:i:s");
                 $endTime   = $endObj->format("H:i:s");
-                $showDate  = $releaseDate;
 
-                // conflict check
-                $conflictCheck->bind_param("isss", $screenId, $showDate, $endTime, $startTime);
-                $conflictCheck->execute();
-                $conflictRes = $conflictCheck->get_result();
+                // ✅ INSERT SHOWTIMES FOR EACH SHOWING DAY
+                for ($day = 0; $day < $showingDays; $day++) {
+                    $showDateObj = clone $releaseObj;
+                    $showDateObj->modify("+{$day} day");
+                    $showDate  = $showDateObj->format("Y-m-d");
 
-                if ($conflictRes->fetch_assoc()) {
-                    $theaterName = "Theater {$tid}";
-                    $theaterLoc  = "";
+                    // conflict check per date
+                    $conflictCheck->bind_param(
+                        "isssss",
+                        $screenId,
+                        $showDate,
+                        $showDate,
+                        $endTime,
+                        $showDate,
+                        $startTime
+                    );
+                    $conflictCheck->execute();
+                    $conflictRes = $conflictCheck->get_result();
 
-                    $theaterLookup->bind_param("i", $tid);
-                    $theaterLookup->execute();
-                    $tRes = $theaterLookup->get_result();
-                    if ($tRow = $tRes->fetch_assoc()) {
-                        $theaterName = $tRow["Name"];
-                        $theaterLoc  = $tRow["Location"];
+                    if ($conflictRow = $conflictRes->fetch_assoc()) {
+
+                        // existing movie details from conflict query
+                        $conflictMovieTitle = $conflictRow["conflictMovieTitle"] ?? "Unknown Movie";
+                        $conflictStart = $conflictRow["conflictStart"] ?? "";
+                        $conflictEnd   = $conflictRow["conflictEnd"] ?? "";
+
+                        // theater lookup (you already have this)
+                        $theaterName = "Theater {$tid}";
+                        $theaterLoc  = "";
+
+                        $theaterLookup->bind_param("i", $tid);
+                        $theaterLookup->execute();
+                        $tRes = $theaterLookup->get_result();
+                        if ($tRow = $tRes->fetch_assoc()) {
+                            $theaterName = $tRow["Name"];
+                            $theaterLoc  = $tRow["Location"];
+                        }
+
+                        $conn->rollback();
+
+                        $prettyLoc = $theaterLoc ? ", {$theaterLoc}" : "";
+                        $screenLabel = "Screen {$sn}";
+
+                        // Nice message format (your “Option B” style)
+                        $message =
+                            "Schedule Conflict\n" .
+                            "Less than 30-minute gap between other movie.\n\n" .
+                            "{$conflictMovieTitle} ({$screenLabel})\n" .
+                            "{$theaterName}{$prettyLoc}\n" .
+                            "{$showDate} {$conflictStart} - {$conflictEnd}";
+
+                        echo json_encode([
+                            "success" => false,
+                            "code" => "SCHEDULE_CONFLICT",
+                            "conflict" => [
+                                "title" => "Schedule Conflict",
+                                "subtitle" => "Less than 30-minute gap between other movie",
+                                "movie" => $conflictMovieTitle,
+                                "screen" => "Screen {$sn}",
+                                "theater" => "{$theaterName}{$prettyLoc}",
+                                "date" => $showDate,
+                                "time" => "{$conflictStart} - {$conflictEnd}"
+                            ]
+                        ]);
+                        exit;
                     }
 
-                    $conn->rollback();
-
-                    $prettyLoc = $theaterLoc ? ", {$theaterLoc}" : "";
-
-                    echo json_encode([
-                        "success" => false,
-                        "message" =>
-                            "⚠️ Schedule Conflict: Less than 30-minute gap between Screen {$sn} events at {$theaterName}{$prettyLoc}.",
-                    ]);
-                    exit;
-                }
-
-                // insert
-                $showStmt->bind_param("iisss", $movieId, $screenId, $showDate, $startTime, $endTime);
-                if (!$showStmt->execute()) {
-                    $conn->rollback();
-                    echo json_encode(["success" => false, "message" => "Failed inserting showtimes"]);
-                    exit;
+                    // insert per date
+                    $showStmt->bind_param("iisss", $movieId, $screenId, $showDate, $startTime, $endTime);
+                    if (!$showStmt->execute()) {
+                        $conn->rollback();
+                        echo json_encode(["success" => false, "message" => "Failed inserting showtimes"]);
+                        exit;
+                    }
                 }
             }
         }

@@ -1,19 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Calendar, Clock, MapPin, CreditCard, ArrowLeft, Home, Film, Users, Check, Ticket as TicketIcon, Download } from 'lucide-react';
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  CreditCard,
+  ArrowLeft,
+  Download,
+  Users,
+  Check,
+} from 'lucide-react';
 import icon from "/assets/logo.png";
 
 const Ticket = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const ticketRef = useRef(null);
-  
+
   const [loading, setLoading] = useState(true);
-  const [showTicket, setShowTicket] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
-  // Get booking data from navigation state
-  const bookingData = location.state?.bookingData || {
+  // ----- 1. Get booking data from navigation state with safe fallback -----
+  const fallbackBookingData = {
     movie: {
       title: "Altered",
       image: "/assets/Movies/altered.jpg",
@@ -25,40 +33,66 @@ const Ticket = () => {
       bookingId: "MBK2024001",
       mall: "SM City Cebu",
       screen: "Cinema 1",
-      date: "Dec 15",
+      date: "Dec 15, 2025",
       time: "7:30 PM",
       seats: ["A5", "A6"],
       totalAmount: 500,
       paymentMethod: "GCash",
-    }
+    },
   };
 
-  const { movie, booking } = bookingData;
+  // bookingData may come from Checkout or MyTickets
+  const rawBookingData = location.state?.bookingData || fallbackBookingData;
 
+  // Normalize a bit just to be safe
+  const movie = rawBookingData.movie || fallbackBookingData.movie;
+  const bookingRaw = rawBookingData.booking || fallbackBookingData.booking;
+
+  const booking = {
+    ...bookingRaw,
+    seats: Array.isArray(bookingRaw.seats)
+      ? bookingRaw.seats
+      : typeof bookingRaw.seats === "string"
+      ? bookingRaw.seats.split(",").map(s => s.trim()).filter(Boolean)
+      : [],
+    totalAmount:
+      typeof bookingRaw.totalAmount === "number"
+        ? bookingRaw.totalAmount
+        : Number(bookingRaw.totalAmount) || 0,
+    paymentMethod: bookingRaw.paymentMethod || "UNKNOWN",
+    bookingId: bookingRaw.bookingId || "UNKNOWN",
+  };
+
+  // ----- 2. Fake loading effect -----
   useEffect(() => {
-    // Simulate loading time
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 2000);
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, []);
 
   const handleBack = () => {
-    navigate(-1); 
+    // If we came here from MyTickets or Checkout, go back
+    // or fallback to /movies
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/movies");
+    }
   };
 
-  // Download ticket function
+  // ----- 3. Download ticket function -----
   const handleDownloadTicket = () => {
     setDownloading(true);
-    
+
     try {
-      // Create clean HTML ticket with only details
       const ticketHtml = `
         <!DOCTYPE html>
         <html>
         <head>
           <title>MoBook Ticket - ${booking.bookingId}</title>
+          <meta charset="UTF-8" />
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
             
@@ -337,7 +371,6 @@ const Ticket = () => {
         </head>
         <body>
           <div class="ticket-container">
-            <!-- Header -->
             <div class="ticket-header">
               <div class="header-content">
                 <div class="logo-section">
@@ -349,10 +382,7 @@ const Ticket = () => {
                 </div>
               </div>
             </div>
-            
-            <!-- Body -->
             <div class="ticket-body">
-              <!-- Movie Title Section -->
               <div class="movie-title-section">
                 <h2 class="movie-title">${movie.title}</h2>
                 <div class="movie-tags">
@@ -361,8 +391,6 @@ const Ticket = () => {
                 </div>
                 <div class="movie-genre">${movie.genre}</div>
               </div>
-              
-              <!-- Details Grid -->
               <div class="details-section">
                 <div class="details-grid">
                   <div class="detail-card">
@@ -396,8 +424,6 @@ const Ticket = () => {
                   </div>
                 </div>
               </div>
-              
-              <!-- Payment Info -->
               <div class="payment-section">
                 <div class="payment-info">
                   <div class="payment-icon">💳</div>
@@ -413,8 +439,6 @@ const Ticket = () => {
                 </div>
               </div>
             </div>
-            
-            <!-- Footer -->
             <div class="ticket-footer">
               Please arrive 15 minutes before showtime • Present this ticket at the cinema entrance
             </div>
@@ -422,25 +446,21 @@ const Ticket = () => {
         </body>
         </html>
       `;
-      
-      // Create blob and download
-      const blob = new Blob([ticketHtml], { type: 'text/html' });
+
+      const blob = new Blob([ticketHtml], { type: "text/html" });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      
+      const link = document.createElement("a");
+
       link.href = url;
       link.download = `MoBook-Ticket-${booking.bookingId}.html`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
-      // Clean up
+
       setTimeout(() => URL.revokeObjectURL(url), 100);
-      
     } catch (error) {
-      console.error('Error downloading ticket:', error);
-      
-      // Fallback: Create a clean text version
+      console.error("Error downloading ticket:", error);
+
       const simpleTicket = `
 ══════════════════════════════════════════════════════
                 MoBook Cinema - E-Ticket              
@@ -461,7 +481,7 @@ Booking ID: ${booking.bookingId}
 
 📅 DATE: ${booking.date}
 ⏰ TIME: ${booking.time}
-🎟️ SEATS: ${booking.seats.join(', ')}
+🎟️ SEATS: ${booking.seats.join(", ")}
 
 ──────────────────────────────────────────────────────
 
@@ -477,30 +497,30 @@ Booking ID: ${booking.bookingId}
 
 ══════════════════════════════════════════════════════
 `;
-      
-      const blob = new Blob([simpleTicket], { type: 'text/plain' });
+
+      const blob = new Blob([simpleTicket], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      
+      const link = document.createElement("a");
+
       link.href = url;
       link.download = `MoBook-Ticket-${booking.bookingId}.txt`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       setTimeout(() => URL.revokeObjectURL(url), 100);
-      
     } finally {
       setDownloading(false);
     }
   };
 
+  // ----- 4. Loading screen -----
   if (loading) {
     return (
       <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center animate-pulse">
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-r from-red-600 to-orange-600 flex items-center justify-center">
-            <Check size={40} className="text-white animate-scale" />
+            <Check size={40} className="text-white" />
           </div>
           <h2 className="text-3xl font-bold text-white mb-2">Ticket Ready!</h2>
           <p className="text-gray-400">Generating your ticket...</p>
@@ -509,10 +529,10 @@ Booking ID: ${booking.bookingId}
     );
   }
 
-  // Show the actual ticket
+  // ----- 5. Actual ticket UI -----
   return (
     <div className="min-h-screen bg-transparent text-white px-4">
-      {/* Fixed Back Button */}
+      {/* Back Button */}
       <div className="fixed top-4 left-4 z-50">
         <button
           onClick={handleBack}
@@ -524,52 +544,60 @@ Booking ID: ${booking.bookingId}
       </div>
 
       <div className="container mx-auto max-w-4xl h-[85vh] pt-20 pb-12">
-        {/* Ticket content here */}
-        <div className="mb-8 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-         <div
+        <div className="mb-8 animate-slide-up" style={{ animationDelay: "0.2s" }}>
+          <div
             ref={ticketRef}
             className="bg-black/70 rounded-3xl overflow-hidden shadow-2xl"
           >
-            {/* Ticket Header */}
+            {/* Header */}
             <div className="bg-gradient-to-l from-red-700/50 to-black/50 border border-red-900 p-6 relative overflow-hidden">
               <div className="absolute inset-0 opacity-20">
-                <div className="absolute inset-0" style={{
-                  backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)'
-                }} />
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage:
+                      "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)",
+                  }}
+                />
               </div>
               <div className="relative text-left flex items-center justify-between">
-                <div className='flex flex-col gap-2'>
-                  <div className='flex gap-3 items-center justify-center'>
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-3 items-center justify-center">
                     <img src={icon} alt="MoBook Logo" className="w-[4vh] h-[3vh]" />
-                    <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent">MoBook</h2>
+                    <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent">
+                      MoBook
+                    </h2>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-white text-sm mb-1">Booking ID</div>
-                  <div className="text-sm md:text-2xl font-bold text-white">{booking.bookingId}</div>
+                  <div className="text-sm md:text-2xl font-bold text-white">
+                    {booking.bookingId}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Main Ticket Content */}
+            {/* Body */}
             <div className="p-8">
               <div className="grid md:grid-cols-3 gap-8 mb-8">
-                {/* Movie Poster */}
+                {/* Poster */}
                 <div className="md:col-span-1">
                   <div className="aspect-[2/3] rounded-xl overflow-hidden shadow-lg shadow-black/50">
-                    <img 
-                      src={movie.image} 
+                    <img
+                      src={movie.image}
                       alt={movie.title}
                       className="w-full h-full object-cover"
                     />
                   </div>
                 </div>
 
-                {/* Movie & Booking Details */}
+                {/* Details */}
                 <div className="md:col-span-2 space-y-6">
-                  {/* Movie Title */}
                   <div>
-                    <h3 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-white to-red-900/90 bg-clip-text text-transparent mb-2 text-left">{movie.title}</h3>
+                    <h3 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-white to-red-900/90 bg-clip-text text-transparent mb-2 text-left">
+                      {movie.title}
+                    </h3>
                     <div className="flex flex-wrap gap-2">
                       <span className="px-3 py-1 bg-red-600/20 border border-red-500/30 rounded-full text-sm text-red-400">
                         {movie.rating}
@@ -580,7 +608,6 @@ Booking ID: ${booking.bookingId}
                     </div>
                   </div>
 
-                  {/* Booking Details Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
                     <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
                       <div className="flex items-center gap-3 mb-2">
@@ -612,14 +639,19 @@ Booking ID: ${booking.bookingId}
                         <Users size={20} className="text-red-500" />
                         <span className="text-gray-400 text-sm">Seats</span>
                       </div>
-                      <p className="text-white font-semibold text-xl">{booking.seats.join(', ')}</p>
-                      <p className="text-gray-400 text-sm">{booking.seats.length} ticket{booking.seats.length > 1 ? 's' : ''}</p>
+                      <p className="text-white font-semibold text-xl">
+                        {booking.seats.join(", ")}
+                      </p>
+                      <p className="text-gray-400 text-sm">
+                        {booking.seats.length} ticket
+                        {booking.seats.length > 1 ? "s" : ""}
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Divider with perforated effect */}
+              {/* Perforated divider */}
               <div className="relative my-8">
                 <div className="absolute inset-0 flex items-center" aria-hidden="true">
                   <div className="w-full border-t border-dashed border-red-900 mb-2"></div>
@@ -628,49 +660,55 @@ Booking ID: ${booking.bookingId}
                 <div className="absolute -right-10 w-10 h-20 bg-red-950/50 rounded-full -mr-3 border-2 border-red-900"></div>
               </div>
 
-              {/* Payment Details */}
+              {/* Payment */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center flex-col">
-                  <div className='flex gap-2'>
+                  <div className="flex gap-2">
                     <CreditCard size={24} className="text-red-500" />
                     <p className="text-gray-400 text-sm">Payment Method:</p>
                   </div>
-                  <p className="text-white font-semibold">{booking.paymentMethod.toUpperCase()}</p>
+                  <p className="text-white font-semibold">
+                    {booking.paymentMethod.toUpperCase()}
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="text-gray-400 text-sm mb-1 mt-1">Total Amount</p>
-                  <p className="text-3xl font-bold text-red-500">₱{booking.totalAmount.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-red-500">
+                    ₱{booking.totalAmount.toLocaleString()}
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Ticket Footer */}
+            {/* Footer */}
             <div className="bg-gray-900/50 px-8 py-4 border-t border-gray-800">
               <p className="text-center text-gray-500 text-sm">
-                Please arrive 15 minutes before showtime • Present this ticket at the entrance
+                Please arrive 15 minutes before showtime • Present this ticket at the
+                entrance
               </p>
             </div>
           </div>
         </div>
 
-        {/* Download Button - Added below ticket */}
-        <div className="flex justify-center animate-fade-in" style={{ animationDelay: '0.4s' }}>
+        {/* Download Button */}
+        <div
+          className="flex justify-center animate-fade-in"
+          style={{ animationDelay: "0.4s" }}
+        >
           <button
             onClick={handleDownloadTicket}
             disabled={downloading}
             className={`flex items-center gap-3 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 ${
               downloading
-                ? 'bg-gray-700 cursor-not-allowed opacity-50'
-                : 'bg-gradient-to-r from-red-700 to-orange-600 hover:from-red-600 hover:to-orange-500 shadow-lg shadow-red-500/20 hover:shadow-red-500/40 hover:scale-[1.02]'
+                ? "bg-gray-700 cursor-not-allowed opacity-50"
+                : "bg-gradient-to-r from-red-700 to-orange-600 hover:from-red-600 hover:to-orange-500 shadow-lg shadow-red-500/20 hover:shadow-red-500/40 hover:scale-[1.02]"
             }`}
           >
             <Download size={24} />
-            {downloading ? 'Downloading...' : 'Download Ticket'}
+            {downloading ? "Downloading..." : "Download Ticket"}
           </button>
         </div>
       </div>
-
-      {/* ... rest of your code ... */}
     </div>
   );
 };

@@ -1,8 +1,10 @@
 <?php
 include "db_connect.php";
 header("Content-Type: application/json");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
 
-// Preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
@@ -16,12 +18,16 @@ if ($bookingId <= 0) {
     exit;
 }
 
-// Optional safety: prevent cancel within 24 hours
+/*
+  1) get showtime for this booking
+  2) block cancel if within 24 hours
+*/
 $sqlCheck = "
-SELECT st.ShowDate, st.StartTime
-FROM booking b
-JOIN showtime st ON b.ShowTimeId = st.ShowTimeId
-WHERE b.BookingId = ?
+    SELECT st.ShowDate, st.StartTime
+    FROM booking b
+    JOIN showtime st ON b.ShowTimeId = st.ShowTimeId
+    WHERE b.BookingId = ?
+    LIMIT 1
 ";
 $checkStmt = $conn->prepare($sqlCheck);
 $checkStmt->bind_param("i", $bookingId);
@@ -42,11 +48,14 @@ if ($hoursDiff <= 24) {
     exit;
 }
 
-// Delete booking (ticketing will cascade delete)
-$del = $conn->prepare("DELETE FROM booking WHERE BookingId = ?");
-$del->bind_param("i", $bookingId);
+$upd = $conn->prepare("
+    UPDATE booking
+    SET PaymentStatus = 'cancelled'
+    WHERE BookingId = ?
+");
+$upd->bind_param("i", $bookingId);
 
-if ($del->execute()) {
+if ($upd->execute()) {
     echo json_encode(["success" => true]);
 } else {
     echo json_encode(["success" => false, "message" => "Failed to cancel booking"]);

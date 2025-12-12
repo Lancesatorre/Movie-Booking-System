@@ -19,7 +19,7 @@ $autoExpireSql = "
     UPDATE movie
     SET Published = 0
     WHERE Published = 1
-      AND CURDATE() > DATE_ADD(ReleaseDate, INTERVAL ShowingDays DAY)
+      AND CURDATE() > DATE_ADD(ReleaseDate, INTERVAL (ShowingDays - 1) DAY)
 ";
 $conn->query($autoExpireSql);
 
@@ -32,10 +32,9 @@ $isAdmin = isset($_GET["admin"]) && (int)$_GET["admin"] === 1;
 
 $whereClause = "";
 if (!$isAdmin) {
-    // booking-safe filter
     $whereClause = "
         WHERE m.Published = 1
-          AND CURDATE() <= DATE_ADD(m.ReleaseDate, INTERVAL m.ShowingDays DAY)
+          AND CURDATE() <= DATE_ADD(m.ReleaseDate, INTERVAL (m.ShowingDays - 1) DAY)
     ";
 }
 

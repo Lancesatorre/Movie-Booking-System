@@ -37,6 +37,8 @@ export default function MovieManagement() {
   const [loadingTheaters, setLoadingTheaters] = useState(true);
   const [loadingScreens, setLoadingScreens] = useState(true);
   const [error, setError] = useState("");
+  const [conflictPopup, setConflictPopup] = useState(null);
+
   
   // Field-specific error states for Add Modal
   const [addErrors, setAddErrors] = useState({
@@ -108,6 +110,10 @@ export default function MovieManagement() {
     x.setHours(0, 0, 0, 0);
     return x;
   };
+
+  // NEW: title normalizer (for duplicate checks)
+  const normalizeTitle = (t = '') =>
+    String(t).trim().toLowerCase().replace(/\s+/g, ' ');
 
   const getEndDate = (movie) => {
     const start = startOfDay(parseDate(movie.dateRelease));
@@ -205,6 +211,7 @@ export default function MovieManagement() {
   // Refs for calendar inputs (native)
   const addDateRef = useRef(null);
   const editDateRef = useRef(null);
+  const addPosterInputRef = useRef(null);
 
   // ---------------------------
   // Fetch Movies
@@ -306,6 +313,23 @@ export default function MovieManagement() {
     // Title validation
     if (!newMovie.title.trim()) {
       errors.title = 'Title is required';
+      isValid = false;
+    }
+
+    // Duplicate showing validation (same title cannot be added until previous expires)
+    const newTitle = normalizeTitle(newMovie.title);
+
+    const existingActive = movies.find(m => {
+      const sameTitle = normalizeTitle(m.title) === newTitle;
+      if (!sameTitle) return false;
+
+      // not expired yet = endDate >= today
+      return !isExpiredByShowingDays(m);
+    });
+
+    if (existingActive) {
+      const endDate = getEndDate(existingActive);
+      errors.title = `This movie is already in your catalog and still active. It must expire first (ends on ${endDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}) before you can add it again.`;
       isValid = false;
     }
 
@@ -769,7 +793,18 @@ export default function MovieManagement() {
       const data = await res.json();
 
       if (!data.success) {
-        alert(data.message || "Failed to add movie.");
+        // 1) If it's a schedule conflict, show your custom popup
+        if (data.code === "SCHEDULE_CONFLICT" && data.conflict) {
+          setConflictPopup(data.conflict);
+        } else {
+          alert(data.message || "Failed to add movie.");
+        }
+
+        // 2) IMPORTANT: reset poster selection to avoid ERR_UPLOAD_FILE_CHANGED
+        if (addPosterInputRef.current) addPosterInputRef.current.value = "";
+        setNewMovie(prev => ({ ...prev, posterFile: null, image: "" }));
+        setAddImagePreview("");
+
         return;
       }
 
@@ -961,6 +996,21 @@ export default function MovieManagement() {
     const d = parseDate(iso);
     if (Number.isNaN(d.getTime())) return iso;
     return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  };
+
+  const formatTimePretty = (timeStr = "") => {
+    // expects "HH:MM:SS" or "HH:MM"
+    const [h = "0", m = "0"] = timeStr.split(":");
+    let hour = parseInt(h, 10);
+    const minute = parseInt(m, 10);
+
+    const ampm = hour >= 12 ? "pm" : "am";
+    hour = hour % 12;
+    if (hour === 0) hour = 12;
+
+    // show minutes only if not 00 (so "10:00" not "10:00pm"? you want "10:00")
+    const mins = minute.toString().padStart(2, "0");
+    return `${hour}:${mins}${ampm}`;
   };
 
   // Input change handlers with error clearing
@@ -1257,7 +1307,13 @@ export default function MovieManagement() {
                   <span className="text-gray-400 text-sm">
                     {addImagePreview ? 'Change image' : 'Upload image'}
                   </span>
-                  <input type="file" accept="image/*" onChange={onAddImageChange} className="hidden" />
+                    <input
+                      ref={addPosterInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={onAddImageChange}
+                      className="hidden"
+                    />
                 </label>
                 {addErrors.image && (
                   <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
@@ -1826,7 +1882,14 @@ export default function MovieManagement() {
                   <span className="text-gray-400 text-sm">
                     {editImagePreview ? 'Change image' : 'Upload image'}
                   </span>
-                  <input type="file" accept="image/*" onChange={onEditImageChange} className="hidden" />
+                  <input
+                    ref={addPosterInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={onAddImageChange}
+                    className="hidden"
+                  />
+
                 </label>
                 {editErrors.image && (
                   <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
@@ -2170,6 +2233,39 @@ export default function MovieManagement() {
         confirmText="Delete"
         cancelText="Cancel"
       />
+
+      {conflictPopup && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[999] p-4 animate-fade-in">
+          <div className="bg-gradient-to-br from-gray-500/20 to-black/20 backdrop-blur-md border border-red-900/30 rounded-3xl p-6 max-w-md w-full shadow-2xl shadow-red-500/20 animate-scale-in">
+            <div className="text-2xl font-black text-red-300">
+              {conflictPopup.title}
+            </div>
+
+            <div className="mt-2 text-gray-200 font-semibold">
+              {conflictPopup.subtitle}
+            </div>
+
+            <div className="mt-4 p-4 bg-black/50 rounded-2xl border border-gray-800/60 space-y-2">
+              <div className="text-white font-bold">
+                {conflictPopup.movie}{" "}
+                <span className="text-gray-400">({conflictPopup.screen})</span>
+              </div>
+
+              <div className="text-gray-300">{conflictPopup.theater}</div>
+
+              <div className="text-gray-300">
+                {conflictPopup.date} • { conflictPopup.time ?.split(" - ") ?.map(formatTimePretty) ?.join(" to ") }
+              </div>
+            </div>
+            <button
+              onClick={() => setConflictPopup(null)}
+              className="mt-5 w-full px-5 py-3 rounded-xl font-bold bg-gradient-to-r from-red-600 to-pink-600 text-white hover:scale-[1.01] transition"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes slide-up {
