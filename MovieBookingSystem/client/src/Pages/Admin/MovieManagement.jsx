@@ -99,16 +99,26 @@ export default function MovieManagement() {
       glow: 'shadow-red-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-red-500/50 text-red-300 border-red-500/40 shadow-red-500/60 shadow-lg animate-pulse-slow0'},
     { value: 'coming-soon', label: 'Coming Soon',  color: 'bg-emerald-500/20 text-emerald-100 border-emerald-500/40', 
       glow: 'shadow-emerald-500/6px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-md bg-emerald-500/50 text-emerald-300 border-emerald-500/40 shadow-emerald-500/60 shadow-lg animate-pulse-slow0'},
-    { value: 'expired', label: 'Expired', color: 'bg-gray-600/20 text-gray-400 border-gray-600/40', glow: 'shadow-gray-600/30' },
+    { value: 'expired', label: 'Expired', color: 'bg-gray-600/40 text-gray-200 border-gray-600/40', glow: 'shadow-gray-600/30' },
     { value: 'not-published', label: 'Not Published', color: 'bg-orange-500/20 text-orange-300 border-orange-500/40', glow: 'shadow-orange-500/30' }
   ];
 
   // ===== Date helpers =====
-  const parseDate = (dateString) => new Date(dateString);
+  const parseDate = (dateString) => {
+    const d = new Date(dateString);
+    return isNaN(d.getTime()) ? new Date() : d;
+  };
+  
   const startOfDay = (d) => {
     const x = new Date(d);
     x.setHours(0, 0, 0, 0);
     return x;
+  };
+
+  const getStartOfDay = (dateInput) => {
+    const d = new Date(dateInput);
+    d.setHours(0, 0, 0, 0);
+    return d;
   };
 
   // NEW: title normalizer (for duplicate checks)
@@ -116,15 +126,30 @@ export default function MovieManagement() {
     String(t).trim().toLowerCase().replace(/\s+/g, ' ');
 
   const getEndDate = (movie) => {
-    const start = startOfDay(parseDate(movie.dateRelease));
-    const days = Number(movie.showingDays || 0);
-    if (!days || days < 1) return start;
+    // 1. Get the release date at 00:00:00
+    const start = getStartOfDay(movie.dateRelease);
+    
+    // 2. Ensure showingDays is a number (handle string inputs like "7")
+    const days = parseInt(movie.showingDays || 1, 10);
+    
+    // 3. Calculate last day. 
+    // If released Oct 1 for 1 day, it ends Oct 1. So add (Days - 1).
+    const daysToAdd = days > 0 ? days - 1 : 0;
+    
     const end = new Date(start);
-    end.setDate(end.getDate() + days - 1);
+    end.setDate(start.getDate() + daysToAdd);
+    
+    // 4. IMPORTANT: The movie is valid UNTIL the very end of that day.
+    end.setHours(23, 59, 59, 999); 
+    
     return end;
   };
 
-  const isFutureDate = (dateString) => startOfDay(parseDate(dateString)) > startOfDay(new Date());
+  const isFutureDate = (dateString) => {
+    const today = getStartOfDay(new Date());
+    const release = getStartOfDay(dateString);
+    return release > today;
+  };
 
     const formatTime12Hour = (time24) => {
       if (!time24) return '';
@@ -146,16 +171,25 @@ export default function MovieManagement() {
     };
 
   const isExpiredByShowingDays = (movie) => {
-    const today = startOfDay(new Date());
-    const end = startOfDay(getEndDate(movie));
-    return today > end;
+    const now = new Date(); // Current real-time
+    const endDate = getEndDate(movie); // The very last second the movie is valid
+    return now > endDate;
   };
 
   const getMovieStatus = (movie) => {
-    if (!movie.published) return 'not-published';
-    if (isFutureDate(movie.dateRelease)) return 'coming-soon';
+    // Priority 1: Check Expiration FIRST.
+    // If the dates are past, it's Expired regardless of whether it's published or not.
     if (isExpiredByShowingDays(movie)) return 'expired';
-    return 'now-showing';
+
+    // Priority 2: Check if Draft/Unpublished.
+    // If it's valid/future dates but hidden, show Not Published.
+    if (!movie.published) return 'not-published'; 
+    
+    // Priority 3: Future releases
+    if (isFutureDate(movie.dateRelease)) return 'coming-soon'; 
+    
+    // Priority 4: Active
+    return 'now-showing'; 
   };
 
   const getStatusBadge = (status) => statuses.find(s => s.value === status) || statuses[0];
@@ -1155,6 +1189,14 @@ export default function MovieManagement() {
           const statusBadge = getStatusBadge(movieStatus);
           const endDate = getEndDate(movie);
 
+          const calculatedEnd = getEndDate(movie);
+    console.log(`Movie: ${movie.title}`, {
+        release: movie.dateRelease,
+        days: movie.showingDays,
+        calcEnd: calculatedEnd.toLocaleString(),
+        isExpired: isExpiredByShowingDays(movie),
+        status: getMovieStatus(movie)
+    });
           return (
             <div
               key={movie.id}
@@ -1173,14 +1215,19 @@ export default function MovieManagement() {
 
                 {!isPublished && (
                   <div className="absolute top-4 right-4 flex gap-2 animate-slide-left">
-                    <button
-                      onClick={() => openEditModal(movie)}
-                      className="cursor-pointer p-3 rounded-xl transition-all duration-300 hover:scale-110 backdrop-blur-md border-2 bg-gradient-to-br from-blue-600/90 to-cyan-600/90 hover:from-blue-500 hover:to-cyan-500 border-blue-500/50 shadow-lg shadow-blue-500/50"
-                      title="Edit Movie"
-                    >
-                      <Edit2 size={18} className="text-white" />
-                    </button>
+                    
+                    {/* EDIT BUTTON: Only show if NOT expired */}
+                    {movieStatus !== 'expired' && (
+                      <button
+                        onClick={() => openEditModal(movie)}
+                        className="cursor-pointer p-3 rounded-xl transition-all duration-300 hover:scale-110 backdrop-blur-md border-2 bg-gradient-to-br from-blue-600/90 to-cyan-600/90 hover:from-blue-500 hover:to-cyan-500 border-blue-500/50 shadow-lg shadow-blue-500/50"
+                        title="Edit Movie"
+                      >
+                        <Edit2 size={18} className="text-white" />
+                      </button>
+                    )}
 
+                    {/* DELETE BUTTON: Always show (if wrapper condition is met) */}
                     <button
                       onClick={() => handleDeleteClick(movie)}
                       className="cursor-pointer p-3 rounded-xl transition-all duration-300 hover:scale-110 backdrop-blur-md border-2 bg-gradient-to-br from-red-600/90 to-pink-600/90 hover:from-red-500 hover:to-pink-500 border-red-500/50 shadow-lg shadow-red-500/50"
@@ -1908,11 +1955,12 @@ export default function MovieManagement() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-gray-300 text-sm font-bold mb-3">
-                    Title <span className="text-red-400">*</span>
+                    Title <span className="text-red-400"></span>
                   </label>
                   <input
                     type="text"
                     value={formData.title}
+                    disabled={true}
                     onChange={(e) => handleEditInputChange('title', e.target.value)}
                     className={`w-full bg-black/60 border-2 ${editErrors.title ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80`}
                     placeholder="Movie title"
@@ -2011,11 +2059,12 @@ export default function MovieManagement() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-gray-300 text-sm font-bold mb-3">
-                    Price (₱) <span className="text-red-400">*</span>
+                    Price (₱) <span className="text-red-400"></span>
                   </label>
                   <input
                     type="number"
                     value={formData.price}
+                    disabled={true}
                     onChange={(e) => handleEditInputChange('price', e.target.value)}
                     className={`w-full bg-black/60 border-2 ${editErrors.price ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80`}
                     placeholder="350"
@@ -2029,11 +2078,12 @@ export default function MovieManagement() {
 
                 <div>
                   <label className="block text-gray-300 text-sm font-bold mb-3">
-                    Duration <span className="text-red-400">*</span>
+                    Duration <span className="text-red-400"></span>
                   </label>
                   <input
                     type="text"
                     value={formData.duration}
+                    disabled={true}
                     onChange={(e) => handleEditInputChange('duration', e.target.value)}
                     className={`w-full bg-black/60 border-2 ${editErrors.duration ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80`}
                     placeholder="120 min"
@@ -2064,10 +2114,11 @@ export default function MovieManagement() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-gray-300 text-sm font-bold mb-3">
-                    Rating <span className="text-red-400">*</span>
+                    Rating <span className="text-red-400"></span>
                   </label>
                   <select
                     value={formData.rating}
+                    disabled={true}
                     onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
                     className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white focus:outline-none transition-all duration-300 hover:bg-black/80 cursor-pointer"
                   >
@@ -2079,11 +2130,12 @@ export default function MovieManagement() {
 
                 <div>
                   <label className="block text-gray-300 text-sm font-bold mb-3">
-                    Location <span className="text-red-400">*</span>
+                    Location <span className="text-red-400"></span>
                   </label>
                   <input
                     type="text"
                     value={formData.location}
+                    disabled={true}
                     onChange={(e) => handleEditInputChange('location', e.target.value)}
                     className={`w-full bg-black/60 border-2 ${editErrors.location ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80`}
                     placeholder="e.g., SM City Cebu"
@@ -2119,7 +2171,7 @@ export default function MovieManagement() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-gray-300 text-sm font-bold mb-3">
-                    Release Date <span className="text-red-400">*</span>
+                    Release Date <span className="text-red-400"></span>
                   </label>
 
                   <div
@@ -2132,6 +2184,7 @@ export default function MovieManagement() {
                     />
                     <input
                       ref={editDateRef}
+                      disabled={true}
                       type="date"
                       value={formData.dateRelease}
                       onChange={(e) => handleEditInputChange('dateRelease', e.target.value)}
@@ -2147,11 +2200,12 @@ export default function MovieManagement() {
 
                 <div>
                   <label className="block text-gray-300 text-sm font-bold mb-3">
-                    Showing Days <span className="text-red-400">*</span>
+                    Showing Days <span className="text-red-400"></span>
                   </label>
                   <input
                     type="number"
                     min="1"
+                    disabled={true}
                     value={formData.showingDays}
                     onChange={(e) => handleEditInputChange('showingDays', e.target.value)}
                     className={`w-full bg-black/60 border-2 ${editErrors.showingDays ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white focus:outline-none transition-all duration-300 hover:bg-black/80`}
