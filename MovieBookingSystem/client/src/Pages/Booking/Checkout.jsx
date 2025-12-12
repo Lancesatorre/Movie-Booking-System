@@ -402,7 +402,8 @@ const Checkout = () => {
       }
 
       // 1. Get bookingId from backend (or fallback)
-      const bookingId = json.bookingId || json.booking_id || generateBookingId();
+      const rawId = json.bookingId || json.booking_id || generateBookingId();
+      const bookingId = `MBK202400${rawId}`;
       const totalFromBackend = json.totalAmount ?? totalAmount;
 
       // 2. Build human-readable date like "Dec 15, 2025"
