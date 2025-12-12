@@ -220,7 +220,7 @@ const MyTickets = () => {
         bookingId:
           ticket.bookingReference ||
           ticket.bookingId ||
-          `TKT${ticket.id.toString().padStart(6, "0")}`,
+          `MBK${new Date().getFullYear()}${ticket.id.toString().padStart(3, "0")}`,
         mall: ticket.theaterLocation || ticket.theatherLocation || "",
         screen: `Screen ${ticket.screenNumber}`,
         date,
