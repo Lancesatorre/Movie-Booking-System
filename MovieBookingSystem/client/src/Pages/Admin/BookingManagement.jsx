@@ -117,8 +117,8 @@ export default function BookingManagement() {
 
   const stats = [
     { label: 'Total Bookings', value: totalBookings, color: 'from-red-600 via-red-500 to-pink-600', icon: Calendar, glow: 'shadow-red-500/50' },
-    // { label: 'Confirmed', value: confirmedBookings, color: 'from-emerald-600 via-green-500 to-teal-600', icon: CheckCircle, glow: 'shadow-emerald-500/50' },
-    // { label: 'Cancelled', value: cancelledBookings, color: 'from-orange-600 via-amber-500 to-yellow-600', icon: XCircle, glow: 'shadow-orange-500/50' },
+    { label: 'Confirmed', value: confirmedBookings, color: 'from-emerald-600 via-green-500 to-teal-600', icon: CheckCircle, glow: 'shadow-emerald-500/50' },
+    { label: 'Cancelled', value: cancelledBookings, color: 'from-orange-600 via-amber-500 to-yellow-600', icon: XCircle, glow: 'shadow-orange-500/50' },
     { label: 'Revenue', value: `₱ ${totalRevenue.toLocaleString()}`, color: 'from-blue-600 via-cyan-500 to-sky-600', icon: Film, glow: 'shadow-blue-500/50' },
   ];
 
@@ -137,7 +137,7 @@ export default function BookingManagement() {
       </div>
 
       {/* Stats Cards - Responsive grid */}
-      <div className="grid text-left grid-cols-2 sm:grid-cols-2  gap-3 sm:gap-4 md:gap-5 lg:gap-6 mb-6 sm:mb-8 md:mb-10">
+      <div className="grid text-left grid-cols-2 sm:grid-cols-2 lg:grid-cols-4  gap-3 sm:gap-4 md:gap-5 lg:gap-6 mb-6 sm:mb-8 md:mb-10">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
