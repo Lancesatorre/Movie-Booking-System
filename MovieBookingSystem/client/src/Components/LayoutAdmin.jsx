@@ -1,21 +1,21 @@
-import React from "react";
-import { Outlet } from "react-router-dom";
-import Navbar from "./Navbar";
+import React from 'react';
+import { Link, Outlet } from 'react-router-dom';
+import Sidebar from './Sidebar';
 
-export default function Layout() {
-  const storedUser =
-    localStorage.getItem("user") || localStorage.getItem("mobook_user");
-
-  const isLoggedIn = !!storedUser;
+export default function LayoutAdmin() {
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
 
   return (
-    <div className="min-h-screen relative bg-gradient-to-br from-black via-[#1a0000] to-red-900 overflow-hidden">
-      <div className="absolute inset-0 bg-red-900/10 blur-3xl z-0"></div>
-      <div className="absolute inset-0 bg-black/60 z-0"></div>
-      <div className="absolute top-20 left-20 w-32 h-32 bg-red-500/5 rounded-full blur-2xl"></div>
-      <div className="absolute bottom-32 right-32 w-40 h-40 bg-purple-500/5 rounded-full blur-2xl"></div>
+ <div className="min-h-screen relative bg-gradient-to-br from-black via-[#1d1a1a] to-red-900 overflow-hidden">
+      {/* Optional soft red glow overlay */}
+     <div className="absolute inset-0 bg-red-900/10 blur-3xl z-0"></div>
+        <div className="absolute inset-0 bg-black/60 z-0"></div>
+        
+        {/* Optional: Add some cinematic elements */}
+        <div className="absolute top-20 left-20 w-32 h-32 bg-red-500/5 rounded-full blur-2xl"></div>
+        <div className="absolute bottom-32 right-32 w-40 h-40 bg-purple-500/5 rounded-full blur-2xl"></div>
 
-       <div className="absolute inset-0 z-[2]">
+         <div className="absolute inset-0 z-1">
           {[...Array(50)].map((_, i) => (
             <div
               key={i}
@@ -41,29 +41,16 @@ export default function Layout() {
               }}
             />
           ))}
-
-            {[...Array(40)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-0.5 h-2 bg-red-600 rounded-full animate-float"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 5}s`,
-                animationDuration: `${10 + Math.random() * 20}s`
-              }}
-            />
-          ))}
         </div>
 
       <div className="relative z-10">
-        {isLoggedIn && <Navbar />}
-        <main className="pt-17">
+        <Sidebar onToggle={setIsSidebarOpen} />
+        <main className={`transition-all duration-300 ${isSidebarOpen ? 'ml-0 lg:ml-[280px]' : 'ml-0 lg:ml-20'}`}>
           <Outlet />
         </main>
       </div>
 
-       <style>{`
+      <style>{`
         @keyframes fadeInUp {
           from {
             opacity: 0;
@@ -170,7 +157,5 @@ export default function Layout() {
         }
       `}</style>
     </div>
-
-    
   );
 }

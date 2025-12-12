@@ -1,8 +1,7 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
-import Navbar from "./Navbar";
 
-export default function Layout() {
+export default function Movies() {
   const storedUser =
     localStorage.getItem("user") || localStorage.getItem("mobook_user");
 
@@ -57,8 +56,7 @@ export default function Layout() {
         </div>
 
       <div className="relative z-10">
-        {isLoggedIn && <Navbar />}
-        <main className="pt-17">
+        <main className="">
           <Outlet />
         </main>
       </div>
