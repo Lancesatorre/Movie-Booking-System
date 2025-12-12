@@ -104,6 +104,8 @@ const MyTickets = () => {
               movieTitle: t.movieTitle || t.title || "",
               movieImage: t.movieImage || t.image || "",
               movieRating: t.movieRating || t.rating || "",
+              movieDurationMinutes: t.movieDurationMinutes ?? null,
+              movieGenre: t.movieGenre ?? "",
               screenNumber:
                 t.screenNumber || t.screen || t.ScreenNumber || 1,
               totalPrice:
@@ -212,9 +214,9 @@ const MyTickets = () => {
       movie: {
         title: ticket.movieTitle,
         image: ticket.movieImage,
-        duration: "N/A", // add to API later if you want
+        duration: ticket.movieDurationMinutes ? `${ticket.movieDurationMinutes}m` : "N/A",
         rating: ticket.movieRating,
-        genre: "N/A",
+        genre: ticket.movieGenre || "N/A",
       },
       booking: {
         bookingId:
