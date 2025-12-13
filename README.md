@@ -52,11 +52,11 @@
 </p>
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/a3e003b7-d24b-4035-bf33-c639d0de8e9c" width="1300" alt="User Tickets" />
+  <img src="https://github.com/user-attachments/assets/74537132-47cc-47e0-ad03-475f8894a61c" width="1300" alt="User Tickets" />
 </p>
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/d0b06700-6e7a-4c3f-b07f-153142e2048d" width="1300" alt="Downloaded Ticket" />
+  <img src="https://github.com/user-attachments/assets/819cdefc-91c0-4638-ba7d-1cb93019ead8" width="1300" alt="Downloaded Ticket" />
 </p>
 
 <p align="center">
