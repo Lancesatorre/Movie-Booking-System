@@ -2021,6 +2021,7 @@ export default function MovieManagement() {
                   <input
                     type="text"
                     value={formData.title}
+                    disabled={true}
                     onChange={(e) => handleEditInputChange('title', e.target.value)}
                     className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white transition-all"
                   />
@@ -2123,6 +2124,7 @@ export default function MovieManagement() {
                   <input
                     type="number"
                     value={formData.price}
+                    disabled={true}
                     onChange={(e) => handleEditInputChange('price', e.target.value)}
                     className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white"
                   />
@@ -2140,6 +2142,7 @@ export default function MovieManagement() {
                   <input
                     type="text"
                     value={formData.duration}
+                    disabled={true}
                     onChange={(e) => handleEditInputChange('duration', e.target.value)}
                     className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white"
                   />
@@ -2173,6 +2176,7 @@ export default function MovieManagement() {
                   </label>
                   <select
                     value={formData.rating}
+                    disabled={true}
                     onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
                     className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white"
                   >
@@ -2299,6 +2303,7 @@ export default function MovieManagement() {
                     <input
                       ref={editDateRef}
                       type="date"
+                      disabled={true}
                       value={formData.dateRelease}
                       onChange={(e) => handleEditInputChange('dateRelease', e.target.value)}
                       className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl pl-11 pr-4 py-3 text-white"
@@ -2318,6 +2323,7 @@ export default function MovieManagement() {
                   <input
                     type="number"
                     min="1"
+                    disabled={true}
                     value={formData.showingDays}
                     onChange={(e) => handleEditInputChange('showingDays', e.target.value)}
                     className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white"

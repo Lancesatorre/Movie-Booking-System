@@ -630,6 +630,12 @@ const Checkout = () => {
     if (step > 1) setStep(step - 1);
   };
 
+  useEffect(() => {
+    if (bookingCompleted) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [bookingCompleted]);
+  
   // Generate booking ID
   const generateBookingId = () => {
     const timestamp = Date.now().toString().slice(-6);
@@ -672,6 +678,7 @@ const Checkout = () => {
         return;
       }
 
+      await new Promise(resolve => setTimeout(resolve, 2000));
       // 1. Get bookingId from backend (or fallback)
       const rawId = json.bookingId || json.booking_id || generateBookingId();
       const bookingId = `MBK202500${rawId}`;
