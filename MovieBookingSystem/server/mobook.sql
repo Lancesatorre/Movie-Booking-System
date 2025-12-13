@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 12, 2025 at 06:38 AM
+-- Generation Time: Dec 13, 2025 at 02:38 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -142,6 +142,14 @@ CREATE TABLE `movie` (
   `UpdatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `movie`
+--
+
+INSERT INTO `movie` (`MovieId`, `Title`, `DurationMinutes`, `RatingCode`, `PosterPath`, `TrailerUrl`, `Description`, `ReleaseDate`, `ShowingDays`, `Published`, `BasePrice`, `CreatedAt`, `UpdatedAt`) VALUES
+(1, 'War of the Worlds', 116, 'PG-13', '/assets/Movies/war-of-the-worlds.jpg', 'https://www.youtube.com/watch?v=mDHgHTho7gs', 'As unstoppable alien forces invade Earth, a father fights desperately to protect his children. Chaos, survival, and humanity’s will to live collide in this intense reimagining of H.G. Wells’ classic tale.', '2025-12-08', 2, 0, 300.00, '2025-12-13 13:26:33', '2025-12-13 13:34:08'),
+(2, 'Muzzle: City of Wolves', 93, 'R', '/assets/Movies/city-of-wolves.jpg', 'https://www.youtube.com/watch?v=byxLYzDRGYs.', 'LAPD officer Jake Rosser endeavors to lead a peaceful life with his family and retired K-9 officer, Socks. However, tranquility dissolves into chaos when a gang targets them in a brutal attack. Alongside his new K-9 partner Argos, Jake launches into a relentless pursuit of justice, determined to protect his loved ones.', '2025-12-08', 2, 0, 350.00, '2025-12-13 13:29:32', '2025-12-13 13:34:12');
+
 -- --------------------------------------------------------
 
 --
@@ -152,6 +160,21 @@ CREATE TABLE `movie_genre` (
   `MovieId` int(11) NOT NULL,
   `GenreId` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `movie_genre`
+--
+
+INSERT INTO `movie_genre` (`MovieId`, `GenreId`) VALUES
+(1, 1),
+(1, 14),
+(1, 15),
+(2, 1),
+(2, 5),
+(2, 7),
+(2, 10),
+(2, 12),
+(2, 15);
 
 -- --------------------------------------------------------
 
@@ -165,6 +188,16 @@ CREATE TABLE `movie_theater` (
   `TheaterId` int(11) NOT NULL,
   `CreatedAt` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `movie_theater`
+--
+
+INSERT INTO `movie_theater` (`MovieTheaterId`, `MovieId`, `TheaterId`, `CreatedAt`) VALUES
+(1, 1, 2, '2025-12-13 13:26:33'),
+(2, 1, 5, '2025-12-13 13:26:33'),
+(3, 2, 4, '2025-12-13 13:29:32'),
+(4, 2, 3, '2025-12-13 13:29:32');
 
 -- --------------------------------------------------------
 
@@ -1966,6 +1999,32 @@ CREATE TABLE `showtime` (
   `Status` enum('active','expired') NOT NULL DEFAULT 'active'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `showtime`
+--
+
+INSERT INTO `showtime` (`ShowTimeId`, `MovieId`, `ScreenId`, `ShowDate`, `StartTime`, `EndTime`, `Status`) VALUES
+(1, 1, 4, '2025-12-09', '11:00:00', '12:56:00', 'expired'),
+(2, 1, 4, '2025-12-09', '11:00:00', '12:56:00', 'expired'),
+(3, 1, 5, '2025-12-09', '11:00:00', '12:56:00', 'expired'),
+(4, 1, 5, '2025-12-09', '11:00:00', '12:56:00', 'expired'),
+(5, 1, 6, '2025-12-09', '11:00:00', '12:56:00', 'expired'),
+(6, 1, 6, '2025-12-09', '11:00:00', '12:56:00', 'expired'),
+(7, 1, 13, '2025-12-09', '11:00:00', '12:56:00', 'expired'),
+(8, 1, 13, '2025-12-09', '11:00:00', '12:56:00', 'expired'),
+(9, 1, 14, '2025-12-09', '11:00:00', '12:56:00', 'expired'),
+(10, 1, 14, '2025-12-09', '11:00:00', '12:56:00', 'expired'),
+(11, 1, 15, '2025-12-09', '11:00:00', '12:56:00', 'expired'),
+(12, 1, 15, '2025-12-09', '11:00:00', '12:56:00', 'expired'),
+(13, 2, 10, '2025-12-09', '13:30:00', '15:03:00', 'expired'),
+(14, 2, 10, '2025-12-09', '13:30:00', '15:03:00', 'expired'),
+(15, 2, 11, '2025-12-09', '13:30:00', '15:03:00', 'expired'),
+(16, 2, 11, '2025-12-09', '13:30:00', '15:03:00', 'expired'),
+(17, 2, 7, '2025-12-09', '13:30:00', '15:03:00', 'expired'),
+(18, 2, 7, '2025-12-09', '13:30:00', '15:03:00', 'expired'),
+(19, 2, 8, '2025-12-09', '13:30:00', '15:03:00', 'expired'),
+(20, 2, 8, '2025-12-09', '13:30:00', '15:03:00', 'expired');
+
 -- --------------------------------------------------------
 
 --
@@ -2124,13 +2183,13 @@ ALTER TABLE `genre`
 -- AUTO_INCREMENT for table `movie`
 --
 ALTER TABLE `movie`
-  MODIFY `MovieId` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `MovieId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `movie_theater`
 --
 ALTER TABLE `movie_theater`
-  MODIFY `MovieTheaterId` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `MovieTheaterId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `screen`
@@ -2148,7 +2207,7 @@ ALTER TABLE `seat`
 -- AUTO_INCREMENT for table `showtime`
 --
 ALTER TABLE `showtime`
-  MODIFY `ShowTimeId` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `ShowTimeId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `theater`
