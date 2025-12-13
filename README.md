@@ -4,11 +4,11 @@
 ### 👤 User Interface
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/72d6599b-6211-4487-94a0-75fa71366873" width="900" alt="Login Page" />
+  <img src="https://github.com/user-attachments/assets/34023877-08c9-46b4-b589-02f800fef02b" width="1300" alt="Signup Page" />
 </p>
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/34023877-08c9-46b4-b589-02f800fef02b" width="900" alt="Signup Page" />
+  <img src="https://github.com/user-attachments/assets/72d6599b-6211-4487-94a0-75fa71366873" width="1300" alt="Login Page" />
 </p>
 
 <p align="center">
