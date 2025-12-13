@@ -46,15 +46,17 @@ if (!$customerId || $customerId <= 0) {
 $sql = "
     SELECT 
         b.BookingId,
-        m.Title AS movieTitle,
-        m.PosterPath AS movieImage,
-        m.RatingCode AS movieRating,
+        m.Title         AS movieTitle,
+        m.PosterPath    AS movieImage,
+        m.RatingCode    AS movieRating,
+        m.DurationMinutes AS movieDurationMinutes,
+        GROUP_CONCAT(DISTINCT g.Name ORDER BY g.Name SEPARATOR ', ') AS movieGenre,
         CONCAT(st.ShowDate, 'T', st.StartTime) AS showDateTime,
         sc.ScreenNumber AS screenNumber,
-        th.Name AS theaterName,
-        th.Location AS theaterLocation,
-        GROUP_CONCAT(se.Seatnumber ORDER BY se.Seatnumber SEPARATOR ',') AS seats,
-        b.TotalAmount AS totalPrice,
+        th.Name         AS theaterName,
+        th.Location     AS theaterLocation,
+        GROUP_CONCAT(DISTINCT se.Seatnumber ORDER BY se.Seatnumber SEPARATOR ',') AS seats,
+        b.TotalAmount   AS totalPrice,
         b.PaymentMethod AS paymentMethod,
 
         CASE
@@ -71,7 +73,10 @@ $sql = "
     INNER JOIN theater th ON sc.TheaterId = th.TheaterId
     LEFT JOIN ticketing t ON b.BookingId = t.BookingId
     LEFT JOIN seat se ON t.SeatId = se.SeatId
+    LEFT JOIN movie_genre mg ON m.MovieId = mg.MovieId
+    LEFT JOIN genre g ON mg.GenreId = g.GenreId
     WHERE b.CustomerId = ?
+    AND b.PaymentStatus <> 'cancelled'
     GROUP BY b.BookingId
     ORDER BY st.ShowDate ASC, st.StartTime ASC
 ";
@@ -92,18 +97,19 @@ while ($row = $result->fetch_assoc()) {
     }
 
     $tickets[] = [
-        "id"               => (int)$row["BookingId"],
-        "movieTitle"       => $row["movieTitle"],
-        "movieImage"       => $row["movieImage"],
-        "movieRating"      => $row["movieRating"],
-        "showDateTime"     => $row["showDateTime"],
-        "screenNumber"     => (int)$row["screenNumber"],
-        // keep key name consistent with existing frontend (typo included)
-        "theatherLocation" => $row["theaterName"] . ", " . $row["theaterLocation"],
-        "seats"            => $seatArray,
-        "totalPrice"       => (float)$row["totalPrice"],
-        "paymentMethod"    => $row["paymentMethod"], // 👈 NEW
-        "isExpired"        => (int)$row["isExpired"]
+        "id"                    => (int)$row["BookingId"],
+        "movieTitle"            => $row["movieTitle"],
+        "movieImage"            => $row["movieImage"],
+        "movieRating"           => $row["movieRating"],
+        "movieDurationMinutes"  => (int)$row["movieDurationMinutes"],
+        "movieGenre"            => $row["movieGenre"] ?: "", 
+        "showDateTime"          => $row["showDateTime"],
+        "screenNumber"          => (int)$row["screenNumber"],
+        "theatherLocation"      => $row["theaterName"] . ", " . $row["theaterLocation"],
+        "seats"                 => $seatArray,
+        "totalPrice"            => (float)$row["totalPrice"],
+        "paymentMethod"         => $row["paymentMethod"],
+        "isExpired"             => (int)$row["isExpired"]
     ];
 }
 

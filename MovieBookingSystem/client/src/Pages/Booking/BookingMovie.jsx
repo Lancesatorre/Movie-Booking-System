@@ -12,6 +12,8 @@ const BookingMovie = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const carouselRef = useRef(null);
   const autoRotateRef = useRef(null);
+  const lastMoviesHashRef = useRef("");
+  const isFirstLoadRef = useRef(true);
 
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -82,40 +84,70 @@ const BookingMovie = () => {
 
   // Fetch movies from backend
   useEffect(() => {
-    const fetchMovies = async () => {
-      try {
-        const res = await fetch('http://localhost/mobook_api/get_movies.php');
-        const data = await res.json();
+    fetchMovies(); 
 
-        if (data.success) {
-          const rawMovies = data.movies || [];
+    const interval = setInterval(fetchMovies, 5000);
+    const onFocus = () => fetchMovies();
+    window.addEventListener("focus", onFocus);
 
-          const normalized = rawMovies.map(m => ({
-            ...m,
-            genre: normalizeGenres(m),
-            duration: normalizeDuration(m),
-            price: normalizePrice(m),
-            status: getMovieStatus(m) // Add status to each movie
-          }));
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
 
-          // ✅ only show published movies
-          const visibleMovies = normalized.filter(m => Number(m.published) === 1);
+  const fetchMovies = async () => {
+    try {
+      const res = await fetch('http://localhost/mobook_api/get_movies.php');
+      const data = await res.json();
+
+      if (data.success) {
+        const rawMovies = data.movies || [];
+
+        const normalized = rawMovies.map(m => ({
+          ...m,
+          genre: normalizeGenres(m),
+          duration: normalizeDuration(m),
+          price: normalizePrice(m),
+          status: getMovieStatus(m)
+        }));
+
+        const visibleMovies = normalized
+          .filter(m => Number(m.published) === 1)
+          .sort((a, b) => Number(a.id) - Number(b.id)); // keep stable order
+
+        const newHash = JSON.stringify(visibleMovies.map(m => ({
+          id: m.id,
+          published: m.published,
+          dateRelease: m.dateRelease || m.releaseDateRaw || m.releaseDate,
+          title: m.title,
+          image: m.image,
+          trailer: m.trailer,
+        })));
+
+        if (newHash !== lastMoviesHashRef.current) {
+          lastMoviesHashRef.current = newHash;
 
           setMovies(visibleMovies);
-          setCurrentIndex(0);
-        } else {
-          setError('Failed to load movies.');
-        }
-      } catch (err) {
-        console.error('Error fetching movies:', err);
-        setError('Unable to connect to server.');
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    fetchMovies();
-  }, []);
+          setCurrentIndex(prev => {
+            if (visibleMovies.length === 0) return 0;
+            return prev >= visibleMovies.length ? 0 : prev;
+          });
+        }
+
+        setError(null);
+      } else {
+        setError('Failed to load movies.');
+      }
+    } catch (err) {
+      console.error('Error fetching movies:', err);
+      setError('Unable to connect to server.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const handleBookNow = () => {
     if (!movies.length) return;

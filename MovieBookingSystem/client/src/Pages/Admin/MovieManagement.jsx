@@ -238,6 +238,11 @@ export default function MovieManagement() {
   const locBoxRef = useRef(null);
   const screenBoxRef = useRef(null);
   const ratingBoxRef = useRef(null);
+  const addGenreBoxRef = useRef(null);
+  const editGenreBoxRef = useRef(null);
+  const [editLocOpen, setEditLocOpen] = useState(false);
+  const editLocBoxRef = useRef(null);
+
 
   // NEW: showtime input local state
   const [timeInput, setTimeInput] = useState('');
@@ -246,6 +251,9 @@ export default function MovieManagement() {
   const addDateRef = useRef(null);
   const editDateRef = useRef(null);
   const addPosterInputRef = useRef(null);
+  const editPosterInputRef = useRef(null);
+  const lastMoviesHashRef = useRef("");
+  const isModalOpen = showAddModal || showEditModal || showDeleteModal || !!conflictPopup;
 
   // ---------------------------
   // Fetch Movies
@@ -272,7 +280,14 @@ export default function MovieManagement() {
           trailer: m.trailer || "",
           image: m.image || ""
         }));
-        setMovies(normalized);
+
+        const stable = [...normalized].sort((a, b) => a.id - b.id);
+        const newHash = JSON.stringify(stable);
+
+        if (newHash !== lastMoviesHashRef.current) {
+          lastMoviesHashRef.current = newHash;
+          setMovies(stable);
+        }
       } else {
         setError(data.message || "Failed to load movies.");
         setMovies([]);
@@ -320,11 +335,32 @@ export default function MovieManagement() {
   };
 
   useEffect(() => {
-    setAnimateCards(true);
+  setAnimateCards(true);
+  fetchMovies();
+  fetchTheaters();
+  fetchScreens();
+
+  const intervalMs = 1000;
+
+  const id = setInterval(() => {
+    if (isSaving) return;
+    if (isModalOpen) return;
+
     fetchMovies();
-    fetchTheaters();
-    fetchScreens();
-  }, []);
+  }, intervalMs);
+
+  const onVisible = () => {
+    if (document.visibilityState === "visible") {
+      fetchMovies();
+    }
+  };
+  document.addEventListener("visibilitychange", onVisible);
+
+  return () => {
+    clearInterval(id);
+    document.removeEventListener("visibilitychange", onVisible);
+  };
+}, [isSaving, isModalOpen]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -332,10 +368,15 @@ export default function MovieManagement() {
       if (locBoxRef.current && !locBoxRef.current.contains(e.target)) setLocOpen(false);
       if (screenBoxRef.current && !screenBoxRef.current.contains(e.target)) setScreenOpen(false);
       if (ratingBoxRef.current && !ratingBoxRef.current.contains(e.target)) setRatingOpen(false);
+      if (addGenreBoxRef.current && !addGenreBoxRef.current.contains(e.target)) setShowGenreDropdown(false);
+      if (editGenreBoxRef.current && !editGenreBoxRef.current.contains(e.target)) setShowEditGenreDropdown(false);
+      if (editLocBoxRef.current && !editLocBoxRef.current.contains(e.target)) setEditLocOpen(false);
     };
+
     document.addEventListener('mousedown', onDocClick);
     return () => document.removeEventListener('mousedown', onDocClick);
   }, []);
+
 
   // ---------------------------
   // Validation functions
@@ -485,8 +526,8 @@ export default function MovieManagement() {
     }
 
     // Location validation
-    if (!formData.location) {
-      errors.location = 'Location is required';
+    if (!formData.location || formData.location.length === 0) {
+      errors.location = 'At least one location is required';
       isValid = false;
     }
 
@@ -559,8 +600,6 @@ export default function MovieManagement() {
   };
 
   const openEditModal = (movie) => {
-    if (movie.published) return;
-
     setSelectedMovie(movie);
 
     const data = {
@@ -575,7 +614,12 @@ export default function MovieManagement() {
       published: movie.published,
       duration: movie.duration,
       rating: movie.rating,
-      location: movie.location,
+      location: Array.isArray(movie.location)
+        ? movie.location
+        : String(movie.location || "")
+            .split(",")
+            .map(s => s.trim())
+            .filter(Boolean),
       dateRelease: movie.dateRelease,
       showingDays: (movie.showingDays !== undefined && movie.showingDays !== null) ? movie.showingDays : 7,
       description: movie.description || "",
@@ -930,6 +974,23 @@ export default function MovieManagement() {
     setNewMovie(prev => ({
       ...prev,
       location: prev.location.filter(x => x !== name)
+    }));
+  };
+
+  const toggleEditLocation = (name) => {
+    setFormData(prev => {
+      const locArr = Array.isArray(prev.location) ? prev.location : [];
+      const exists = locArr.includes(name);
+      const next = exists ? locArr.filter(x => x !== name) : [...locArr, name];
+      return { ...prev, location: next };
+    });
+    clearEditError('location');
+  };
+
+  const removeEditLocation = (name) => {
+    setFormData(prev => ({
+      ...prev,
+      location: (Array.isArray(prev.location) ? prev.location : []).filter(x => x !== name)
     }));
   };
 
@@ -1396,7 +1457,7 @@ export default function MovieManagement() {
                 </div>
 
                 {/* Genre multi-select tag-style */}
-                <div className="relative">
+                <div ref={addGenreBoxRef} className="relative">
                   <label className="block text-gray-300 text-sm font-bold mb-3">
                     Genre <span className="text-red-400">*</span>
                   </label>
@@ -1930,10 +1991,10 @@ export default function MovieManagement() {
                     {editImagePreview ? 'Change image' : 'Upload image'}
                   </span>
                   <input
-                    ref={addPosterInputRef}
+                    ref={editPosterInputRef}
                     type="file"
                     accept="image/*"
-                    onChange={onAddImageChange}
+                    onChange={onEditImageChange}
                     className="hidden"
                   />
 
@@ -1960,10 +2021,8 @@ export default function MovieManagement() {
                   <input
                     type="text"
                     value={formData.title}
-                    disabled={true}
                     onChange={(e) => handleEditInputChange('title', e.target.value)}
-                    className={`w-full bg-black/60 border-2 ${editErrors.title ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80`}
-                    placeholder="Movie title"
+                    className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white transition-all"
                   />
                   {editErrors.title && (
                     <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
@@ -1973,7 +2032,7 @@ export default function MovieManagement() {
                 </div>
 
                 {/* Genre multi-select tag-style for EDIT */}
-                <div className="relative">
+                <div ref={editGenreBoxRef} className="relative">
                   <label className="block text-gray-300 text-sm font-bold mb-3">
                     Genre <span className="text-red-400">*</span>
                   </label>
@@ -2064,10 +2123,8 @@ export default function MovieManagement() {
                   <input
                     type="number"
                     value={formData.price}
-                    disabled={true}
                     onChange={(e) => handleEditInputChange('price', e.target.value)}
-                    className={`w-full bg-black/60 border-2 ${editErrors.price ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80`}
-                    placeholder="350"
+                    className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white"
                   />
                   {editErrors.price && (
                     <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
@@ -2083,10 +2140,8 @@ export default function MovieManagement() {
                   <input
                     type="text"
                     value={formData.duration}
-                    disabled={true}
                     onChange={(e) => handleEditInputChange('duration', e.target.value)}
-                    className={`w-full bg-black/60 border-2 ${editErrors.duration ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80`}
-                    placeholder="120 min"
+                    className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white"
                   />
                   {editErrors.duration && (
                     <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
@@ -2118,9 +2173,8 @@ export default function MovieManagement() {
                   </label>
                   <select
                     value={formData.rating}
-                    disabled={true}
                     onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
-                    className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white focus:outline-none transition-all duration-300 hover:bg-black/80 cursor-pointer"
+                    className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white"
                   >
                     {ratings.map(r => (
                       <option key={r} value={r}>{r}</option>
@@ -2128,24 +2182,84 @@ export default function MovieManagement() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-gray-300 text-sm font-bold mb-3">
-                    Location <span className="text-red-400"></span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.location}
-                    disabled={true}
-                    onChange={(e) => handleEditInputChange('location', e.target.value)}
-                    className={`w-full bg-black/60 border-2 ${editErrors.location ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80`}
-                    placeholder="e.g., SM City Cebu"
-                  />
-                  {editErrors.location && (
-                    <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
-                      <span>⚠</span> {editErrors.location}
-                    </p>
+                <div ref={editLocBoxRef} className="relative">
+                <label className="block text-gray-300 text-sm font-bold mb-3">
+                  Location <span className="text-red-400">*</span>
+                </label>
+
+                <div
+                  onClick={() => !loadingTheaters && setEditLocOpen(v => !v)}
+                  className={`w-full bg-black/60 border-2 ${
+                    editErrors.location ? 'border-red-500/50' : 'border-gray-800/50 focus-within:border-red-500/50'
+                  } rounded-xl px-3 py-2.5 text-white transition-all duration-300 hover:bg-black/80 cursor-pointer min-h-[48px] flex items-center flex-wrap gap-2`}
+                >
+                  {(formData.location?.length ?? 0) === 0 && (
+                    <span className="text-gray-500 text-sm px-1">Select location(s)...</span>
                   )}
+
+                  {(formData.location || []).map(loc => (
+                    <span
+                      key={loc}
+                      className="flex items-center gap-2 bg-black/70 border border-red-900/50 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-md shadow-red-500/20"
+                    >
+                      {loc}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeEditLocation(loc);
+                        }}
+                        className="cursor-pointer text-gray-300 hover:text-white"
+                        title="Remove"
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+
+                  <div className="ml-auto flex items-center gap-2">
+                    <ChevronDown size={16} className={`text-gray-500 transition-transform ${editLocOpen ? 'rotate-180' : ''}`} />
+                  </div>
                 </div>
+
+                {editErrors.location && (
+                  <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                    <span>⚠</span> {editErrors.location}
+                  </p>
+                )}
+
+                {editLocOpen && (
+                  <div className="absolute z-50 mt-2 w-full bg-black/90 backdrop-blur-md border-2 border-gray-800/70 rounded-xl max-h-56 overflow-y-auto shadow-2xl">
+                    {loadingTheaters && (
+                      <div className="px-4 py-3 text-gray-400 text-sm">Loading locations...</div>
+                    )}
+
+                    {!loadingTheaters && theaters.length === 0 && (
+                      <div className="px-4 py-3 text-gray-400 text-sm">No locations found.</div>
+                    )}
+
+                    {!loadingTheaters && theaters.map(t => {
+                      const checked = (formData.location || []).includes(t.name);
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => toggleEditLocation(t.name)}
+                          className={`w-full text-left px-4 py-3 text-sm transition-colors flex items-center justify-between ${
+                            checked
+                              ? 'bg-red-600/20 text-white'
+                              : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                          }`}
+                        >
+                          <span>{t.name} — {t.location}</span>
+                          {checked && <span className="text-red-400 font-bold">✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
               </div>
 
               {/* Description */}
@@ -2184,11 +2298,10 @@ export default function MovieManagement() {
                     />
                     <input
                       ref={editDateRef}
-                      disabled={true}
                       type="date"
                       value={formData.dateRelease}
                       onChange={(e) => handleEditInputChange('dateRelease', e.target.value)}
-                      className={`w-full bg-black/60 border-2 ${editErrors.dateRelease ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl pl-11 pr-4 py-3 text-white focus:outline-none transition-all duration-300 hover:bg-black/80 cursor-pointer`}
+                      className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl pl-11 pr-4 py-3 text-white"
                     />
                   </div>
                   {editErrors.dateRelease && (
@@ -2205,11 +2318,9 @@ export default function MovieManagement() {
                   <input
                     type="number"
                     min="1"
-                    disabled={true}
                     value={formData.showingDays}
                     onChange={(e) => handleEditInputChange('showingDays', e.target.value)}
-                    className={`w-full bg-black/60 border-2 ${editErrors.showingDays ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white focus:outline-none transition-all duration-300 hover:bg-black/80`}
-                    placeholder="7"
+                    className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white"
                   />
                   {editErrors.showingDays && (
                     <p className="mt-1 text-sm text-red-400 flex items-center gap-1">

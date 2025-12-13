@@ -1,5 +1,5 @@
 // BookingManagement.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Film, Users, Calendar, MapPin, ChevronDown, ChevronUp, X, Search, Filter, CheckCircle, XCircle, Clock } from 'lucide-react';
 
 export default function BookingManagement() {
@@ -9,36 +9,51 @@ export default function BookingManagement() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedScreen, setSelectedScreen] = useState('all');
 
-  // ✅ bookings must exist BEFORE any filter logic runs
   const [bookings, setBookings] = useState([]);
+  const lastHashRef = useRef("");
+  const intervalRef = useRef(null);
 
   useEffect(() => {
     setAnimateCards(true);
   }, []);
 
-  useEffect(() => {
-    const fetchBookings = async () => {
+    useEffect(() => {
+    const fetchBookings = async ({ silent = false } = {}) => {
       try {
-        // ✅ correct endpoint (php)
         const res = await fetch("http://localhost/mobook_api/get_booking_management.php");
         const data = await res.json();
 
-        if (data.success) {
-          // ✅ always normalize to array
-          const safeBookings = Array.isArray(data.bookings) ? data.bookings : [];
-          setBookings(safeBookings);
-        } else {
+        if (!data.success) {
           console.error(data.message || "Failed to load bookings");
-          setBookings([]);
+          return;
         }
+
+        const safeBookings = Array.isArray(data.bookings) ? data.bookings : [];
+        const newHash = JSON.stringify(safeBookings);
+        if (newHash === lastHashRef.current) return;
+        lastHashRef.current = newHash;
+
+        setBookings(safeBookings);
       } catch (err) {
         console.error("Bookings fetch error:", err);
-        setBookings([]);
       }
     };
 
-    fetchBookings();
+    fetchBookings({ silent: false });
+
+    intervalRef.current = setInterval(() => {
+      fetchBookings({ silent: true });
+    }, 1000);
+
+    const onFocus = () => fetchBookings({ silent: true });
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      window.removeEventListener("focus", onFocus);
+    };
   }, []);
+
 
   // Get all unique screens from all movies
   const allScreens = Array.from(
@@ -84,7 +99,7 @@ export default function BookingManagement() {
         String(detail.email || "").toLowerCase().includes(searchQuery.toLowerCase())
       );
 
-    // ✅ selectedScreen is string like "Screen 1"
+    // selectedScreen is string like "Screen 1"
     const screens = Array.isArray(booking.screens) ? booking.screens : [];
     const matchesScreen = selectedScreen === 'all' || screens.includes(selectedScreen);
 
