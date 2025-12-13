@@ -19,6 +19,15 @@ const Checkout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const ticketRef = useRef(null);
+  const lastHashRef = useRef({
+    malls: "",
+    dates: "",
+    times: "",
+    seats: "",
+  });
+
+  const pollRef = useRef(null);
+  const inFlightRef = useRef(false);
 
   // Get movie data from navigation state or use default
   const movie = location.state?.movie || {
@@ -31,7 +40,7 @@ const Checkout = () => {
     price: 250
   };
 
-  // ✅ logged-in user
+  // logged-in user
   const storedUser = JSON.parse(localStorage.getItem("user"));
   const customerId = storedUser?.CustomerId || storedUser?.customerId;
 
@@ -41,6 +50,19 @@ const Checkout = () => {
   const [showDates, setShowDates] = useState([]);
   const [times, setTimes] = useState([]);
   const [unavailableSeats, setUnavailableSeats] = useState([]);
+  // prevent flicker: only update state if data changed
+  const lastMallsHashRef = useRef("");
+  const lastDatesHashRef = useRef("");
+  const lastTimesHashRef = useRef("");
+  const lastSeatsHashRef = useRef("");
+
+  // only show loading on first load per section
+  const firstLoadRef = useRef({
+    malls: true,
+    dates: true,
+    times: true,
+    seats: true,
+  });
 
   const [loading, setLoading] = useState({
     screens: false,
@@ -93,6 +115,150 @@ const Checkout = () => {
         };
       })
     : generatedDates;
+
+    const refreshMallsSilent = async () => {
+    if (!selectedScreen) return;
+
+    const res = await fetch(
+      `${API_BASE}/get_theaters.php?movieId=${movie.id}&screenId=${selectedScreen.id}`
+    );
+    const json = await res.json();
+    if (!json.success) return;
+
+    const nextMalls = json.theaters || [];
+    const hash = JSON.stringify(nextMalls);
+
+    if (hash !== lastHashRef.current.malls) {
+      lastHashRef.current.malls = hash;
+      setMalls(nextMalls);
+
+      setSelectedMall(prev =>
+        prev && nextMalls.some(m => m.id === prev.id) ? prev : null
+      );
+    }
+  };
+
+  const refreshDatesSilent = async () => {
+    if (!selectedMall || !selectedScreen) return;
+
+    const res = await fetch(
+      `${API_BASE}/get_showdates.php?movieId=${movie.id}&screenId=${selectedScreen.id}&theaterId=${selectedMall.id}`
+    );
+    const json = await res.json();
+    if (!json.success) return;
+
+    const nextDates = json.dates || [];
+    const hash = JSON.stringify(nextDates);
+
+    if (hash !== lastHashRef.current.dates) {
+      lastHashRef.current.dates = hash;
+      setShowDates(nextDates);
+
+      setSelectedDate(prev => {
+        if (!prev) return prev;
+
+        const stillValid = nextDates.some(d => {
+          const full = new Date(d.date);
+          return full.toDateString() === prev.full.toDateString();
+        });
+
+        if (!stillValid) {
+          setSelectedTime(null);
+          setTimes([]);
+          setSelectedSeats([]);
+          setUnavailableSeats([]);
+          return null;
+        }
+        return prev;
+      });
+    }
+  };
+
+  const refreshTimesSilent = async () => {
+    if (!selectedMall || !selectedScreen || !selectedDate) return;
+
+    const dateStr = toYMD(selectedDate.full);
+    const res = await fetch(
+      `${API_BASE}/get_showtimes.php?movieId=${movie.id}&screenId=${selectedScreen.id}&theaterId=${selectedMall.id}&date=${dateStr}`
+    );
+    const json = await res.json();
+    if (!json.success) return;
+
+    const now = new Date();
+
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const selectedDateOnly = new Date(
+      selectedDate.full.getFullYear(),
+      selectedDate.full.getMonth(),
+      selectedDate.full.getDate()
+    );
+    const isToday = selectedDateOnly.getTime() === today.getTime();
+
+    const nextTimes = (json.times || []).map((time) => {
+      const soldOut = !time.available;
+      let tooLate = false;
+
+      if (isToday) {
+        const [timePart, modifier] = time.time.split(" ");
+        const [hStr, mStr] = timePart.split(":");
+
+        let hours = parseInt(hStr, 10);
+        const minutes = parseInt(mStr, 10);
+
+        if (modifier === "PM" && hours !== 12) hours += 12;
+        if (modifier === "AM" && hours === 12) hours = 0;
+
+        const showDateTime = new Date(selectedDate.full);
+        showDateTime.setHours(hours, minutes, 0, 0);
+
+        const diffMs = showDateTime - now;
+        const timeDiffHours = diffMs / (1000 * 60 * 60);
+        tooLate = timeDiffHours < 3;
+      }
+
+      return { ...time, available: !soldOut && !tooLate, soldOut, tooLate };
+    });
+
+    const hash = JSON.stringify(nextTimes);
+
+    if (hash !== lastHashRef.current.times) {
+      lastHashRef.current.times = hash;
+      setTimes(nextTimes);
+
+      setSelectedTime(prev => {
+        if (!prev) return prev;
+        const updated = nextTimes.find(t => t.id === prev.id);
+        if (!updated || !updated.available) {
+          setSelectedSeats([]);
+          setUnavailableSeats([]);
+          return null;
+        }
+        return updated;
+      });
+    }
+  };
+
+  const refreshSeatsSilent = async () => {
+    if (!selectedTime?.id) return;
+
+    const res = await fetch(
+      `${API_BASE}/get_unavailable_seats.php?showtimeId=${selectedTime.id}`
+    );
+    const json = await res.json();
+    if (!json.success) return;
+
+    const nextUnavailable = json.unavailableSeats || [];
+    const hash = JSON.stringify(nextUnavailable);
+
+    if (hash !== lastHashRef.current.seats) {
+      lastHashRef.current.seats = hash;
+      setUnavailableSeats(nextUnavailable);
+
+      // remove seats that got taken by others
+      setSelectedSeats(prev => prev.filter(s => !nextUnavailable.includes(s)));
+    }
+  };
+
 
   // --------- Load Screens for movie ----------
   useEffect(() => {
@@ -183,12 +349,17 @@ const Checkout = () => {
   }, [selectedMall?.id, selectedScreen?.id, movie.id]);
 
   // --------- Load Showtimes when date changes ----------
+  // --------- Load Showtimes when date changes (REALTIME) ----------
   useEffect(() => {
     if (!selectedMall || !selectedScreen || !selectedDate) return;
 
+    let intervalId;
+
     const loadTimes = async () => {
-      setLoading(l => ({ ...l, times: true }));
-      setError(null);
+      // only show loader the first time (avoid flicker)
+      if (firstLoadRef.current.times) {
+        setLoading(l => ({ ...l, times: true }));
+      }
 
       try {
         const dateStr = toYMD(selectedDate.full);
@@ -208,13 +379,13 @@ const Checkout = () => {
         );
         const isToday = selectedDateOnly.getTime() === today.getTime();
 
-        const filteredTimes = (json.times || []).map((time) => {
+        const computedTimes = (json.times || []).map((time) => {
           const soldOut = !time.available;
           let tooLate = false;
 
           if (isToday) {
-            const [timePart, modifier] = time.time.split(' '); 
-            const [hStr, mStr] = timePart.split(':');         
+            const [timePart, modifier] = time.time.split(' ');
+            const [hStr, mStr] = timePart.split(':');
 
             let hours = parseInt(hStr, 10);
             const minutes = parseInt(mStr, 10);
@@ -238,50 +409,150 @@ const Checkout = () => {
           };
         });
 
-        setTimes(filteredTimes);
-        setSelectedTime(null);
+        // ✅ hash check: only update if changed
+        const newHash = JSON.stringify(computedTimes);
+        if (newHash !== lastTimesHashRef.current) {
+          lastTimesHashRef.current = newHash;
+          setTimes(computedTimes);
+
+          // if currently selected time became invalid, reset it
+          if (selectedTime?.id) {
+            const stillExists = computedTimes.some(t => t.id === selectedTime.id);
+            const stillAvailable = computedTimes.some(t => t.id === selectedTime.id && t.available);
+            if (!stillExists || !stillAvailable) {
+              setSelectedTime(null);
+              setSelectedSeats([]);
+              setUnavailableSeats([]);
+            }
+          }
+        }
       } catch (e) {
         console.error(e);
-        setError(e.message);
         setTimes([]);
       } finally {
-        setLoading(l => ({ ...l, times: false }));
+        if (firstLoadRef.current.times) {
+          setLoading(l => ({ ...l, times: false }));
+          firstLoadRef.current.times = false;
+        }
       }
     };
 
-    // reset downstream when date changes
+    // reset downstream once (when date changes)
     setSelectedTime(null);
     setSelectedSeats([]);
     setUnavailableSeats([]);
 
     loadTimes();
-  }, [selectedDate?.date, selectedMall?.id, selectedScreen?.id, movie.id]);
+
+    // ✅ poll every 5s for realtime
+    intervalId = setInterval(loadTimes, 5000);
+
+    // also refresh when user returns to tab
+    const onFocus = () => loadTimes();
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [selectedDate?.full, selectedMall?.id, selectedScreen?.id, movie.id]);
+
 
   // --------- Load Unavailable Seats when time changes ----------
+  // --------- Load Unavailable Seats when time changes (REALTIME) ----------
   useEffect(() => {
     if (!selectedTime?.id) return;
 
+    let intervalId;
+
     const loadUnavailableSeats = async () => {
-      setLoading(l => ({ ...l, seats: true }));
-      setError(null);
+      if (firstLoadRef.current.seats) {
+        setLoading(l => ({ ...l, seats: true }));
+      }
+
       try {
         const res = await fetch(
           `${API_BASE}/get_unavailable_seats.php?showtimeId=${selectedTime.id}`
         );
         const json = await res.json();
         if (!json.success) throw new Error(json.message || "Failed to load unavailable seats");
-        setUnavailableSeats(json.unavailableSeats || []);
-        setSelectedSeats([]);
+
+        const seats = json.unavailableSeats || [];
+        const newHash = JSON.stringify(seats);
+
+        // ✅ only update if changed
+        if (newHash !== lastSeatsHashRef.current) {
+          lastSeatsHashRef.current = newHash;
+          setUnavailableSeats(seats);
+
+          // ✅ if user selected a seat that became unavailable, remove it
+          setSelectedSeats(prev => prev.filter(s => !seats.includes(s)));
+        }
       } catch (e) {
-        setError(e.message);
+        console.error(e);
         setUnavailableSeats([]);
       } finally {
-        setLoading(l => ({ ...l, seats: false }));
+        if (firstLoadRef.current.seats) {
+          setLoading(l => ({ ...l, seats: false }));
+          firstLoadRef.current.seats = false;
+        }
       }
     };
 
+    // reset when time changes
+    lastSeatsHashRef.current = "";
+    setUnavailableSeats([]);
+    setSelectedSeats([]);
+
     loadUnavailableSeats();
+
+    // ✅ poll every 3s (seats change fast)
+    intervalId = setInterval(loadUnavailableSeats, 3000);
+
+    const onFocus = () => loadUnavailableSeats();
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("focus", onFocus);
+    };
   }, [selectedTime?.id]);
+
+
+    useEffect(() => {
+    const poll = async () => {
+      if (inFlightRef.current) return;
+      inFlightRef.current = true;
+
+      try {
+        await refreshMallsSilent();
+        await refreshDatesSilent();
+        await refreshTimesSilent();
+        await refreshSeatsSilent();
+      } finally {
+        inFlightRef.current = false;
+      }
+    };
+
+    poll();
+
+    pollRef.current = setInterval(poll, 1000);
+
+    const onFocus = () => poll();
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      clearInterval(pollRef.current);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [
+    movie.id,
+    selectedScreen?.id,
+    selectedMall?.id,
+    selectedDate?.date,
+    selectedTime?.id,
+  ]);
+
 
   // --------- booking in progress tracking ----------
   useEffect(() => {
@@ -359,6 +630,12 @@ const Checkout = () => {
     if (step > 1) setStep(step - 1);
   };
 
+  useEffect(() => {
+    if (bookingCompleted) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [bookingCompleted]);
+  
   // Generate booking ID
   const generateBookingId = () => {
     const timestamp = Date.now().toString().slice(-6);
@@ -380,7 +657,7 @@ const Checkout = () => {
       showtimeId: selectedTime.id,
       seatNumbers: selectedSeats,
       paymentMethod,
-      paymentStatus: "PAID",
+      paymentStatus: "confirmed",
     };
 
     setLoading(l => ({ ...l, booking: true }));
@@ -401,8 +678,10 @@ const Checkout = () => {
         return;
       }
 
+      await new Promise(resolve => setTimeout(resolve, 2000));
       // 1. Get bookingId from backend (or fallback)
-      const bookingId = json.bookingId || json.booking_id || generateBookingId();
+      const rawId = json.bookingId || json.booking_id || generateBookingId();
+      const bookingId = `MBK202500${rawId}`;
       const totalFromBackend = json.totalAmount ?? totalAmount;
 
       // 2. Build human-readable date like "Dec 15, 2025"

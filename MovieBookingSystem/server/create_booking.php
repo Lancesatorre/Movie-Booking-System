@@ -23,7 +23,7 @@ if (!in_array($paymentStatus, $allowedStatuses, true)) {
 }
 
 if ($customerId <= 0 || $showtimeId <= 0 || !is_array($seatNumbers) || count($seatNumbers) == 0) {
-    echo json_encode(["success" => false, "message" => "customerId, showtimeId, seatNumbers are required"]);
+    echo json_encode(["success" => false, "message" => "Seat Reserved! \n Please choose another seat. Thank you!"]);
     exit;
 }
 

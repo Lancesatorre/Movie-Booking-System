@@ -1,5 +1,5 @@
 // BookingManagement.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Film, Users, Calendar, MapPin, ChevronDown, ChevronUp, X, Search, Filter, CheckCircle, XCircle, Clock } from 'lucide-react';
 
 export default function BookingManagement() {
@@ -9,36 +9,51 @@ export default function BookingManagement() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedScreen, setSelectedScreen] = useState('all');
 
-  // ✅ bookings must exist BEFORE any filter logic runs
   const [bookings, setBookings] = useState([]);
+  const lastHashRef = useRef("");
+  const intervalRef = useRef(null);
 
   useEffect(() => {
     setAnimateCards(true);
   }, []);
 
   useEffect(() => {
-    const fetchBookings = async () => {
+    const fetchBookings = async ({ silent = false } = {}) => {
       try {
-        // ✅ correct endpoint (php)
         const res = await fetch("http://localhost/mobook_api/get_booking_management.php");
         const data = await res.json();
 
-        if (data.success) {
-          // ✅ always normalize to array
-          const safeBookings = Array.isArray(data.bookings) ? data.bookings : [];
-          setBookings(safeBookings);
-        } else {
+        if (!data.success) {
           console.error(data.message || "Failed to load bookings");
-          setBookings([]);
+          return;
         }
+
+        const safeBookings = Array.isArray(data.bookings) ? data.bookings : [];
+        const newHash = JSON.stringify(safeBookings);
+        if (newHash === lastHashRef.current) return;
+        lastHashRef.current = newHash;
+
+        setBookings(safeBookings);
       } catch (err) {
         console.error("Bookings fetch error:", err);
-        setBookings([]);
       }
     };
 
-    fetchBookings();
+    fetchBookings({ silent: false });
+
+    intervalRef.current = setInterval(() => {
+      fetchBookings({ silent: true });
+    }, 1000);
+
+    const onFocus = () => fetchBookings({ silent: true });
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      window.removeEventListener("focus", onFocus);
+    };
   }, []);
+
 
   // Get all unique screens from all movies
   const allScreens = Array.from(
@@ -84,7 +99,7 @@ export default function BookingManagement() {
         String(detail.email || "").toLowerCase().includes(searchQuery.toLowerCase())
       );
 
-    // ✅ selectedScreen is string like "Screen 1"
+    // selectedScreen is string like "Screen 1"
     const screens = Array.isArray(booking.screens) ? booking.screens : [];
     const matchesScreen = selectedScreen === 'all' || screens.includes(selectedScreen);
 
@@ -92,6 +107,7 @@ export default function BookingManagement() {
       return matchesSearch && matchesScreen;
     }
 
+    // Only return movies that have at least one booking with the selected status
     const hasMatchingStatus = details.some(detail => detail.status === filterStatus);
     return matchesSearch && matchesScreen && hasMatchingStatus;
   });
@@ -184,6 +200,22 @@ export default function BookingManagement() {
           </div>
           
           <div className="flex flex-col md:flex-row gap-3 sm:gap-3 md:gap-4 w-full sm:w-auto">
+            {/* NEW STATUS FILTER */}
+            <div className="relative flex-1 xs:flex-initial group">
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 pointer-events-none w-4 h-4 sm:w-5 sm:h-5" />
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 pointer-events-none w-3 h-3 sm:w-4 sm:h-4" />
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-lg sm:rounded-xl md:rounded-xl pl-9 sm:pl-12 pr-8 sm:pr-12 py-2.5 sm:py-3 text-sm sm:text-base text-white focus:outline-none transition-all duration-300 appearance-none cursor-pointer hover:bg-black/80"
+              >
+                <option value="all">All Status</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+
+            {/* Existing Screens Filter */}
             <div className="relative flex-1 xs:flex-initial group">
               <Film className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 pointer-events-none w-4 h-4 sm:w-5 sm:h-5" />
               <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10 pointer-events-none w-3 h-3 sm:w-4 sm:h-4" />

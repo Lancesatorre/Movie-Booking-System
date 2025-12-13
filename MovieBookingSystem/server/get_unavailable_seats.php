@@ -26,6 +26,7 @@ $sql = "
     INNER JOIN ticketing t ON t.BookingId = b.BookingId
     INNER JOIN seat s ON s.SeatId = t.SeatId
     WHERE b.ShowTimeId = ?
+      AND b.PaymentStatus = 'confirmed'
     ORDER BY s.Seatnumber ASC
 ";
 

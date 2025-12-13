@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Film, Ticket, Users, DollarSign, Play, TrendingUp, Calendar } from 'lucide-react';
 
 const API_BASE = "http://localhost/mobook_api";
@@ -13,24 +13,57 @@ export default function Dashboard() {
     totalRevenue: 0,
   });
   const [currentMovies, setCurrentMovies] = useState([]);
+  const lastHashRef = useRef("");
+  const isFirstLoadRef = useRef(true);
 
   useEffect(() => {
     setAnimateCards(true);
-    const fetchDashboard = async () => {
+
+    const fetchDashboard = async ({ silent = false } = {}) => {
       try {
         const res = await fetch(`${API_BASE}/get_dashboard.php`);
         const data = await res.json();
-        if (data.success) {
-          setDashboardStats(data.stats);
-          setCurrentMovies(data.currentMovies || []);
-        } else {
-            console.error(data.message || "Failed to load dashboard data");
-          }
-      } catch (err) {
-          console.error("Dashboard fetch error:", err);
+
+        if (!data.success) {
+          console.error(data.message || "Failed to load dashboard data");
+          return;
         }
+
+        const normalized = {
+          stats: data.stats || {},
+          currentMovies: data.currentMovies || [],
+        };
+
+        const newHash = JSON.stringify(normalized);
+
+        if (newHash === lastHashRef.current) return;
+        lastHashRef.current = newHash;
+
+        setDashboardStats(normalized.stats);
+        setCurrentMovies(normalized.currentMovies);
+
+      } catch (err) {
+        console.error("Dashboard fetch error:", err);
+      } finally {
+        if (isFirstLoadRef.current) {
+          isFirstLoadRef.current = false;
+        }
+      }
     };
-    fetchDashboard();
+
+    fetchDashboard({ silent: false });
+
+    const interval = setInterval(() => {
+      fetchDashboard({ silent: true });
+    }, 1000);
+
+    const onFocus = () => fetchDashboard({ silent: true });
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
   }, []);
 
 
