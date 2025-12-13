@@ -12,6 +12,10 @@
 </p>
 
 <p align="center">
+  <img src="https://github.com/user-attachments/assets/99373d71-4e0b-4497-a5ac-697c587c85d8" width="900" alt="Loading State" />
+</p>
+
+<p align="center">
   <img src="https://github.com/user-attachments/assets/71b84d5c-eca4-4f70-ac87-c1b5f186479c" width="900" alt="User Landing Page" />
 </p>
 
@@ -101,6 +105,10 @@
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/a1e6045f-8d6b-4dd8-b18f-0624a6252bce" width="900" alt="Booking Management" />
+</p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/b02964e1-8ebb-417a-a47d-b6571db31d42" width="900" alt="Admin Movies Management Part 2" />
 </p>
 
 <p align="center">
