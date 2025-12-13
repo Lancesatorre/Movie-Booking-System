@@ -1,4 +1,4 @@
-## 📸 Application Screenshots
+## 📸 MoBook Screenshots
 ---
 
 ### 👤 User Interface
