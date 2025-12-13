@@ -36,7 +36,7 @@
 </p>
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/16b0c3f8-4cde-47c4-831e-98ce55004637" width="1300" alt="User Movie Trailer" />
+  <img src="https://github.com/user-attachments/assets/262d69ed-8a6a-463f-ae51-ae928e86292f" width="1300" alt="User Movie Trailer" />
 </p>
 
 <p align="center">
