@@ -24,6 +24,11 @@
 </p>
 
 <p align="center">
+  <img src="https://github.com/user-attachments/assets/1fc50022-dbff-401f-9b5a-4d769dc319e7" width="1300" alt="User Landing Developers Section" />
+</p>
+
+
+<p align="center">
   <img src="https://github.com/user-attachments/assets/7c64cf9f-07b1-4067-96a6-ff646747270f" width="1300" alt="User Footer" />
 </p>
 
