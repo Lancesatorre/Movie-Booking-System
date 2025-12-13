@@ -56,6 +56,10 @@
 </p>
 
 <p align="center">
+  <img src="https://github.com/user-attachments/assets/d0b06700-6e7a-4c3f-b07f-153142e2048d" width="1300" alt="Downloaded Ticket" />
+</p>
+
+<p align="center">
   <img src="https://github.com/user-attachments/assets/d677fd24-6a2c-47bc-b589-ce2b74e47ff3" width="1300" alt="My Tickets" />
 </p>
 
