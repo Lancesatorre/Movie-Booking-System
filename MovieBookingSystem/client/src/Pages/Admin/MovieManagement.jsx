@@ -2021,6 +2021,7 @@ export default function MovieManagement() {
                   <input
                     type="text"
                     value={formData.title}
+                    disabled={true}
                     onChange={(e) => handleEditInputChange('title', e.target.value)}
                     className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white transition-all"
                   />
@@ -2034,12 +2035,12 @@ export default function MovieManagement() {
                 {/* Genre multi-select tag-style for EDIT */}
                 <div ref={editGenreBoxRef} className="relative">
                   <label className="block text-gray-300 text-sm font-bold mb-3">
-                    Genre <span className="text-red-400">*</span>
+                    Genre <span className="text-red-400"></span>
                   </label>
 
                   <div
-                    onClick={() => setShowEditGenreDropdown(v => !v)}
-                    className={`w-full bg-black/60 border-2 ${editErrors.genre ? 'border-red-500/50' : 'border-gray-800/50 focus-within:border-red-500/50'} rounded-xl px-3 py-2.5 text-white transition-all duration-300 hover:bg-black/80 cursor-pointer min-h-[48px] flex items-center flex-wrap gap-2`}
+                    
+                    className={`w-full bg-black/60 border-2 ${editErrors.genre ? 'border-red-500/50' : 'border-gray-800/50 focus-within:border-red-500/50'} rounded-xl px-3 py-2.5 text-white transition-all duration-300 hover:bg-black/80 min-h-[48px] flex items-center flex-wrap gap-2`}
                   >
                     {formData.genre.length === 0 && (
                       <span className="text-gray-500 text-sm px-1">Select genre(s)...</span>
@@ -2051,20 +2052,6 @@ export default function MovieManagement() {
                         className="flex items-center gap-2 bg-black/70 border border-red-900/50 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-md shadow-red-500/20"
                       >
                         {g}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setFormData(prev => ({
-                              ...prev,
-                              genre: prev.genre.filter(x => x !== g)
-                            }));
-                          }}
-                          className="cursor-pointer text-gray-300 hover:text-white"
-                          title="Remove"
-                        >
-                          <X size={12} />
-                        </button>
                       </span>
                     ))}
 
@@ -2123,6 +2110,7 @@ export default function MovieManagement() {
                   <input
                     type="number"
                     value={formData.price}
+                    disabled={true}
                     onChange={(e) => handleEditInputChange('price', e.target.value)}
                     className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white"
                   />
@@ -2140,6 +2128,7 @@ export default function MovieManagement() {
                   <input
                     type="text"
                     value={formData.duration}
+                    disabled={true}
                     onChange={(e) => handleEditInputChange('duration', e.target.value)}
                     className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white"
                   />
@@ -2173,6 +2162,7 @@ export default function MovieManagement() {
                   </label>
                   <select
                     value={formData.rating}
+                    disabled={true}
                     onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
                     className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white"
                   >
@@ -2265,11 +2255,12 @@ export default function MovieManagement() {
               {/* Description */}
               <div>
                 <label className="block text-gray-300 text-sm font-bold mb-3">
-                  Description <span className="text-red-400">*</span>
+                  Description <span className="text-red-400"></span>
                 </label>
                 <textarea
                   rows="4"
                   value={formData.description}
+                  disabled={true}
                   onChange={(e) => handleEditInputChange('description', e.target.value)}
                   className={`w-full bg-black/60 border-2 ${editErrors.description ? 'border-red-500/50' : 'border-gray-800/50 focus:border-red-500/50'} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all duration-300 hover:bg-black/80 resize-none`}
                   placeholder="Write a short description of the movie..."
@@ -2299,6 +2290,7 @@ export default function MovieManagement() {
                     <input
                       ref={editDateRef}
                       type="date"
+                      disabled={true}
                       value={formData.dateRelease}
                       onChange={(e) => handleEditInputChange('dateRelease', e.target.value)}
                       className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl pl-11 pr-4 py-3 text-white"
@@ -2318,6 +2310,7 @@ export default function MovieManagement() {
                   <input
                     type="number"
                     min="1"
+                    disabled={true}
                     value={formData.showingDays}
                     onChange={(e) => handleEditInputChange('showingDays', e.target.value)}
                     className="w-full bg-black/60 border-2 border-gray-800/50 focus:border-red-500/50 rounded-xl px-4 py-3 text-white"
