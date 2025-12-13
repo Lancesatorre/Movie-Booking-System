@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Search, Filter, X, Ticket as TicketIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import LoadingState from '../../Components/LoadingState';
+
 
 const MyTickets = () => {
   const navigate = useNavigate();
@@ -14,8 +15,10 @@ const MyTickets = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
+  const lastHashRef = useRef("");
 
-  // Status labels configuration matching the design - UPDATED
+  const isFirstLoadRef = useRef(true);
+
   const statuses = [
     { 
       value: 'now-showing', 
@@ -39,11 +42,22 @@ const MyTickets = () => {
 
   // Fetch user's tickets from backend
   useEffect(() => {
+    fetchTickets();
+
+    const interval = setInterval(fetchTickets, 1000);
+    const onFocus = () => fetchTickets();
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
+
     const fetchTickets = async () => {
       try {
-        setLoading(true);
+        if (isFirstLoadRef.current) setLoading(true);
 
-        // 🔹 Be consistent with Checkout.jsx
         const storedUser =
           JSON.parse(localStorage.getItem("user")) ||
           JSON.parse(localStorage.getItem("mobook_user"));
@@ -51,8 +65,10 @@ const MyTickets = () => {
         const customerId = storedUser?.CustomerId || storedUser?.customerId;
 
         if (!customerId) {
-          alert("You must be logged in to view tickets.");
-          navigate("/login");
+          if (isFirstLoadRef.current) {
+            alert("You must be logged in to view tickets.");
+            navigate("/login");
+          }
           return;
         }
 
@@ -61,77 +77,73 @@ const MyTickets = () => {
         );
         const data = await res.json();
 
-        if (data.success) {
-          const rawTickets = data.tickets || [];
-
-          // 🔹 Normalize ticket shape so the rest of the code is safe
-          const normalized = rawTickets.map((t, idx) => {
-            // seats: ensure array
-            let seats = t.seats;
-            if (!Array.isArray(seats)) {
-              if (typeof seats === "string") {
-                seats = seats
-                  .split(",")
-                  .map((s) => s.trim())
-                  .filter(Boolean);
-              } else {
-                seats = [];
-              }
-            }
-
-            // showDateTime: combine if needed
-            const showDateTime =
-              t.showDateTime ||
-              (t.showDate && t.showTime
-                ? `${t.showDate} ${t.showTime}`
-                : null);
-
-            // theater location key (typo-safe)
-            const theaterLocation =
-              t.theatherLocation || t.theaterLocation || t.theaterName || "";
-
-            return {
-              // keep all original fields
-              ...t,
-              // normalized / fallback fields
-              id: t.id || t.bookingId || idx + 1,
-              bookingReference:
-                t.bookingReference || t.bookingId || null,
-              seats,
-              showDateTime,
-              theatherLocation: theaterLocation, // keep old key for compatibility
-              theaterLocation,                   // nice clean key
-              movieTitle: t.movieTitle || t.title || "",
-              movieImage: t.movieImage || t.image || "",
-              movieRating: t.movieRating || t.rating || "",
-              screenNumber:
-                t.screenNumber || t.screen || t.ScreenNumber || 1,
-              totalPrice:
-                typeof t.totalPrice === "number"
-                  ? t.totalPrice
-                  : Number(t.totalPrice) || 0,
-              paymentMethod: t.paymentMethod || "Credit Card",
-            };
-          });
-
-          setTickets(normalized);
-          setFilteredTickets(normalized);
-        } else {
+        if (!data.success) {
           console.error(data.message);
+          if (isFirstLoadRef.current) {
+            setTickets([]);
+            setFilteredTickets([]);
+          }
+          return;
+        }
+
+        const rawTickets = data.tickets || [];
+
+        const normalized = rawTickets.map((t, idx) => {
+          let seats = t.seats;
+          if (!Array.isArray(seats)) {
+            if (typeof seats === "string") {
+              seats = seats.split(",").map((s) => s.trim()).filter(Boolean);
+            } else {
+              seats = [];
+            }
+          }
+
+          const showDateTime =
+            t.showDateTime ||
+            (t.showDate && t.showTime ? `${t.showDate} ${t.showTime}` : null);
+
+          const theaterLocation =
+            t.theatherLocation || t.theaterLocation || t.theaterName || "";
+
+          return {
+            ...t,
+            id: t.id || t.bookingId || idx + 1,
+            bookingReference: t.bookingReference || t.bookingId || null,
+            seats,
+            showDateTime,
+            theatherLocation: theaterLocation,
+            theaterLocation,
+            movieTitle: t.movieTitle || t.title || "",
+            movieImage: t.movieImage || t.image || "",
+            movieRating: t.movieRating || t.rating || "",
+            movieDurationMinutes: t.movieDurationMinutes ?? null,
+            movieGenre: t.movieGenre ?? "",
+            screenNumber: t.screenNumber || t.screen || t.ScreenNumber || 1,
+            totalPrice:
+              typeof t.totalPrice === "number" ? t.totalPrice : Number(t.totalPrice) || 0,
+            paymentMethod: t.paymentMethod || "Credit Card",
+          };
+        });
+
+        const newHash = JSON.stringify(normalized);
+        if (newHash === lastHashRef.current) return;
+        lastHashRef.current = newHash;
+
+        setTickets(normalized);
+      } catch (err) {
+        console.error("Error fetching tickets:", err);
+
+        if (isFirstLoadRef.current) {
           setTickets([]);
           setFilteredTickets([]);
         }
-      } catch (err) {
-        console.error("Error fetching tickets:", err);
-        setTickets([]);
-        setFilteredTickets([]);
       } finally {
-        setLoading(false);
+        if (isFirstLoadRef.current) {
+          setLoading(false);
+          isFirstLoadRef.current = false;
+        }
       }
     };
-
-    fetchTickets();
-  }, [navigate]);
 
   // Filter and search tickets
   useEffect(() => {
@@ -212,9 +224,9 @@ const MyTickets = () => {
       movie: {
         title: ticket.movieTitle,
         image: ticket.movieImage,
-        duration: "N/A", // add to API later if you want
+        duration: ticket.movieDurationMinutes ? `${ticket.movieDurationMinutes}m` : "N/A",
         rating: ticket.movieRating,
-        genre: "N/A",
+        genre: ticket.movieGenre || "N/A",
       },
       booking: {
         bookingId:

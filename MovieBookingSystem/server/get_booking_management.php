@@ -43,7 +43,7 @@ JOIN screen s ON st.ScreenId = s.ScreenID
 JOIN theater t ON s.TheaterId = t.TheaterId
 LEFT JOIN ticketing tk ON b.BookingId = tk.BookingId
 LEFT JOIN seat se ON tk.SeatId = se.SeatId
-ORDER BY m.MovieId, b.BookingId
+ORDER BY m.MovieId ASC, b.BookingId ASC, se.Seatnumber ASC
 ";
 
 $result = $conn->query($sql);
@@ -118,6 +118,7 @@ while ($row = $result->fetch_assoc()) {
   if (!in_array($screenLabel, $moviesMap[$movieId]["screens"], true)) {
     $moviesMap[$movieId]["screens"][] = $screenLabel;
   }
+  sort($moviesMap[$movieId]["screens"], SORT_NATURAL);
 
   // 🔹 Create booking detail once per BookingId
   if (!isset($bookingMap[$bookingId])) {
@@ -152,7 +153,8 @@ while ($row = $result->fetch_assoc()) {
 // 🔹 Finalize seats & totalSeats
 foreach ($moviesMap as &$movie) {
   foreach ($movie["bookingDetails"] as &$bd) {
-    $bd["seats"]      = array_values(array_unique($bd["seats"]));
+    $bd["seats"] = array_values(array_unique($bd["seats"]));
+    sort($bd["seats"], SORT_NATURAL);
     $bd["totalSeats"] = count($bd["seats"]);
   }
 }
