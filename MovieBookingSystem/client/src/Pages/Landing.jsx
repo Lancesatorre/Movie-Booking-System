@@ -455,8 +455,168 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* Developers Section */}
+        <section className="py-12 md:py-24 relative bg-transparent">
+          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-50"></div>
+          
+          <div className="px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-8 md:mb-16 max-w-7xl mx-auto">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 md:mb-4 animate-fade-in">
+                Meet Our <span className="bg-gradient-to-r from-red-700 to-orange-600/20 bg-clip-text text-transparent">Creative Team</span>
+              </h2>
+              <p className="text-gray-400 text-base sm:text-lg md:text-xl max-w-2xl md:max-w-3xl mx-auto px-4">
+                The passionate developers and designers who brought MoBook to life
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 md:gap-8 justify-center items-stretch mx-auto">
+              {[
+                {
+                  name: "Lance Timothy Satorre",
+                  role: "Frontend Developer / UI & UX Designer",
+                  image: "/assets/Developers/Lance.jfif",
+                  description: "Crafted the visual experience and user interface with modern React components and responsive design",
+                  color: "from-red-600 to-orange-500",
+                  delay: 0
+                },
+                {
+                  name: "Sergio Neri",
+                  role: "Backend Developer",
+                  image: "/assets/Developers/Neri.jpg",
+                  description: "Built the robust server infrastructure and APIs ensuring secure and efficient data handling",
+                  color: "from-red-700 to-orange-600",
+                  delay: 100
+                },
+                {
+                  name: "Euwen Aldrich Villarin",
+                  role: "Backend Developer",
+                  image: "/assets/Developers/Euwen.jpg",
+                  description: "Engineered the database architecture and system logic for seamless booking operations",
+                  color: "from-red-800 to-orange-700",
+                  delay: 200
+                },
+                {
+                  name: "Yvone Bardon",
+                  role: "Documentation Specialist",
+                  image: "/assets/Developers/Yvone.png",
+                  description: "Curated comprehensive system documentation and user guides for seamless adoption",
+                  color: "from-red-900 to-orange-800",
+                  delay: 300
+                }
+              ].map((developer, index) => (
+                <div 
+                  key={index}
+                  className="group relative w-full"
+                  style={{ animation: `fadeInUp 0.6s ease-out ${developer.delay}ms both` }}
+                >
+                  <div className="relative h-full bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-sm rounded-xl md:rounded-2xl border border-gray-800 group-hover:border-red-500/50 transition-all duration-500 overflow-hidden shadow-lg md:shadow-xl hover:shadow-red-500/20 hover:scale-[1.02]">
+                    {/* Animated background effect */}
+                    <div className={`absolute inset-0 bg-gradient-to-br ${developer.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
+                    
+                    {/* Content - Stacked layout */}
+                    <div className="relative p-4 sm:p-5 md:p-6 h-full flex flex-col items-center text-center">
+                      {/* Profile Image Container - Responsive sizing */}
+                      <div className="relative mb-4 sm:mb-5 md:mb-6 lg:mb-8">
+                        <div className="absolute -inset-2 sm:-inset-3 md:-inset-4 bg-gradient-to-br from-red-500 to-orange-500 rounded-full blur-lg md:blur-xl opacity-20 md:opacity-30 group-hover:opacity-40 md:group-hover:opacity-50 transition-opacity duration-700"></div>
+                        <div className="relative">
+                          <div className="w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-full overflow-hidden border-3 md:border-4 border-gray-800 group-hover:border-red-500/50 transition-all duration-500 shadow-lg md:shadow-2xl mx-auto">
+                            <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                              <img 
+                                src={developer.image} 
+                                alt={developer.name}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.style.display = 'none';
+                                  const initials = developer.name.split(' ').map(n => n[0]).join('');
+                                  e.target.parentElement.innerHTML = `
+                                    <div class="w-full h-full flex items-center justify-center bg-gradient-to-br ${developer.color}">
+                                      <div class="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
+                                        ${initials}
+                                      </div>
+                                    </div>
+                                  `;
+                                }}
+                              />
+                            </div>
+                          </div>
+                          {/* Online status indicator */}
+                          <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 md:bottom-4 md:right-4 w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 bg-gradient-to-r from-green-500 to-emerald-400 rounded-full border-2 border-gray-900 shadow-md md:shadow-lg"></div>
+                        </div>
+                      </div>
+
+                      {/* Name and Role */}
+                      <div className="mb-3 sm:mb-4 w-full px-1">
+                        <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-2 sm:mb-3 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-red-500 group-hover:to-orange-400 group-hover:bg-clip-text transition-all duration-300">
+                          {developer.name}
+                        </h3>
+                        <div className="inline-block px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-gradient-to-r from-red-900/40 to-orange-900/20 border border-red-500/30 backdrop-blur-sm">
+                          <span className="text-xs sm:text-sm font-semibold text-red-300">{developer.role}</span>
+                        </div>
+                      </div>
+                      
+                      {/* Description */}
+                      <p className="text-gray-300 leading-relaxed mb-4 sm:mb-5 md:mb-6 text-xs sm:text-sm md:text-base flex-grow px-1 sm:px-2">
+                        {developer.description}
+                      </p>
+                      
+                      {/* Skills/Contribution Tags - Responsive */}
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center">
+                        {developer.role.toLowerCase().includes('frontend') && (
+                          <>
+                            <span className="px-2 py-1 sm:px-3 sm:py-1.5 text-xs rounded-full bg-red-500/10 text-red-300 border border-red-500/20 hover:bg-red-500/20 transition-colors duration-300 cursor-default">
+                              React.js
+                            </span>
+                            <span className="px-2 py-1 sm:px-3 sm:py-1.5 text-xs rounded-full bg-red-600/10 text-red-400 border border-red-600/20 hover:bg-red-600/20 transition-colors duration-300 cursor-default">
+                              UI/UX
+                            </span>
+                            <span className="px-2 py-1 sm:px-3 sm:py-1.5 text-xs rounded-full bg-red-700/10 text-red-400 border border-red-700/20 hover:bg-red-700/20 transition-colors duration-300 cursor-default">
+                              Tailwind
+                            </span>
+                          </>
+                        )}
+                        {developer.role.toLowerCase().includes('backend') && (
+                          <>
+                            <span className="px-2 py-1 sm:px-3 sm:py-1.5 text-xs rounded-full bg-orange-600/10 text-orange-400 border border-orange-600/20 hover:bg-orange-600/20 transition-colors duration-300 cursor-default">
+                              PHP
+                            </span>
+                            <span className="px-2 py-1 sm:px-3 sm:py-1.5 text-xs rounded-full bg-orange-700/10 text-orange-400 border border-orange-700/20 hover:bg-orange-700/20 transition-colors duration-300 cursor-default">
+                              Database
+                            </span>
+                          </>
+                        )}
+                        {developer.role.toLowerCase().includes('documentation') && (
+                          <>
+                            <span className="px-2 py-1 sm:px-3 sm:py-1.5 text-xs rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 hover:bg-amber-500/20 transition-colors duration-300 cursor-default">
+                              Tech Writing
+                            </span>
+                            <span className="px-2 py-1 sm:px-3 sm:py-1.5 text-xs rounded-full bg-amber-600/10 text-amber-400 border border-amber-600/20 hover:bg-amber-600/20 transition-colors duration-300 cursor-default">
+                              User Guides
+                            </span>
+                            <span className="px-2 py-1 sm:px-3 sm:py-1.5 text-xs rounded-full bg-amber-700/10 text-amber-400 border border-amber-700/20 hover:bg-amber-700/20 transition-colors duration-300 cursor-default">
+                              Documentation
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Corner accents - Hide on mobile */}
+                    <div className="hidden sm:block absolute top-0 right-0 w-12 sm:w-16 h-12 sm:h-16">
+                      <div className="absolute top-2 right-2 sm:top-3 sm:right-3 w-3 h-3 sm:w-4 sm:h-4 border-t-2 border-r-2 border-red-500/60 group-hover:border-red-400 transition-colors duration-500"></div>
+                    </div>
+                    <div className="hidden sm:block absolute bottom-0 left-0 w-12 sm:w-16 h-12 sm:h-16">
+                      <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 w-3 h-3 sm:w-4 sm:h-4 border-b-2 border-l-2 border-orange-500/60 group-hover:border-orange-400 transition-colors duration-500"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
       {/* Footer */}
-      <footer id="contact" className="bg-black border-t border-red-500/50 py-16">
+      <footer id="contact" className="bg-black border-t border-red-500/50 pt-16 pb-5">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             <div>
@@ -533,9 +693,8 @@ const Landing = () => {
             </div>
           </div>
           
-          <div className="border-t border-red-500/50 pt-8 text-center text-gray-500 space-y-2">
+          <div className="border-t border-red-500/50 pt-4 text-center text-gray-500 space-y-2">
             <p>&copy; 2024 MoBook Movie Booking System. All rights reserved.</p>
-            <p className="text-sm">Developed by: Lance Timothy B. Satorre, Euwen Aldrich D. Villarin, Yvone Bardon, Neri Sergio</p>
           </div>
         </div>
       </footer>
